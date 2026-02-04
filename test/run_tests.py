@@ -7,14 +7,17 @@ To be used as a Docker command when tests in a standalone container.
 This script runs the tests and generates JUnit-compatible xml reports.
 """
 
+import os
 import pathlib
 import sys
 
 from tests import test_dags
 
-
-APP_ROOT = pathlib.Path('/opt/airflow/')
-REPORTS_DIR = APP_ROOT / 'artifacts' / 'unittest'
+if os.environ.get("ARTIFACTS_DIR") is not None:
+    ARTIFACTS_ROOT = pathlib.Path(os.environ["ARTIFACTS_DIR"])
+else:
+    ARTIFACTS_ROOT = pathlib.Path(__file__).parent.parent / "artifacts"
+REPORTS_DIR = ARTIFACTS_ROOT / 'unittest'
 TIMEOUT_SECONDS = 60
 
 
@@ -29,7 +32,7 @@ def ensure_reports_dir():
 
 def main():
     reports_dir = ensure_reports_dir()
-    report_file = reports_dir / 'arflow_test.xml'
+    report_file = reports_dir / 'airflow_test.xml'
 
     log(f"Writing test report to {report_file}")
     result = test_dags.DagLoadingTest.runTestsWithXMLReport(report_file)

@@ -1,3 +1,2 @@
-apache-airflow==3.1.6
 lxml
 unittest-xml-reporting

@@ -2,9 +2,70 @@ services:
   postgres:
     volumes: !reset
 
-  x-airflow-common:
+  redis:
+    volumes: !reset
+
+  airflow-apiserver:
+    &airflow-common
     build: !reset
+    image: ${DOCKER_APP_IMAGE}
     depends_on: !reset
     ports: !reset
-    env_file: !override env.example
+    env_file: !override example.env
+    volumes: !reset
+
+  airflow-scheduler:
+    build: !reset
+    image: ${DOCKER_APP_IMAGE}
+    depends_on: !reset
+    ports: !reset
+    env_file: !override example.env
+    volumes: !reset
+
+  airflow-dag-processor:
+    build: !reset
+    image: ${DOCKER_APP_IMAGE}
+    depends_on: !reset
+    ports: !reset
+    env_file: !override example.env
+    volumes: !reset
+
+  airflow-worker:
+    build: !reset
+    image: ${DOCKER_APP_IMAGE}
+    depends_on: !reset
+    ports: !reset
+    env_file: !override example.env
+    volumes: !reset
+
+  airflow-triggerer:
+    build: !reset
+    image: ${DOCKER_APP_IMAGE}
+    depends_on: !reset
+    ports: !reset
+    env_file: !override example.env
+    volumes: !reset
+
+  airflow-init:
+    build: !reset
+    image: ${DOCKER_APP_IMAGE}
+    depends_on: !reset
+    ports: !reset
+    env_file: !override example.env
+    volumes: !reset
+
+  airflow-cli:
+    build: !reset
+    image: ${DOCKER_APP_IMAGE}
+    depends_on: !reset
+    ports: !reset
+    env_file: !override example.env
+    volumes: !reset
+
+  flower:
+    build: !reset
+    image: ${DOCKER_APP_IMAGE}
+    depends_on: !reset
+    ports: !reset
+    env_file: !override example.env
     volumes: !reset
