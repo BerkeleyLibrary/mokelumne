@@ -1,8 +1,13 @@
-FROM apache/airflow:3.1.6 AS reqs
-USER root
-
 # This Dockerfile relies on ARGs and ENVs defined in the upstream
 # Airflow Dockerfile: https://github.com/apache/airflow/blob/main/Dockerfile
+
+ARG AIRFLOW_VERSION="3.1.7"
+ARG AIRFLOW_IMAGE_NAME="apache/airflow:${AIRFLOW_VERSION}"
+
+FROM ${AIRFLOW_IMAGE_NAME} AS reqs
+ENV AIRFLOW_VERSION="${AIRFLOW_VERSION}"
+
+USER root
 
 RUN umask 0002; \
     mkdir -p "${AIRFLOW_USER_HOME_DIR}/artifacts"; \
@@ -17,6 +22,7 @@ COPY --chown=airflow:0 requirements.txt .
 
 
 FROM reqs AS airflow
+ENV AIRFLOW_VERSION="${AIRFLOW_VERSION}"
 
 USER airflow
 WORKDIR $AIRFLOW_HOME
@@ -27,7 +33,7 @@ COPY --chown=airflow:0 plugins plugins
 WORKDIR $AIRFLOW_USER_HOME_DIR
 COPY --chown=airflow:0 test test
 
-RUN pip install --no-cache-dir "apache-airflow==3.1.6" \
+RUN pip install --no-cache-dir "apache-airflow==${AIRFLOW_VERSION}" \
     -r requirements.txt
 
 ENV AIRFLOW__CORE__LOAD_EXAMPLES=True
