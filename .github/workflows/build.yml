@@ -112,10 +112,6 @@ jobs:
   test:
     runs-on: ubuntu-24.04
     needs: merge
-    container:
-      image: ${{ needs.merge.outputs.image }}
-      # without this we run into permissions issues on Github Actions
-      options: --user root
     env:
       COMPOSE_FILE: docker-compose.yml:docker-compose.ci.yml
       DOCKER_APP_IMAGE: ${{ needs.merge.outputs.image }}
@@ -143,7 +139,7 @@ jobs:
           FERNET_KEY: ${{ secrets.FERNET_KEY }}
         run: |
           docker compose up -d postgres redis --wait
-          docker compose run -- airflow-init
+          docker compose run --rm airflow-init
           docker compose up -d --wait
       - name: Set ARTIFACTS_DIR
         run: echo "ARTIFACTS_DIR=${RUNNER_TEMP}/artifacts" >> $GITHUB_ENV
