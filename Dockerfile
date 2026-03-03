@@ -2,7 +2,9 @@
 # Airflow Dockerfile: https://github.com/apache/airflow/blob/main/Dockerfile
 
 ARG AIRFLOW_VERSION="3.1.7"
-ARG AIRFLOW_IMAGE_NAME="apache/airflow:${AIRFLOW_VERSION}"
+ARG PYTHON_VERSION="3.13"
+
+ARG AIRFLOW_IMAGE_NAME="apache/airflow:${AIRFLOW_VERSION}-python${PYTHON_VERSION}"
 
 FROM ${AIRFLOW_IMAGE_NAME} AS reqs
 ENV AIRFLOW_VERSION="${AIRFLOW_VERSION}"
