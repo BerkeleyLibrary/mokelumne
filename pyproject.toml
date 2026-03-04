@@ -14,6 +14,7 @@ requires-python = ">= 3.12.12, < 3.14"
 authors = [
     {name = "Anna Wilcox"},
     {name = "maría a. matienzo"},
+    {name = "Jason Raitz"}
 ]
 readme = "README.md"
 license = "MIT"

@@ -1,0 +1,87 @@
+# keycloak-config-cli realm configuration for local development.
+# Mocks a minimal subset of the production Berkeley OIDC (auth.berkeley.edu/cas/oidc)
+# needed to authenticate against Airflow via the berkeley_edu_groups scope.
+#
+# Group names mirror the production LDAP DN format; update the 'lib-mokelumne' token
+# to whatever app-specific group is needed when reusing this for a different service.
+#
+# Secrets are injected at import time via substitution by keycloak-config-cli.
+# Set OIDC_CLIENT_SECRET in your .env file — never commit a real secret here.
+
+realm: berkeley-local
+enabled: true
+displayName: Berkeley Local
+
+clientScopes:
+  - name: berkeley_edu_groups
+    description: Berkeley group memberships
+    protocol: openid-connect
+    attributes:
+      include.in.token.scope: "true"
+      display.on.consent.screen: "false"
+    protocolMappers:
+      - name: groups
+        protocol: openid-connect
+        protocolMapper: oidc-group-membership-mapper
+        consentRequired: false
+        config:
+          full.path: "true"
+          id.token.claim: "true"
+          access.token.claim: "true"
+          introspection.token.claim: "true"
+          claim.name: groups
+          jsonType.label: String
+
+clients:
+  - clientId: airflow
+    name: airflow
+    enabled: true
+    rootUrl: "http://localhost:8080"
+    adminUrl: "http://localhost:8080"
+    redirectUris:
+      - "http://localhost:8080/*"
+    webOrigins:
+      - "http://localhost:8080"
+    publicClient: false
+    secret: "$(OIDC_CLIENT_SECRET)"
+    standardFlowEnabled: true
+    directAccessGrantsEnabled: true
+    frontchannelLogout: true
+    attributes:
+      backchannel.logout.session.required: "true"
+      frontchannel.logout.session.required: "true"
+    defaultClientScopes:
+      - profile
+      - email
+    optionalClientScopes:
+      - berkeley_edu_groups
+
+groups:
+  - name: "$(OIDC_ADMIN_GROUP)"
+  - name: "$(OIDC_USER_GROUP)"
+
+users:
+  - username: testadmin
+    enabled: true
+    email: testadmin@example.edu
+    firstName: Test
+    lastName: Admin
+    credentials:
+      - type: password
+        value: testadmin
+        temporary: false
+    groups:
+      - "$(OIDC_ADMIN_GROUP)"
+      - "$(OIDC_USER_GROUP)"
+
+  - username: testuser
+    enabled: true
+    email: testuser@example.edu
+    firstName: Test
+    lastName: User
+    credentials:
+      - type: password
+        value: testuser
+        temporary: false
+    groups:
+      - "$(OIDC_USER_GROUP)"

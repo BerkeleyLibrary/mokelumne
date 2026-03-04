@@ -28,6 +28,7 @@ USER airflow
 WORKDIR $AIRFLOW_HOME
 COPY --chown=airflow:0 dags dags
 COPY --chown=airflow:0 plugins plugins
+COPY --chown=airflow:0 webserver_config.py .
 
 # we want to isolate anything that airflow might not run directly
 WORKDIR $AIRFLOW_USER_HOME_DIR

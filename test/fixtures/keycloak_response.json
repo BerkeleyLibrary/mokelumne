@@ -1,0 +1,20 @@
+{
+    "exp": 1773867589,
+    "iat": 1773867289,
+    "jti": "bf996a4a-3713-4051-8be6-86e3d0954ff2",
+    "iss": "http: //localhost:8180/realms/berkeley-local",
+    "typ": "Bearer",
+    "azp": "airflow",
+    "sid": "36fde8bc-8713-4acd-919e-a73f2addae4f",
+    "scope": "openid email profile berkeley_edu_groups",
+    "email_verified": false,
+    "name": "Test Admin",
+    "groups": [
+        "/cn=edu:berkeley:app:auth-cas:lib-mokelumne:lib-mokelumne-admin,ou=campus groups,dc=berkeley,dc=edu",
+        "/cn=edu:berkeley:app:auth-cas:lib-mokelumne:lib-mokelumne-allow,ou=campus groups,dc=berkeley,dc=edu"
+    ],
+    "preferred_username": "testadmin",
+    "given_name": "Test",
+    "family_name": "Admin",
+    "email": "testadmin@example.edu"
+}

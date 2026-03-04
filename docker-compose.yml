@@ -78,6 +78,8 @@ x-airflow-common:
     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
     # The following line can be used to set a custom config file, stored in the local config folder
     AIRFLOW_CONFIG: '/opt/airflow/config/airflow.cfg'
+    OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET}
+    OIDC_CLIENT_ID: ${OIDC_CLIENT_ID}
   volumes:
     - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
     - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
@@ -104,6 +106,7 @@ services:
       POSTGRES_DB: airflow
     volumes:
       - postgres-db-volume:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "airflow"]
       interval: 10s
@@ -141,6 +144,61 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
+  
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.1
+    command: start-dev
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HOSTNAME: "http://localhost:8180"
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+      KC_HTTP_ENABLED: "true"
+      KC_HTTP_PORT: "8180"
+      KC_HEALTH_ENABLED: "true"
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET}
+      OIDC_NAME: ${OIDC_NAME}
+      OIDC_WELL_KNOWN: ${OIDC_WELL_KNOWN}
+      OIDC_ADMIN_GROUP: ${OIDC_ADMIN_GROUP}
+      OIDC_USER_GROUP: ${OIDC_USER_GROUP}
+    ports:
+      - "8180:8180"
+    healthcheck:
+      # curl/wget are not present in the UBI9-based Keycloak image; use /dev/tcp.
+      # KC_HEALTH_ENABLED=true exposes /health/ready on the management port (9000).
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9000 && printf 'GET /health/ready HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && grep -q 'status.*UP' <&3"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  keycloak-config:
+    image: adorsys/keycloak-config-cli:latest-26.1.0
+    environment:
+      KEYCLOAK_URL: http://keycloak:8180
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: admin
+      KEYCLOAK_AVAILABILITYCHECK_ENABLED: "true"
+      IMPORT_FILES_LOCATIONS: /config/*
+      IMPORT_VAR_SUBSTITUTION_ENABLED: "true"
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET}
+      OIDC_ADMIN_GROUP: ${OIDC_ADMIN_GROUP}
+      OIDC_USER_GROUP: ${OIDC_USER_GROUP}
+    volumes:
+      - ${AIRFLOW_PROJ_DIR:-.}/keycloak/config:/config
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    restart: on-failure
 
   airflow-scheduler:
     <<: *airflow-common

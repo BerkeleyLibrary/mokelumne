@@ -1,3 +1,4 @@
+.DS_Store
 .env
 .venv
 tmp
@@ -7,4 +8,4 @@ download/*
 __pycache__/
 *.py[cod]
 *$py.class
-config
+config/*
