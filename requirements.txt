@@ -1,2 +1,3 @@
 lxml
 unittest-xml-reporting
+git+https://github.com/BerkeleyLibrary/python-tind-client.git@main
