@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools >= 77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mokelumne"
+version = "0.1.0"
+dependencies = [
+    "langfuse",
+    "lxml",
+    "unittest-xml-reporting"
+]
+requires-python = ">= 3.12.12, < 3.14"
+authors = [
+    {name = "Anna Wilcox"},
+    {name = "maría a. matienzo"},
+]
+readme = "README.md"
+license = "MIT"
+
+[project.optional-dependencies]
+test = [
+]
+lint = [
+    "mypy ~= 1.17.1",
+    "pydoclint ~= 0.6.10",
+    "pylint ~= 3.3",
+]
+
+[project.urls]
+Repository = "https://github.com/BerkeleyLibrary/mokelumne"
+Issues = "https://github.com/BerkeleyLibrary/mokelumne/issues"
+
+[tool.mypy]
+python_version = "3.12"
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_return_any = true
+
+[tool.setuptools]
+py-modules = ['mokelumne']
+
+[tool.pydoclint]
+allow-init-docstring = true
+skip-checking-raises = true
+style = "sphinx"
