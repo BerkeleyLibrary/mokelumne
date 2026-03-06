@@ -1,3 +1,4 @@
 lxml
 unittest-xml-reporting
+pymarc
 git+https://github.com/BerkeleyLibrary/python-tind-client.git@main

@@ -3,62 +3,74 @@ import os
 import logging
 from typing import List
 from pathlib import Path
-from airflow.sdk import dag, task
+from airflow.sdk import dag, task, Param
 from tind_client import TINDClient
 
 logger = logging.getLogger(__name__)
 BASE_OUTPUT_DIR = "/opt/airflow/download"
+# BATCH_SIZE = 2
 
 @dag(
     schedule=None,
     catchup=False,
-    params={"collection_name": "Johan Hagemeyer Photographs"},
+    params={
+            "collection_name": "Johan Hagemeyer Photographs", 
+            "batch_size": Param(2, type="integer", minimum=1)},
     tags=["tind collection"],
 )
 
 def download_tind_collection():
 
+    def _get_tind_client() -> TINDClient:
+        storage_dir = Path("/opt/airflow/download")
+        storage_dir.mkdir(parents=True, exist_ok=True)
+        return TINDClient(default_storage_dir=storage_dir)
+
+    def _download_image_file(client: TINDClient, id: str) -> None:
+        record = client.fetch_file_metadata(id)     
+        download_url = record[0]["url"]
+    
+        record_dir = os.path.join(BASE_OUTPUT_DIR, id)
+        os.makedirs(record_dir, exist_ok=True)
+        
+        client.fetch_file(download_url, record_dir )
+        logger.info(f"Successfully downloaded: {record_dir }")
+
+    
+    def _download_metadata_file(client: TINDClient, id: str) -> None:
+        pass
+
     @task
     def get_ids(collection_name: str) -> List[str]:
-        storage_dir = Path("/opt/airflow/download")
-        storage_dir.mkdir(parents=True, exist_ok=True)
-        client = TINDClient(default_storage_dir=storage_dir)
+        client = _get_tind_client()
         query = "collection:'{0}'".format(collection_name)
         ids = client.fetch_ids_search(query)
-        return ids[:1]
+        return ids[:6]
     
     @task
-    def process_batch(ids: List[str]):
-        """
-        Process a batch of record IDs
-        """
-        logger.info(f"Processing batch of {len(ids)} records: {ids}")
-        storage_dir = Path("/opt/airflow/download")
-        storage_dir.mkdir(parents=True, exist_ok=True)
-        client = TINDClient(default_storage_dir=storage_dir)
+    def chunk_ids(ids: List[str], batch_size: str) -> List[List[str]]:
+        batch_size = int(batch_size)
+        logger.info(f"Chunking {len(ids)} IDs into batches of {batch_size}")
+        batches = [
+            ids[i:i + batch_size]
+            for i in range(0, len(ids), batch_size)
+        ]
+        logger.info(f"Created {len(batches)} batches")
+        return batches
+    
+    @task
+    def process_batch(batch: List[str]):
+        logger.info(f"Processing batch of {len(batch)} records: {batch}")
+        client = _get_tind_client()
 
-        for record_id in ids:
-            logger.info(f"Processing record: {record_id}")
-            record = client.fetch_file_metadata(record_id)
-            record_xml = ''        
-            download_url = record[0]["url"]
-            logger.info(f"Download URL: {download_url}")
-
-            record_dir = os.path.join(BASE_OUTPUT_DIR, record_id)
-            os.makedirs(record_dir, exist_ok=True)
-            logger.info(f"Created directory: {record_dir}")
-
-            # Save XML
-            # xml_path = os.path.join(record_dir, f"{record_id}.xml")
-            # with open(xml_path, "w", encoding="utf-8") as f:
-            #     f.write(record_xml)
-
-            client.fetch_file(download_url, record_dir )
-            logger.info(f"Successfully downloaded: {record_dir }")
-
-
+        for id in batch:
+            logger.info(f"Processing record: {id}")
+            _download_image_file(client, id)
+            _download_metadata_file(client, id)
+            
     ids = get_ids("{{ params.collection_name }}")
-    process_batch(ids)
+    batches = chunk_ids(ids, batch_size="{{ params.batch_size }}")
+    process_batch.expand(batch=batches)
     
 
 download_tind_collection()
