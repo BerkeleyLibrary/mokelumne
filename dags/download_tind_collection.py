@@ -5,7 +5,6 @@ from airflow.sdk import dag, task, Param
 from helpers.tind import Tind
 
 logger = logging.getLogger(__name__)
-# BASE_OUTPUT_DIR = "/opt/airflow/download"
 
 @dag(
     schedule=None,
@@ -19,42 +18,6 @@ logger = logging.getLogger(__name__)
 
 def download_tind_collection():
     tind = Tind()
-
-    # def _get_tind_client() -> TINDClient:
-    #     storage_dir = Path("/opt/airflow/download")
-    #     storage_dir.mkdir(parents=True, exist_ok=True)
-    #     return TINDClient(default_storage_dir=storage_dir)
-
-    # def _result_dir(id: str) -> str:
-    #     record_dir = os.path.join(BASE_OUTPUT_DIR, id)
-    #     os.makedirs(record_dir, exist_ok=True)
-    #     return record_dir
-
-    # def _download_image_file(client: TINDClient, id: str) -> None:
-    #     record = client.fetch_file_metadata(id)     
-    #     download_url = record[0]["url"]
-    
-    #     record_dir = os.path.join(BASE_OUTPUT_DIR, id)
-    #     os.makedirs(record_dir, exist_ok=True)
-        
-    #     client.fetch_file(download_url, record_dir )
-    #     logger.info(f"Successfully downloaded: {record_dir }")
-
-    # def _write_record_to_xml(record: Record, file_path: Union[str, Path]) -> None:
-    #     parser = etree.XMLParser(remove_blank_text=True)
-    #     tree = etree.parse(str(file_path), parser)
-    #     tree.write(
-    #         str(file_path),
-    #         encoding="utf-8",
-    #         xml_declaration=True,
-    #         pretty_print=True,
-    #     )
-
-    # def _download_metadata_file(client: TINDClient, id: str) -> None:
-    #     record = client.fetch_metadata(id)
-    #     record_dir = _result_dir(id)
-    #     file_path = Path(f"{record_dir}/{id}.xml")
-    #     _write_record_to_xml(record, file_path)
 
     @task
     def get_ids(collection_name: str, extract_num: str = None) -> List[str]:

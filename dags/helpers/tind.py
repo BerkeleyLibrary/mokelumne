@@ -21,7 +21,6 @@ class Tind:
     
         record_dir = self._record_dir(id)        
         self.client.fetch_file(download_url, record_dir)
-       
     
     def download_metadata_file(self, id: str) -> None:
         record = self.client.fetch_metadata(id)
@@ -30,20 +29,16 @@ class Tind:
         self._write_record_to_xml(record, file_path)
 
     def _tind_client(self) -> TINDClient:
-        base_dir = os.environ.get("MOKELUMNE_TIND_DOWNLOAD", "")
-        if base_dir:
-            storage_dir = Path(base_dir)
-            storage_dir.mkdir(parents=True, exist_ok=True)
-            return TINDClient(default_storage_dir=storage_dir)
-        else:
-            return TINDClient()
+        base_dir = os.environ.get("MOKELUMNE_TIND_DOWNLOAD", "/opt/airflow/download")     
+        storage_dir = Path(base_dir)
+        storage_dir.mkdir(parents=True, exist_ok=True)
+        return TINDClient(default_storage_dir=storage_dir)
      
     def _record_dir(self, id: str) -> str:
         record_dir = os.path.join(self.client.default_storage_dir, id)
         os.makedirs(record_dir, exist_ok=True)
         return record_dir
 
-    
     def _write_record_to_xml(self, record: Record, file_path: Union[str, Path]) -> None:
         parser = etree.XMLParser(remove_blank_text=True)
         tree = etree.parse(str(file_path), parser)
