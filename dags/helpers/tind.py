@@ -1,6 +1,6 @@
 import os
 from lxml import etree
-from pymarc import Record
+from pymarc import Record, XMLWriter
 from typing import Union
 from pathlib import Path
 from typing import List
@@ -40,6 +40,14 @@ class Tind:
         return record_dir
 
     def _write_record_to_xml(self, record: Record, file_path: Union[str, Path]) -> None:
+        file_path = Path(file_path)
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with file_path.open("wb") as f:
+            writer = XMLWriter(f)
+            writer.write(record)
+            writer.close()
+
         parser = etree.XMLParser(remove_blank_text=True)
         tree = etree.parse(str(file_path), parser)
         tree.write(

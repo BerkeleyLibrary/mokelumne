@@ -1,7 +1,11 @@
 from __future__ import annotations
+import sys
 import logging
 from typing import List
+from pathlib import Path
 from airflow.sdk import dag, task, Param
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from helpers.tind import Tind
 
 logger = logging.getLogger(__name__)
