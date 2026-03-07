@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import List
 from tind_client import TINDClient
 
-class Tind:
+class FetchTind:
     def __init__(self):
         self.client = self._tind_client()
         

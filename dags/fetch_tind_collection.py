@@ -6,7 +6,7 @@ from pathlib import Path
 from airflow.sdk import dag, task, Param
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from helpers.tind import Tind
+from helpers.fetch_tind import FetchTind
 
 logger = logging.getLogger(__name__)
 
@@ -20,8 +20,8 @@ logger = logging.getLogger(__name__)
     tags=["tind collection"],
 )
 
-def download_tind_collection():
-    tind = Tind()
+def fetch_tind_collection():
+    fetch_tind = FetchTind()
 
     @task
     def get_ids(collection_name: str, extract_num: str = None) -> List[str]:
@@ -32,7 +32,7 @@ def download_tind_collection():
             extract_num: Number of IDs to extract (None or 0 returns all)
         """
         num = int(extract_num) if extract_num else None
-        return tind.get_ids(collection_name, extract_num=num if num and num > 0 else None)
+        return fetch_tind.get_ids(collection_name, extract_num=num if num and num > 0 else None)
     
     @task
     def chunk_ids(ids: List[str], batch_size: str) -> List[List[str]]:
@@ -51,12 +51,12 @@ def download_tind_collection():
 
         for id in batch:
             logger.info(f"Processing record: {id}")
-            tind.download_image_file(id)
-            tind.download_metadata_file(id)
+            fetch_tind.download_image_file(id)
+            fetch_tind.download_metadata_file(id)
             
     ids = get_ids("{{ params.collection_name }}", "{{ params.extract_num }}")
     batches = chunk_ids(ids, batch_size="{{ params.batch_size }}")
     process_batch.expand(batch=batches)
     
 
-download_tind_collection()
+fetch_tind_collection()
