@@ -1,4 +1,5 @@
 import os
+import logging
 from lxml import etree
 from pymarc import Record, XMLWriter
 from typing import Union
@@ -10,10 +11,12 @@ class FetchTind:
     def __init__(self):
         self.client = self._tind_client()
         
-    def get_ids(self, collection_name: str, extract_num: int = None) -> List[str]:
-        query = "collection:'{0}'".format(collection_name)
-        ids = self.client.fetch_ids_search(query)
-        return ids[:extract_num] if extract_num is not None else ids
+    def get_ids(self, tind_query: str, limit_to_fetch_the_first_number_of_records: int = None) -> List[str]:
+        try:
+            ids = self.client.fetch_ids_search(tind_query)
+            return ids[:limit_to_fetch_the_first_number_of_records] if limit_to_fetch_the_first_number_of_records is not None else ids
+        except Exception as ex:
+            raise RuntimeError("Unable to fetch IDs from TIND: TIND Query = {0}; {1}".format(tind_query, str(ex))) 
   
     def download_image_file(self, id: str) -> None:
         record = self.client.fetch_file_metadata(id)     
