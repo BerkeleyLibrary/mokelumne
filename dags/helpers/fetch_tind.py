@@ -10,14 +10,11 @@ from tind_client import TINDClient
 class FetchTind:
     def __init__(self):
         self.client = self._tind_client()
+
+    def get_ids(self, tind_query: str) -> List[str]:
+        return  self.client.fetch_ids_search(tind_query)
         
-    def get_ids(self, tind_query: str, limit_to_fetch_the_first_number_of_records: int = None) -> List[str]:
-        try:
-            ids = self.client.fetch_ids_search(tind_query)
-            return ids[:limit_to_fetch_the_first_number_of_records] if limit_to_fetch_the_first_number_of_records is not None else ids
-        except Exception as ex:
-            raise RuntimeError("Unable to fetch IDs from TIND: TIND Query = {0}; {1}".format(tind_query, str(ex))) 
-  
+    # to be used in later Jira ticket
     # def download_image_file(self, id: str) -> None:
     #     record = self.client.fetch_file_metadata(id)     
     #     download_url = record[0]["url"]    

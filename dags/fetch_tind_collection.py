@@ -4,7 +4,7 @@ import logging
 from typing import List
 from pathlib import Path
 from airflow.sdk import dag, task, Param
-from airflow.exceptions import AirflowFailException
+from airflow.exceptions import AirflowFailException, AirflowSkipException
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from helpers.fetch_tind import FetchTind
@@ -22,12 +22,20 @@ logger = logging.getLogger(__name__)
 
 def fetch_tind_collection():
     fetch_tind = FetchTind()
-
+   
     @task
     def validate_params(**context):
         val = context['params'].get('tind_query')
         if not val.strip():
             raise AirflowFailException("Parameter tind_qury cannot be empty")
+
+    @task
+    def validate_ids(ids: List[str], tind_query: str) -> List[str]:
+        if not ids:
+            msg = f"No TIND IDs retrieved. All downstream tasks have been skipped. Please check to see if the 'tind_query'is valid: {tind_query}"
+            logger.warning(msg)
+            raise AirflowSkipException(msg)
+        return ids
 
     @task
     def get_ids(tind_qury: str) -> List[str]:
@@ -56,9 +64,11 @@ def fetch_tind_collection():
         for id in batch:
             logger.info(f"Processing record: {id}")
             fetch_tind.download_metadata_file(id)
-            
-    ids = get_ids("{{ params.tind_query }}")
-    batches = chunk_ids(ids, batch_size="{{ params.batch_size }}")
+    query =  "{{ params.tind_query }}"     
+    ids = get_ids(query)  
+    # ids = get_ids("{{ params.tind_query }}")
+    validated_ids = validate_ids(ids, tind_query=query)
+    batches = chunk_ids(validated_ids, batch_size="{{ params.batch_size }}")
     validate_params() >> process_batch.expand(batch=batches)
     
 
