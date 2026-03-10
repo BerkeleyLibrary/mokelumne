@@ -84,7 +84,6 @@ x-airflow-common:
     - ${AIRFLOW_PROJ_DIR:-.}/config:/opt/airflow/config
     - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
     - ${AIRFLOW_PROJ_DIR:-.}/download:/opt/airflow/download
-    - ${AIRFLOW_PROJ_DIR:-.}/tmp:/opt/airflow/tmp
     - ${AIRFLOW_PROJ_DIR:-.}/test:/home/airflow/test
     - ${AIRFLOW_PROJ_DIR:-.}/artifacts:/home/airflow/artifacts
     
