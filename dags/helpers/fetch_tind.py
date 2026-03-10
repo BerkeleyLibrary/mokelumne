@@ -32,7 +32,7 @@ class FetchTind:
         self._write_record_to_xml(record, file_path)
 
     def _tind_client(self) -> TINDClient:
-        base_dir = os.environ.get("MOKELUMNE_TIND_DOWNLOAD", "/opt/airflow/download")     
+        base_dir = os.environ.get("MOKELUMNE_TIND_DOWNLOAD")     
         storage_dir = Path(base_dir)
         storage_dir.mkdir(parents=True, exist_ok=True)
         return TINDClient(default_storage_dir=storage_dir)
