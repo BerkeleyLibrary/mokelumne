@@ -20,8 +20,7 @@ class FetchTind:
   
     # def download_image_file(self, id: str) -> None:
     #     record = self.client.fetch_file_metadata(id)     
-    #     download_url = record[0]["url"]
-    
+    #     download_url = record[0]["url"]    
     #     record_dir = self._record_dir(id)        
     #     self.client.fetch_file(download_url, record_dir)
     
