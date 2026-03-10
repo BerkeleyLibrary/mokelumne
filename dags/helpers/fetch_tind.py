@@ -18,12 +18,12 @@ class FetchTind:
         except Exception as ex:
             raise RuntimeError("Unable to fetch IDs from TIND: TIND Query = {0}; {1}".format(tind_query, str(ex))) 
   
-    def download_image_file(self, id: str) -> None:
-        record = self.client.fetch_file_metadata(id)     
-        download_url = record[0]["url"]
+    # def download_image_file(self, id: str) -> None:
+    #     record = self.client.fetch_file_metadata(id)     
+    #     download_url = record[0]["url"]
     
-        record_dir = self._record_dir(id)        
-        self.client.fetch_file(download_url, record_dir)
+    #     record_dir = self._record_dir(id)        
+    #     self.client.fetch_file(download_url, record_dir)
     
     def download_metadata_file(self, id: str) -> None:
         record = self.client.fetch_metadata(id)

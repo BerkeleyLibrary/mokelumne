@@ -55,7 +55,6 @@ def fetch_tind_collection():
 
         for id in batch:
             logger.info(f"Processing record: {id}")
-            fetch_tind.download_image_file(id)
             fetch_tind.download_metadata_file(id)
             
     ids = get_ids("{{ params.tind_query }}")
