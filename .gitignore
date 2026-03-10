@@ -8,4 +8,3 @@ __pycache__/
 *.py[cod]
 *$py.class
 config
-test/test_fetch_search_metadata.py
