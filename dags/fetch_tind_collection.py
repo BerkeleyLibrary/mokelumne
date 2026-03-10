@@ -30,7 +30,13 @@ def fetch_tind_collection():
             raise AirflowFailException("Parameter tind_qury cannot be empty")
 
     @task
-    def validate_ids(ids: List[str], tind_query: str) -> List[str]:
+    def validate_tind_ids(ids: List[str], tind_query: str) -> List[str]:
+        """
+        Airflow skips downstream tasks silently if the TIND IDs list is empty.
+        This task explicitly logs the query and raises AirflowSkipException here to:
+        1. Provide a clear log audit (Invalid query vs. No records found).
+        2. Prevent silent task skip in Airflow UI.
+        """
         if not ids:
             msg = f"No TIND IDs retrieved. All downstream tasks have been skipped. Please check to see if the 'tind_query'is valid: {tind_query}"
             logger.warning(msg)
@@ -38,16 +44,15 @@ def fetch_tind_collection():
         return ids
 
     @task
-    def get_ids(tind_qury: str) -> List[str]:
-        """Fetch record IDs from TIND collection.
-        """
+    def get_tind_ids(tind_qury: str) -> List[str]:
+        """Fetch record IDs from TIND collection.  """
         try:
             return fetch_tind.get_ids(tind_qury)
         except Exception as ex:
             raise AirflowFailException(f"Failed to fetch TIND IDs: {str(ex)}")
             
     @task
-    def chunk_ids(ids: List[str], batch_size: str) -> List[List[str]]:
+    def chunk_tind_ids(ids: List[str], batch_size: str) -> List[List[str]]:
         batch_size = int(batch_size)
         logger.info(f"Chunking {len(ids)} IDs into batches of {batch_size}")
         batches = [
@@ -58,18 +63,18 @@ def fetch_tind_collection():
         return batches
     
     @task
-    def process_batch(batch: List[str]):
+    def process_tind_fetch_batch(batch: List[str]):
         logger.info(f"Processing batch of {len(batch)} records: {batch}")
 
         for id in batch:
             logger.info(f"Processing record: {id}")
             fetch_tind.download_metadata_file(id)
+    
     query =  "{{ params.tind_query }}"     
-    ids = get_ids(query)  
-    # ids = get_ids("{{ params.tind_query }}")
-    validated_ids = validate_ids(ids, tind_query=query)
-    batches = chunk_ids(validated_ids, batch_size="{{ params.batch_size }}")
-    validate_params() >> process_batch.expand(batch=batches)
+    ids = get_tind_ids(query)  
+    validated_ids = validate_tind_ids(ids, tind_query=query)
+    batches = chunk_tind_ids(validated_ids, batch_size="{{ params.batch_size }}")
+    validate_params() >> process_tind_fetch_batch.expand(batch=batches)
     
 
 fetch_tind_collection()
