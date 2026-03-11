@@ -1,4 +1,5 @@
 import os
+import csv
 import logging
 from lxml import etree
 from pymarc import Record, XMLWriter
@@ -26,6 +27,16 @@ class FetchTind:
         record_dir = self._record_dir(id) 
         file_path = Path(f"{record_dir}/{id}.xml")
         self._write_record_to_xml(record, file_path)
+
+    def save_tind_ids_file(self, ids: List[str]) -> None:
+        file_path = Path(f"{self.client.default_storage_dir}/query_batch_name.csv")
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with file_path.open("w", newline="", encoding="utf-8") as csv_file:
+            writer = csv.writer(csv_file)
+            writer.writerow(["TIND_ID"])
+            for id in ids:
+                writer.writerow([id])
 
     def _tind_client(self) -> TINDClient:
         base_dir = os.environ.get("MOKELUMNE_TIND_DOWNLOAD", "/opt/airflow/download")     

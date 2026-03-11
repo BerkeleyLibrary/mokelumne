@@ -69,12 +69,18 @@ def fetch_tind_collection():
         for id in batch:
             logger.info(f"Processing record: {id}")
             fetch_tind.download_metadata_file(id)
+
+    @task
+    def save_tind_ids_to_csv_file(ids: List[str]):
+        fetch_tind.save_tind_ids_file(ids)
+
     
     query =  "{{ params.tind_query }}"     
     ids = get_tind_ids(query)  
     validated_ids = validate_tind_ids(ids, tind_query=query)
     batches = chunk_tind_ids(validated_ids, batch_size="{{ params.batch_size }}")
-    validate_params() >> process_tind_fetch_batch.expand(batch=batches)
+
+    validate_params() >> process_tind_fetch_batch.expand(batch=batches) >> save_tind_ids_to_csv_file(ids)
     
 
 fetch_tind_collection()
