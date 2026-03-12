@@ -3,7 +3,7 @@ import sys
 import logging
 from typing import List
 from pathlib import Path
-from airflow.sdk import dag, task, Param
+from airflow.sdk import dag, task, Param, get_current_context
 from airflow.exceptions import AirflowFailException, AirflowSkipException
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -21,7 +21,9 @@ logger = logging.getLogger(__name__)
 )
 
 def fetch_tind_collection():
-    fetch_tind = FetchTind()
+    def get_fetch_tind() -> FetchTind:
+        context = get_current_context()
+        return FetchTind(context["run_id"])
    
     @task
     def validate_params(**context):
@@ -47,6 +49,7 @@ def fetch_tind_collection():
     def get_tind_ids(tind_qury: str) -> List[str]:
         """Fetch record IDs from TIND collection.  """
         try:
+            fetch_tind = get_fetch_tind()
             return fetch_tind.get_ids(tind_qury)
         except Exception as ex:
             raise AirflowFailException(f"Failed to fetch TIND IDs: {str(ex)}")
@@ -65,13 +68,14 @@ def fetch_tind_collection():
     @task
     def process_tind_fetch_batch(batch: List[str]):
         logger.info(f"Processing batch of {len(batch)} records: {batch}")
-
+        fetch_tind = get_fetch_tind()
         for id in batch:
             logger.info(f"Processing record: {id}")
             fetch_tind.download_metadata_file(id)
 
     @task
     def save_tind_ids_to_csv_file(ids: List[str]):
+        fetch_tind = get_fetch_tind()
         fetch_tind.save_tind_ids_file(ids)
 
     
