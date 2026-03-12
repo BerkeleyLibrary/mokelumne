@@ -1,7 +1,9 @@
 .env
 .venv
+tmp
 artifacts/*
 logs/*
+download/*
 __pycache__/
 *.py[cod]
 *$py.class
