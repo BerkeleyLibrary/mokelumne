@@ -17,6 +17,9 @@ Important environment variables for our build/environment:
 | `AIRFLOW_UID` | Set the `uid` the container runs as. | `AIRFLOW_UID="49003"` |
 | `AIRFLOW_VERSION` | Sets the Airflow release version. Used to identify the base Airflow image and to define it as a Python constraint | `AIRFLOW_VERSION="3.1.7"` |
 | `AIRFLOW_IMAGE_NAME` | Sets an alternate base image for Airflow, e.g. for `slim` images | `AIRFLOW_IMAGE_NAME="apache/airflow:slim-latest"` |
-| `FERNET_KEY` | [Fernet](https://airflow.apache.org/docs/apache-airflow/stable/security/secrets/fernet.html) encryption key used to encrypt Airflow secrets | `FERNET_KEY="somebase64value=` |
+| `FERNET_KEY` | [Fernet](https://airflow.apache.org/docs/apache-airflow/stable/security/secrets/fernet.html) encryption key used to encrypt Airflow secrets | `FERNET_KEY="somebase64value="` |
+| `TIND_API_KEY` | API key for TIND access | `TIND_API_KEY="..."` |
+| `TIND_API_URL` | URL for TIND access | `ITND_API_URL="https://digicoll.lib.berkeley.edu/api/v1"` |
+| `MOKELUMNE_TIND_DOWNLOAD_DIR` | Path for downloaded image cache | `MOKELUMNE_TIND_DOWNLOAD_DIR="/some/path/to/download/to"` |
 
 Note: The `AIRFLOW_UID` example in `example.env` maps to the reserved `uid` for the `airflow` user in [lap/workflow](https://git.lib.berkeley.edu/lap/workflow/-/wikis/UIDs).
