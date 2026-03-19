@@ -12,7 +12,7 @@ class TindXmlHandler(XmlHandler):
         self.writer_p = csv.writer(self.fp)
         self.writer_s = csv.writer(self.fs)
 
-        header = ['001', '035__a', '982__a', '8564_u']
+        header = ['Record ID', '035__a', 'Collection name', 'Record Link' , '8564_u']
         self.writer_p.writerow(header)
         self.writer_s.writerow(header)
 
@@ -27,15 +27,23 @@ class TindXmlHandler(XmlHandler):
             for v in f.get_subfields('u')
         ]
 
+    def _record_link(self, record_id):
+        return (
+            "No Record Link"
+            if not record_id
+            else f"https://digicoll.lib.berkeley.edu/record/{record_id}?ln=en"
+        )
+
     def process_record(self, record):
         record_id = record['001'].data.strip() if record['001'] else ''
 
+        link = self._record_link(record_id)
         f035 = self._get_subfield(record, '035', 'a')
         f982 = self._get_subfield(record, '982', 'b')
         f336 = self._get_subfield(record, '336', 'a')
         f856 = self._get_856_urls(record)
 
-        row = [record_id, f035, f982, '|'.join(f856)]
+        row = [record_id, f035, f982, link, '|'.join(f856)]
 
         if len(f856) == 1 and f336 == 'Image':
             self.writer_p.writerow(row)
