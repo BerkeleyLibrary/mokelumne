@@ -13,6 +13,9 @@ services:
     ports: !reset
     env_file: !reset
     volumes: !reset
+    environment:
+      OIDC_CLIENT_SECRET: ""
+      CI: "true"
 
   airflow-scheduler:
     build: !reset
@@ -53,6 +56,8 @@ services:
     ports: !reset
     env_file: !reset
     volumes: !reset
+    environment:
+      CI: "true"
 
   airflow-cli:
     build: !reset
@@ -69,3 +74,12 @@ services:
     ports: !reset
     env_file: !reset
     volumes: !reset
+
+  # local-only is a profile never declared so these services will not run in CI
+  keycloak:
+    profiles:
+      - local-only
+
+  keycloak-config:
+    profiles:
+      - local-only

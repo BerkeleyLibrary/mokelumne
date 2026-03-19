@@ -1,3 +1,4 @@
+.DS_Store
 .env
 .venv
 tmp
@@ -8,3 +9,5 @@ __pycache__/
 *.py[cod]
 *$py.class
 config
+airflow.cfg
+*.egg-info

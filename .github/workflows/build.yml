@@ -137,6 +137,7 @@ jobs:
       - name: Setup and start Airflow containers
         env:
           FERNET_KEY: ${{ secrets.FERNET_KEY }}
+          AIRFLOW__API_AUTH__JWT_SECRET: ${{ secrets.AIRFLOW__API_AUTH__JWT_SECRET }}
         run: |
           docker compose up -d postgres redis --wait
           docker compose run --rm airflow-init
@@ -150,6 +151,7 @@ jobs:
       - name: Run Dag import test
         env:
           FERNET_KEY: ${{ secrets.FERNET_KEY }}
+          AIRFLOW__API_AUTH__JWT_SECRET: ${{ secrets.AIRFLOW__API_AUTH__JWT_SECRET }}
         run: |
           docker compose exec airflow-worker python test/run_tests.py
 
@@ -158,6 +160,7 @@ jobs:
         id: artifacts
         env:
           FERNET_KEY: ${{ secrets.FERNET_KEY }}
+          AIRFLOW__API_AUTH__JWT_SECRET: ${{ secrets.AIRFLOW__API_AUTH__JWT_SECRET }}
         run: |
           docker compose cp airflow-worker:/home/airflow/artifacts/unittest "${ARTIFACTS_DIR}"
           docker compose logs | tee "${ARTIFACTS_DIR}/docker-services.log"
