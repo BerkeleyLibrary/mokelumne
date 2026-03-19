@@ -15,6 +15,7 @@ services:
     volumes: !reset
     environment:
       OIDC_CLIENT_SECRET: ""
+      CI: "true"
 
   airflow-scheduler:
     build: !reset
