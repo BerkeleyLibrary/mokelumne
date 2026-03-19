@@ -19,26 +19,27 @@ AUTH_ROLES_MAPPING = {
     OIDC_USER_GROUP: ["User"],
 }
 
-oidc = requests.get(OIDC_WELL_KNOWN).json()
+if all([OIDC_ADMIN_GROUP, OIDC_USER_GROUP, OIDC_WELL_KNOWN, OIDC_NAME, OIDC_CLIENT_ID, OIDC_CLIENT_SECRET]):
+    oidc = requests.get(OIDC_WELL_KNOWN).json()
 
-OAUTH_PROVIDERS = [
-    {
-        # keycloak or CAS depending on environment
-        "name": OIDC_NAME,
-        "icon": "fa-key",
-        "token_key": "access_token",
-        "remote_app": {
-            "client_id": OIDC_CLIENT_ID,
-            "client_secret": OIDC_CLIENT_SECRET,
-            "jwks_uri": oidc["jwks_uri"],
-            "client_kwargs": {
-                "scope": "openid profile berkeley_edu_groups"
+    OAUTH_PROVIDERS = [
+        {
+            # keycloak or CAS depending on environment
+            "name": OIDC_NAME,
+            "icon": "fa-key",
+            "token_key": "access_token",
+            "remote_app": {
+                "client_id": OIDC_CLIENT_ID,
+                "client_secret": OIDC_CLIENT_SECRET,
+                "jwks_uri": oidc["jwks_uri"],
+                "client_kwargs": {
+                    "scope": "openid profile berkeley_edu_groups"
+                },
+                "access_token_url": oidc["token_endpoint"],
+                "authorize_url": oidc["authorization_endpoint"],
+                "request_token_url": None,
             },
-            "access_token_url": oidc["token_endpoint"],
-            "authorize_url": oidc["authorization_endpoint"],
-            "request_token_url": None,
-        },
-    }
-]
+        }
+    ]
 
-SECURITY_MANAGER_CLASS = OIDCSecurityManager
+    SECURITY_MANAGER_CLASS = OIDCSecurityManager
