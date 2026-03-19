@@ -19,7 +19,9 @@ AUTH_ROLES_MAPPING = {
     OIDC_USER_GROUP: ["User"],
 }
 
-if not os.getenv('CI'):
+if os.getenv('CI'):
+    OAUTH_PROVIDERS = []
+else:
     oidc = requests.get(OIDC_WELL_KNOWN).json()
 
     OAUTH_PROVIDERS = [
@@ -43,6 +45,3 @@ if not os.getenv('CI'):
     ]
 
     SECURITY_MANAGER_CLASS = OIDCSecurityManager
-
-else:
-    OAUTH_PROVIDERS = []
