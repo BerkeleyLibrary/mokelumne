@@ -16,18 +16,24 @@ class TindXmlHandler(XmlHandler):
         self.writer_p.writerow(header)
         self.writer_s.writerow(header)
 
-    def process_record(self, record):
-        record_id = record['001'].data.strip() if record['001'] else ''
+    def _get_subfield(self, record, field_tag, subfield_code):
+        return next((v for f in record.get_fields(field_tag) for v in f.get_subfields(subfield_code)), '')
 
-        f035 = next((v for f in record.get_fields('035') for v in f.get_subfields('a')), '')
-        f982 = next((v for f in record.get_fields('982') for v in f.get_subfields('b')), '')
-        f336 = next((v for f in record.get_fields('336') for v in f.get_subfields('a')), '')
-        f856 = [
+    def _get_856_urls(self, record):
+        return [
             v
             for f in record.get_fields('856')
             if f.indicator1 == '4' and f.indicator2 == ' '
             for v in f.get_subfields('u')
         ]
+
+    def process_record(self, record):
+        record_id = record['001'].data.strip() if record['001'] else ''
+
+        f035 = self._get_subfield(record, '035', 'a')
+        f982 = self._get_subfield(record, '982', 'b')
+        f336 = self._get_subfield(record, '336', 'a')
+        f856 = self._get_856_urls(record)
 
         row = [record_id, f035, f982, '|'.join(f856)]
 
