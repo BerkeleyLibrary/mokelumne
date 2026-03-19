@@ -8,4 +8,5 @@ download/*
 __pycache__/
 *.py[cod]
 *$py.class
-config/*
+config
+airflow.cfg
