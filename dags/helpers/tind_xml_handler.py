@@ -7,6 +7,10 @@ class TindXmlHandler(XmlHandler):
         super().__init__(**kwargs)
         self.csv_p = Path(f"{download_dir}/to_process.csv")
         self.csv_s = Path(f"{download_dir}/skipped.csv")
+        self.fp = self.fs = None
+        self.writer_p = self.writer_s = None
+       
+    def __enter__(self):
         self.fp = open(self.csv_p, 'w', newline='', encoding='utf-8')
         self.fs = open(self.csv_s, 'w', newline='', encoding='utf-8')
         self.writer_p = csv.writer(self.fp)
@@ -15,7 +19,15 @@ class TindXmlHandler(XmlHandler):
         header = ['Record ID', '035__a', 'Collection name', 'Link to record' , '8564_u']
         self.writer_p.writerow(header)
         self.writer_s.writerow(header)
+        return self
 
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.fp:
+            self.fp.close()
+        if self.fs:
+            self.fs.close()
+        return False 
+    
     def _get_subfield(self, record, field_tag, subfield_code):
         return next((v for f in record.get_fields(field_tag) for v in f.get_subfields(subfield_code)), '')
 
@@ -37,13 +49,13 @@ class TindXmlHandler(XmlHandler):
     def process_record(self, record):
         record_id = record['001'].data.strip() if record['001'] else ''
 
-        link = self._record_link(record_id)
+        record_link = self._record_link(record_id)
         f035 = self._get_subfield(record, '035', 'a')
         f982 = self._get_subfield(record, '982', 'b')
         f336 = self._get_subfield(record, '336', 'a')
         f856 = self._get_856_urls(record)
 
-        row = [record_id, f035, f982, link, '|'.join(f856)]
+        row = [record_id, f035, f982, record_link, '|'.join(f856)]
 
         if len(f856) == 1 and f336 == 'Image':
             self.writer_p.writerow(row)
