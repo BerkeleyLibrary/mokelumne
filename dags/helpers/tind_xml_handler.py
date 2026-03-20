@@ -9,6 +9,8 @@ class TindXmlHandler(XmlHandler):
         self.csv_s = Path(f"{download_dir}/skipped.csv")
         self.fp = self.fs = None
         self.writer_p = self.writer_s = None
+        self.count_p = 0
+        self.count_s = 0
        
     def __enter__(self):
         self.fp = open(self.csv_p, 'w', newline='', encoding='utf-8')
@@ -59,5 +61,7 @@ class TindXmlHandler(XmlHandler):
 
         if len(f856) == 1 and f336 == 'Image':
             self.writer_p.writerow(row)
+            self.count_p += 1
         else:
             self.writer_s.writerow(row)
+            self.count_s += 1
