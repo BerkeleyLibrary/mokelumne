@@ -31,6 +31,7 @@ def tind_filter():
         xml_path = Path(xml_file)
         batch_path = Path(batch_dir)
 
+        # need todo the case: when search.xml returns no records or error
         if not xml_path.exists() or not xml_path.is_file():
             raise AirflowFailException(f"XML file not found: {xml_path}")
 
