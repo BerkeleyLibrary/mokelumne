@@ -27,7 +27,9 @@ ENV AIRFLOW_VERSION="${AIRFLOW_VERSION}"
 USER airflow
 WORKDIR $AIRFLOW_HOME
 COPY --chown=airflow:0 dags dags
+COPY --chown=airflow:0 mokelumne mokelumne
 COPY --chown=airflow:0 plugins plugins
+COPY --chown=airflow:0 pyproject.toml pyproject.toml
 COPY --chown=airflow:0 webserver_config.py .
 
 # we want to isolate anything that airflow might not run directly
@@ -36,5 +38,6 @@ COPY --chown=airflow:0 test test
 
 RUN pip install --no-cache-dir "apache-airflow==${AIRFLOW_VERSION}" \
     -r requirements.txt
+RUN pip install --no-cache-dir -e $AIRFLOW_HOME
 
 ENV AIRFLOW__CORE__LOAD_EXAMPLES=True
