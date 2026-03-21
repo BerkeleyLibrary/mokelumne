@@ -27,8 +27,12 @@ ENV AIRFLOW_VERSION="${AIRFLOW_VERSION}"
 USER airflow
 WORKDIR $AIRFLOW_HOME
 COPY --chown=airflow:0 dags dags
+COPY --chown=airflow:0 mokelumne mokelumne
 COPY --chown=airflow:0 plugins plugins
+COPY --chown=airflow:0 pyproject.toml pyproject.toml
 COPY --chown=airflow:0 webserver_config.py .
+
+RUN pip install --no-cache-dir -e .
 
 # we want to isolate anything that airflow might not run directly
 WORKDIR $AIRFLOW_USER_HOME_DIR
