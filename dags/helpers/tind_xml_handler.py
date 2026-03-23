@@ -18,7 +18,7 @@ class TindXmlHandler(XmlHandler):
         self.writer_p = csv.writer(self.fp)
         self.writer_s = csv.writer(self.fs)
 
-        header = ['Record ID', '035__a', 'Collection name', 'Link to record' , '8564_u']
+        header = ['Record ID', '035__a', 'Collection name', 'Link to record' , 'Image Url(s)']
         self.writer_p.writerow(header)
         self.writer_s.writerow(header)
         return self
