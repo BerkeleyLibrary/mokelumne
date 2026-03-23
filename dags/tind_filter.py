@@ -13,7 +13,11 @@ from helpers.tind_xml_handler import TindXmlHandler
 
 logger = logging.getLogger(__name__)
 
-
+# Note: 
+# 1. The parameter "batch_dir_from_fetch_tind_dag" will be replaced with something else
+#    provided by an upstream DAG or task.
+# 2. Currently, the DAG returns the file path of the "to_processed.csv" file.
+#    This will be updated based on final requirements.
 @dag(
     schedule=None,
     catchup=False,
@@ -31,7 +35,7 @@ def tind_filter():
         xml_path = Path(xml_file)
         batch_path = Path(batch_dir)
 
-        # need todo the case: when search.xml returns no records or error
+        # The fetch dag will handle the case when tind xml returns no records or error?
         if not xml_path.exists() or not xml_path.is_file():
             raise AirflowFailException(f"XML file not found: {xml_path}")
 
