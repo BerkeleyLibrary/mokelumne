@@ -24,9 +24,8 @@ class TindCsvWriter:
         self.writer_p = csv.writer(self.fp)
         self.writer_s = csv.writer(self.fs)
 
-        header = ['Record ID', '035__a', 'Collection name', 'Link to record', 'Image Url(s)']
-        self.writer_p.writerow(header)
-        self.writer_s.writerow(header)
+        self.writer_p.writerow(['Record ID', '035__a', 'Collection name', 'Status', 'Link to record', 'Image Url'])
+        self.writer_s.writerow(['Record ID', '035__a', 'Collection name', 'Status', 'Link to record'])
         return self
 
     def __exit__(self, _exc_type, _exc_val, _exc_tb):
@@ -78,6 +77,10 @@ def process_tind_record(record, csv_writer):
     f336 = _get_subfield(record, '336', 'a')
     f856 = _get_856_urls(record)
 
-    row = [record_id, f035, f982, record_link, '|'.join(f856)]
     should_process = len(f856) == 1 and f336 == 'Image'
+    status = 'to_process' if should_process else 'skipped'
+    row = [record_id, f035, f982, status, record_link]
+    if should_process:
+        row.append(f856[0])
+
     csv_writer.write_row(row, should_process)
