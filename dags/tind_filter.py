@@ -63,10 +63,10 @@ def tind_filter():
         }
 
         to_process_file_path = Path(result["to_process_file"])
-        to_process_file_path = Path(result["skipped_file"])
+        skipped_file_path = Path(result["skipped_file"])
         if not to_process_file_path.exists() or not to_process_file_path.exists():
             raise AirflowFailException(
-                f"Expected output CSVs were not written: {str(to_process_file_path)}, {str(to_process_file_path)}"
+                f"Expected output CSVs were not written: {str(to_process_file_path)}, {str(skipped_file_path)}"
             )
 
         return result
