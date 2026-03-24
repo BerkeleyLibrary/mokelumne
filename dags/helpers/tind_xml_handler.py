@@ -2,7 +2,13 @@ import csv
 from pathlib import Path
 from pymarc.marcxml import XmlHandler
 
+
 class TindXmlHandler(XmlHandler):
+    '''
+    A subclass of XmlHandler from PyMarc's MarcXML to handle filtering records, 
+    save each record to csv files without having to store them all in memory.
+    **kwargs: Using defalut XmlHandler initialization
+    '''
     def __init__(self, download_dir, **kwargs):
         super().__init__(**kwargs)
         self.csv_p = Path(f"{download_dir}/to_process.csv")
@@ -11,8 +17,11 @@ class TindXmlHandler(XmlHandler):
         self.writer_p = self.writer_s = None
         self.count_p = 0
         self.count_s = 0
-       
+    
     def __enter__(self):
+        '''
+        Add a context manager to ensure the CSV file is closed properly. 
+        '''
         self.fp = open(self.csv_p, 'w', newline='', encoding='utf-8')
         self.fs = open(self.csv_s, 'w', newline='', encoding='utf-8')
         self.writer_p = csv.writer(self.fp)
@@ -24,6 +33,9 @@ class TindXmlHandler(XmlHandler):
         return self
 
     def __exit__(self, _exc_type, _exc_val, _exc_tb):
+        '''
+        Add a context manager to ensure the CSV file is closed properly. 
+        '''
         if self.fp:
             self.fp.close()
         if self.fs:
@@ -49,6 +61,10 @@ class TindXmlHandler(XmlHandler):
         )
 
     def process_record(self, record):
+        '''
+        Add tind filter logic to process record and write it to csv file accordingly.
+        '''
+
         record_id = record['001'].data.strip() if record['001'] else ''
 
         record_link = self._record_link(record_id)
