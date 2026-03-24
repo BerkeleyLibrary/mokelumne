@@ -3,13 +3,13 @@ from __future__ import annotations
 import logging
 import sys
 from pathlib import Path
-from pymarc.marcxml import parse_xml
+from pymarc.marcxml import map_xml
 
 from airflow.exceptions import AirflowFailException
 from airflow.sdk import Param, dag, task
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from helpers.tind_xml_handler import TindXmlHandler
+from helpers.tind_filter_util import TindCsvWriter, process_tind_record
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
     schedule=None,
     catchup=False,
     params={
-             "batch_dir_from_fetch_tind_dag": Param("/opt/airflow/download/manual__2026-03-12T18:51:57.880502+00:00", type="string")
+             "batch_dir_from_fetch_tind_dag": Param("/opt/airflow/download", type="string")
     },
     tags=["tind", "filter"],
 )
@@ -52,19 +52,22 @@ def tind_filter():
         xml_path = Path(inputs["xml_file"])
         batch_dir = inputs["batch_dir"]
 
-        with TindXmlHandler(batch_dir) as handler:
-            parse_xml(xml_path, handler)
+        with TindCsvWriter(batch_dir) as csv_writer:
+            def handle_record(record):
+                process_tind_record(record, csv_writer=csv_writer)
+
+            map_xml(handle_record, xml_path)
 
         result = {
-            "to_process_file": str(handler.csv_p),
-            "skipped_file": str(handler.csv_s),
-            "to_process_count": handler.count_p,
-            "skipped_count": handler.count_s,
+            "to_process_file": str(csv_writer.csv_p),
+            "skipped_file": str(csv_writer.csv_s),
+            "to_process_count": csv_writer.count_p,
+            "skipped_count": csv_writer.count_s,
         }
 
         to_process_file_path = Path(result["to_process_file"])
         skipped_file_path = Path(result["skipped_file"])
-        if not to_process_file_path.exists() or not to_process_file_path.exists():
+        if not to_process_file_path.exists() or not skipped_file_path.exists():
             raise AirflowFailException(
                 f"Expected output CSVs were not written: {str(to_process_file_path)}, {str(skipped_file_path)}"
             )
@@ -75,7 +78,7 @@ def tind_filter():
     def outputs(result: dict[str, str | int]) -> str:
         file_p = result["to_process_file"]
         logger.info(
-            "Tind Filter complete. to_proces_file =%s (%s records), skipped=%s (%s records)" %(
+            "Tind Filter complete. to_proces_file=%s (%s records), skipped=%s (%s records)" %(
             file_p,
             result["to_process_count"],
             result["skipped_file"],
