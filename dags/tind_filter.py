@@ -48,7 +48,7 @@ def tind_filter():
         }
 
     @task
-    def filter_records(inputs: dict[str, str]) -> dict[str,str,int,int]:
+    def filter_records(inputs: dict[str, str]) -> dict[str,str | int]:
         xml_path = Path(inputs["xml_file"])
         batch_dir = inputs["batch_dir"]
 
