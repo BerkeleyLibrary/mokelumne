@@ -3,7 +3,7 @@
 ```mermaid
 flowchart TB
 
-    subgraph tind_fetcher
+    subgraph fetch_tind_records
         direction LR
         validate_params-->fetch_query_results-->validate_record_count
         
