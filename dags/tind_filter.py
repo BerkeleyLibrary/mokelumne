@@ -75,7 +75,7 @@ def tind_filter():
     def outputs(result: dict[str, str | int]) -> str:
         file_p = result["to_process_file"]
         logger.info(
-            "Tind Filter complete. to_proces_file=%s (%s records), skipped=%s (%s records)" %(
+            "Tind Filter complete. to_process_file=%s (%s records), skipped=%s (%s records)" %(
             file_p,
             result["to_process_count"],
             result["skipped_file"],
