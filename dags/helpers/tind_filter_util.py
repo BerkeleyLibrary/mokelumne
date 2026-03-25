@@ -35,7 +35,27 @@ class TindCsvWriter:
             self.fs.close()
         return False
 
-    def write_row(self, row, should_process):
+    def process_tind_record(self, record):
+        '''
+        Parse a TIND record and write it to the proper output CSV.
+        '''
+        record_id = record['001'].data.strip() if record['001'] else ''
+
+        record_link = self._record_link(record_id)
+        f035 = self._get_subfield(record, '035', 'a')
+        f982 = self._get_subfield(record, '982', 'b')
+        f336 = self._get_subfield(record, '336', 'a')
+        f856 = self._get_856_urls(record)
+
+        should_process = len(f856) == 1 and f336 == 'Image'
+        status = 'to_process' if should_process else 'skipped'
+        row = [record_id, f035, f982, status, record_link]
+        if should_process:
+            row.append(f856[0])
+
+        self._write_row(row, should_process)
+
+    def _write_row(self, row, should_process):
         if should_process:
             self.writer_p.writerow(row)
             self.count_p += 1
@@ -43,44 +63,20 @@ class TindCsvWriter:
             self.writer_s.writerow(row)
             self.count_s += 1
 
+    def _get_subfield(self, record, field_tag, subfield_code):
+        return next((v for f in record.get_fields(field_tag) for v in f.get_subfields(subfield_code)), '')
 
-def _get_subfield(record, field_tag, subfield_code):
-    return next((v for f in record.get_fields(field_tag) for v in f.get_subfields(subfield_code)), '')
+    def _get_856_urls(self, record):
+        return [
+            v
+            for f in record.get_fields('856')
+            if f.indicator1 == '4' and f.indicator2 == ' '
+            for v in f.get_subfields('u')
+        ]
 
-
-def _get_856_urls(record):
-    return [
-        v
-        for f in record.get_fields('856')
-        if f.indicator1 == '4' and f.indicator2 == ' '
-        for v in f.get_subfields('u')
-    ]
-
-
-def _record_link(record_id):
-    return (
-        "No Record Link"
-        if not record_id
-        else f"https://digicoll.lib.berkeley.edu/record/{record_id}?ln=en"
-    )
-
-
-def process_tind_record(record, csv_writer):
-    '''
-    Parse a TIND record and write it to the proper output CSV.
-    '''
-    record_id = record['001'].data.strip() if record['001'] else ''
-
-    record_link = _record_link(record_id)
-    f035 = _get_subfield(record, '035', 'a')
-    f982 = _get_subfield(record, '982', 'b')
-    f336 = _get_subfield(record, '336', 'a')
-    f856 = _get_856_urls(record)
-
-    should_process = len(f856) == 1 and f336 == 'Image'
-    status = 'to_process' if should_process else 'skipped'
-    row = [record_id, f035, f982, status, record_link]
-    if should_process:
-        row.append(f856[0])
-
-    csv_writer.write_row(row, should_process)
+    def _record_link(self, record_id):
+        return (
+            "No Record Link"
+            if not record_id
+            else f"https://digicoll.lib.berkeley.edu/record/{record_id}?ln=en"
+        )

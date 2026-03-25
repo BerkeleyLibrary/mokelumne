@@ -9,7 +9,7 @@ from airflow.exceptions import AirflowFailException
 from airflow.sdk import Param, dag, task
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from helpers.tind_filter_util import TindCsvWriter, process_tind_record
+from helpers.tind_filter_util import TindCsvWriter
 
 logger = logging.getLogger(__name__)
 
@@ -53,10 +53,7 @@ def tind_filter():
         batch_dir = inputs["batch_dir"]
 
         with TindCsvWriter(batch_dir) as csv_writer:
-            def handle_record(record):
-                process_tind_record(record, csv_writer=csv_writer)
-
-            map_xml(handle_record, xml_path)
+            map_xml(csv_writer.process_tind_record, xml_path)
 
         result = {
             "to_process_file": str(csv_writer.csv_p),
@@ -89,6 +86,5 @@ def tind_filter():
 
     inputs = validate_inputs()
     outputs(filter_records(inputs))
-
 
 tind_filter()
