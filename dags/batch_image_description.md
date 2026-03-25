@@ -1,13 +1,14 @@
-# Batch Image Description Dags/Tags
+# Batch Image Description Dags and tasks
 
 ```mermaid
 flowchart TB
-    tind_fetcher -->filter_records -->fetch_images-->generate_image_descriptions -->notify_user
+
     subgraph tind_fetcher
         direction LR
-        validate_params-->validate_tind_ids-->chunk_tind_ids-->process_tind_fetch_batch1 & process_tind_fetch_batchn-->save_tind_ids_to_csv_file
-        validate_params-->stop0("AirflowFailException if query is empty")
-        validate_tind_ids-->stop1("AirflowSkipException if no records")
+        validate_params-->fetch_query_results-->validate_record_count
+        
+        validate_params-.->stop0("AirflowFailException if query is empty")
+        validate_record_count-.->stop1("AirflowSkipException if no records")
     end
 
 
@@ -27,7 +28,7 @@ flowchart TB
     end
 
     subgraph notify_user
-        generate_asset_links & summarize_job --> send_email --.-> stop2["AirflowFailException if sending fails"] & success0["SMTP connection to send to list"]
+        generate_asset_links & summarize_job --> send_email -.-> stop2["AirflowFailException if sending fails"] & success0["SMTP connection to send to list"]
     end
 
 
