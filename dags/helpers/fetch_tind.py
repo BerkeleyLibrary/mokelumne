@@ -12,8 +12,8 @@ from mokelumne.util.storage import storage_dir, run_dir, record_dir
 class FetchTind:
     """Helper methods for fetching items from TIND using TINDClient."""
     def __init__(self, _run_id: str):
-        self.client = TINDClient(default_storage_dir=str(storage_dir()))
         self.run_id = _run_id
+        self.client = TINDClient(default_storage_dir=str(run_dir(_run_id)))
 
     def get_ids(self, tind_query: str) -> list[str]:
         return self.client.fetch_ids_search(tind_query)
@@ -38,6 +38,10 @@ class FetchTind:
             writer.writerow(["TIND_ID"])
             for tind_id in ids:
                 writer.writerow([tind_id])
+
+    def write_query_results_to_xml(self, tind_query: str, file_name: str = "") -> int:
+        records_written = self.client.write_search_results_to_file(tind_query, file_name)
+        return records_written
 
     def _write_record_to_xml(self, record: Record, file_path: Path) -> None:
         with file_path.open("wb") as f:
