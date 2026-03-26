@@ -80,4 +80,4 @@ class TindCsvWriter:
             if not record_id
             else f"https://digicoll.lib.berkeley.edu/record/{record_id}?ln=en"
         )
-    
+
