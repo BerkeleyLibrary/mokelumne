@@ -3,9 +3,9 @@ from pathlib import Path
 
 
 class TindCsvWriter:
-    '''
+    """
     Utility class to write filtered TIND records to CSV files.
-    '''
+    """
 
     def __init__(self, download_dir):
         self.csv_p = Path(f"{download_dir}/to_process.csv")
@@ -15,9 +15,9 @@ class TindCsvWriter:
         self.count_p = 0
         self.count_s = 0
 
-    '''
+    """
     Add context manager
-    '''
+    """
     def __enter__(self):
         self.fp = open(self.csv_p, 'w', newline='', encoding='utf-8')
         self.fs = open(self.csv_s, 'w', newline='', encoding='utf-8')
@@ -36,9 +36,9 @@ class TindCsvWriter:
         return False
 
     def process_tind_record(self, record):
-        '''
+        """
         Parse a TIND record and write it to the proper output CSV.
-        '''
+        """
         record_id = record['001'].data.strip() if record['001'] else ''
 
         record_link = self._record_link(record_id)
@@ -80,3 +80,4 @@ class TindCsvWriter:
             if not record_id
             else f"https://digicoll.lib.berkeley.edu/record/{record_id}?ln=en"
         )
+    
