@@ -5,7 +5,7 @@ flowchart TB
 
     subgraph fetch_tind_records
         direction LR
-        validate_params-->fetch_query_results-->validate_record_count
+        validate_params-->write_query_results_to_xml-->validate_record_count
         
         validate_params-.->stop0("AirflowFailException if query is empty")
         validate_record_count-.->stop1("AirflowSkipException if no records")
