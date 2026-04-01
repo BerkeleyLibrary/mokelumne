@@ -19,8 +19,8 @@ logger = logging.getLogger(__name__)
 def fetch_tind_records():
 
     @task
-    def validate_params(**context):
-        val = context['params'].get('tind_query')
+    def validate_params(params):
+        val = params.get('tind_query')
         if not val.strip():
             raise AirflowFailException("Parameter tind_query cannot be empty")
 
@@ -45,7 +45,7 @@ def fetch_tind_records():
 
         return records_written
 
-    validate_params() >> write_query_results_to_xml("{{ params.tind_query }}")
+    validate_params(params={"tind_query": "{{ params.tind_query }}"}) >> write_query_results_to_xml("{{ params.tind_query }}")
 
 
 fetch_tind_records()
