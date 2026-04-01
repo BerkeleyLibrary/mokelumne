@@ -16,6 +16,7 @@ authors = [
     {name = "Anna Wilcox"},
     {name = "maría a. matienzo"},
     {name = "Jason Raitz"},
+    {name = "Daniel Schmidt"},
 ]
 readme = "README.md"
 license = "MIT"
