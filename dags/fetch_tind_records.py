@@ -65,7 +65,7 @@ def fetch_tind_records():
 
         return records_written
 
-    _ = validate_params() >> write_query_results_to_xml()
+    validate_params() >> write_query_results_to_xml()
 
 
 fetch_tind_records()
