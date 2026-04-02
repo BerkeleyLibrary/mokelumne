@@ -41,7 +41,7 @@ class FetchTind:
 
     def write_query_results_to_xml(self, tind_query: str, file_name: str = "") -> int:
         records_written = self.client.write_search_results_to_file(tind_query, file_name)
-        return records_written
+        return int(records_written)
 
     def _write_record_to_xml(self, record: Record, file_path: Path) -> None:
         with file_path.open("wb") as f:
