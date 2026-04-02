@@ -1,85 +1,40 @@
 services:
-  postgres:
-    volumes: !reset
-
-  redis:
-    volumes: !reset
-
   airflow-apiserver:
-    &airflow-common
     build: !reset
+    develop: !reset
     image: ${DOCKER_APP_IMAGE}
-    depends_on: !reset
-    ports: !reset
-    env_file: !reset
     volumes: !reset
-    environment:
-      OIDC_CLIENT_SECRET: ""
-      CI: "true"
 
-  airflow-scheduler:
-    build: !reset
-    image: ${DOCKER_APP_IMAGE}
-    depends_on: !reset
-    ports: !reset
-    env_file: !reset
-    volumes: !reset
+  airflow-cli: !reset
 
   airflow-dag-processor:
     build: !reset
+    develop: !reset
     image: ${DOCKER_APP_IMAGE}
-    depends_on: !reset
-    ports: !reset
-    env_file: !reset
-    volumes: !reset
-
-  airflow-worker:
-    build: !reset
-    image: ${DOCKER_APP_IMAGE}
-    depends_on: !reset
-    ports: !reset
-    env_file: !reset
-    volumes: !reset
-
-  airflow-triggerer:
-    build: !reset
-    image: ${DOCKER_APP_IMAGE}
-    depends_on: !reset
-    ports: !reset
-    env_file: !reset
     volumes: !reset
 
   airflow-init:
     build: !reset
+    develop: !reset
     image: ${DOCKER_APP_IMAGE}
-    depends_on: !reset
-    ports: !reset
-    env_file: !reset
     volumes: !reset
-    environment:
-      CI: "true"
 
-  airflow-cli:
+  airflow-scheduler:
     build: !reset
+    develop: !reset
     image: ${DOCKER_APP_IMAGE}
-    depends_on: !reset
-    ports: !reset
-    env_file: !reset
     volumes: !reset
 
-  flower:
+  airflow-triggerer:
     build: !reset
+    develop: !reset
     image: ${DOCKER_APP_IMAGE}
-    depends_on: !reset
-    ports: !reset
-    env_file: !reset
     volumes: !reset
 
-  # local-only is a profile never declared so these services will not run in CI
-  keycloak:
-    profiles:
-      - local-only
+  airflow-worker:
+    build: !reset
+    develop: !reset
+    image: ${DOCKER_APP_IMAGE}
+    volumes: !reset
 
-  keycloak-config:
-    profiles:
-      - local-only
+  flower: !reset

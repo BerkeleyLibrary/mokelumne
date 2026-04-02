@@ -25,16 +25,18 @@ clientScopes:
         protocolMapper: oidc-group-membership-mapper
         consentRequired: false
         config:
-          full.path: "true"
+          # Match Calnet's behavior by not prepending groups with "/"
+          full.path: "false"
           id.token.claim: "true"
           access.token.claim: "true"
           introspection.token.claim: "true"
+          userinfo.token.claim: "true"
           claim.name: groups
           jsonType.label: String
 
 clients:
-  - clientId: airflow
-    name: airflow
+  - clientId: mokelumne
+    name: mokelumne
     enabled: true
     rootUrl: "http://localhost:8080"
     adminUrl: "http://localhost:8080"
@@ -59,6 +61,7 @@ clients:
 groups:
   - name: "$(OIDC_ADMIN_GROUP)"
   - name: "$(OIDC_USER_GROUP)"
+  - name: cn=edu:berkeley:org:libr:unrelated:group,ou=campus groups,dc=berkeley,dc=edu
 
 users:
   - username: testadmin
@@ -85,3 +88,15 @@ users:
         temporary: false
     groups:
       - "$(OIDC_USER_GROUP)"
+
+  - username: testpublic
+    enabled: true
+    email: testpublic@example.edu
+    firstName: Test
+    lastName: Public
+    credentials:
+      - type: password
+        value: testpublic
+        temporary: false
+    groups:
+      - cn=edu:berkeley:org:libr:unrelated:group,ou=campus groups,dc=berkeley,dc=edu
