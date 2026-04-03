@@ -27,7 +27,7 @@ def tind_filter():
 
         inlet_events = context["inlet_events"][records_xml]
         
-        xml_file = Path(inlet_events[0].asset.uri.replace("file://", ""))
+        xml_file = Path(inlet_events[-1].asset.uri.replace("file://", ""))
         batch_dir = xml_file.parent
 
         with TindCsvWriter(batch_dir) as csv_writer:
