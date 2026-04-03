@@ -30,8 +30,8 @@ def tind_filter():
         xml_file = Path(inlet_events[0].asset.uri.replace("file://", ""))
         batch_dir = xml_file.parent
 
-        with TindCsvWriter(str(batch_dir)) as csv_writer:
-            map_xml(csv_writer.process_tind_record, str(xml_file))
+        with TindCsvWriter(batch_dir) as csv_writer:
+            map_xml(csv_writer.process_tind_record, xml_file)
 
         logger.info(
             "Tind filter complete. to_process=%s (%s records), skipped=%s (%s records)",
