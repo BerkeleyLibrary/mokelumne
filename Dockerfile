@@ -1,7 +1,7 @@
 # This Dockerfile relies on ARGs and ENVs defined in the upstream
 # Airflow Dockerfile: https://github.com/apache/airflow/blob/main/Dockerfile
 
-ARG AIRFLOW_VERSION="3.1.7"
+ARG AIRFLOW_VERSION="3.1.8"
 ARG AIRFLOW_IMAGE_NAME="apache/airflow:${AIRFLOW_VERSION}"
 
 FROM ${AIRFLOW_IMAGE_NAME} AS reqs
