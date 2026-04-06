@@ -40,5 +40,3 @@ COPY --chown=airflow:0 test test
 
 RUN pip install --no-cache-dir "apache-airflow==${AIRFLOW_VERSION}" \
     -r requirements.txt
-
-ENV AIRFLOW__CORE__LOAD_EXAMPLES=True
