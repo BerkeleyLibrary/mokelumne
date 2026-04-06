@@ -1,3 +1,5 @@
+"""Provides a helper class, FetchTind, to download information from TIND."""
+
 import csv
 
 from pathlib import Path
@@ -6,7 +8,7 @@ from lxml import etree
 from pymarc import Record, XMLWriter
 from tind_client import TINDClient
 
-from mokelumne.util.storage import storage_dir, run_dir, record_dir
+from mokelumne.util.storage import run_dir, record_dir
 
 
 class FetchTind:
@@ -16,21 +18,24 @@ class FetchTind:
         self.client = TINDClient(default_storage_dir=str(run_dir(_run_id)))
 
     def get_ids(self, tind_query: str) -> list[str]:
+        """Return the TIND IDs that match a given query."""
         return self.client.fetch_ids_search(tind_query)
 
-    # to be used in later Jira ticket
-    def download_image_file(self, tind_id: str) -> None:
+    def download_image_file(self, tind_id: str) -> str:
+        """Download the first file attachment for a given TIND ID."""
         record = self.client.fetch_file_metadata(tind_id)
         download_url = record[0]["url"]
         record_path = record_dir(self.run_id, tind_id)
-        self.client.fetch_file(download_url, str(record_path))
+        return self.client.fetch_file(download_url, str(record_path))
 
     def download_metadata_file(self, tind_id: str) -> None:
+        """Download the metadata XML for a given TIND ID."""
         record = self.client.fetch_metadata(tind_id)
         file_path = record_dir(self.run_id, tind_id) / f"{tind_id}.xml"
         self._write_record_to_xml(record, file_path)
 
     def save_tind_ids_file(self, ids: list[str]) -> None:
+        """Save matching TIND IDs to a CSV file."""
         file_path = run_dir(self.run_id) / "ids.csv"
 
         with file_path.open("w", newline="", encoding="utf-8") as csv_file:
@@ -40,6 +45,7 @@ class FetchTind:
                 writer.writerow([tind_id])
 
     def write_query_results_to_xml(self, tind_query: str, file_name: str = "") -> int:
+        """Download the XML results of a search query from TIND."""
         records_written = self.client.write_search_results_to_file(tind_query, file_name)
         return int(records_written)
 
