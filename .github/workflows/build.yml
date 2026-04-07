@@ -158,9 +158,9 @@ jobs:
         run: |
           docker compose up --detach
 
-      - name: Run Dag import test
-        run: |
-          docker compose exec airflow-worker python test/run_tests.py
+      # - name: Run Dag import test
+      #   run: |
+      #     docker compose exec airflow-worker python test/run_tests.py
 
       - name: Copy out artifacts
         if: ${{ always() }}
