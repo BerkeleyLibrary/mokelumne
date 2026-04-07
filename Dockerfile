@@ -1,7 +1,7 @@
 # This Dockerfile relies on ARGs and ENVs defined in the upstream
 # Airflow Dockerfile: https://github.com/apache/airflow/blob/main/Dockerfile
 
-ARG AIRFLOW_VERSION="3.1.8"
+ARG AIRFLOW_VERSION="3.2.0"
 ARG AIRFLOW_IMAGE_NAME="apache/airflow:${AIRFLOW_VERSION}"
 
 FROM ${AIRFLOW_IMAGE_NAME}
@@ -36,6 +36,10 @@ COPY --chown=airflow:0 dags dags
 COPY --chown=airflow:0 plugins plugins
 COPY --chown=airflow:0 webserver_config.py .
 RUN pip install --no-cache-dir --no-deps .
+
+# Fail the build if any installed package has unsatisfied dependencies.
+# This catches conflicts between our pins and the base image's Airflow packages.
+RUN pip check
 
 # we want to isolate anything that airflow might not run directly
 WORKDIR $AIRFLOW_USER_HOME_DIR

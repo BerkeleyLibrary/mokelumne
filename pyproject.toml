@@ -8,7 +8,7 @@ version = "0.3.0"
 dependencies = [
     # Pin to avoid conflicts with the Airflow packages
     # that ship with the base Docker image.
-    "apache-airflow-task-sdk == 1.1.8",
+    "apache-airflow-task-sdk == 1.2.0",
     "langfuse",
     "lxml",
     "pymarc",
