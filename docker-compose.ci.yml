@@ -5,7 +5,11 @@ services:
     image: ${DOCKER_APP_IMAGE}
     volumes: !reset
 
-  airflow-cli: !reset
+  airflow-cli:
+    build: !reset
+    develop: !reset
+    image: ${DOCKER_APP_IMAGE}
+    volumes: !reset
 
   airflow-dag-processor:
     build: !reset
