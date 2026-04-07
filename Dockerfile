@@ -27,7 +27,7 @@ WORKDIR $AIRFLOW_HOME
 # README for why python-tind-client gets special handling.
 COPY --chown=airflow:0 requirements.txt ./
 RUN pip install --no-cache-dir --require-hashes -r requirements.txt
-RUN pip install --no-cache-dir git+https://github.com/BerkeleyLibrary/python-tind-client.git@0.2.1
+RUN pip install --no-cache-dir --no-deps git+https://github.com/BerkeleyLibrary/python-tind-client.git@0.2.1
 
 # Install the project itself without pulling dependencies.
 COPY --chown=airflow:0 pyproject.toml ./

@@ -13,7 +13,7 @@ Dependencies are declared in `pyproject.toml` and pinned in `requirements.txt`. 
 When adding or changing dependencies, regenerate the pins with [uv](https://docs.astral.sh/uv/):
 
 ```sh
-uv pip compile pyproject.toml -c constraints.txt --no-emit-package python-tind-client --generate-hashes -o requirements.txt
+uv pip compile pyproject.toml --extra test --no-emit-package python-tind-client --generate-hashes -o requirements.txt
 ```
 
 `constraints.txt` contains upper bounds derived from the base Airflow Docker image to prevent version conflicts with pre-installed packages. Regenerate it when bumping `AIRFLOW_VERSION`. `python-tind-client` is excluded from hash verification because pip doesn't support hashes on git-sourced packages.
