@@ -16,7 +16,7 @@ When adding or changing dependencies, regenerate the pins with [uv](https://docs
 uv pip compile pyproject.toml --no-emit-package python-tind-client --generate-hashes -o requirements.txt
 ```
 
-Note that python-tind-client has to be handled differently for now because pip doesn't support hash checks on git-sourced packages. Once that's published to PyPi we can install it the same way we do other packages.
+Note that python-tind-client has to be handled differently for now because pip doesn't support hash checks on git-sourced packages. Once that's published to PyPI we can install it the same way we do other packages.
 
 ## Development
 

@@ -6,11 +6,13 @@ build-backend = "setuptools.build_meta"
 name = "mokelumne"
 version = "0.3.0"
 dependencies = [
-    "apache-airflow-task-sdk",
+    # Pin to avoid conflicts with the Airflow packages
+    # that ship with the base Docker image.
+    "apache-airflow-task-sdk == 1.1.8",
     "langfuse",
     "lxml",
     "pymarc",
-    "python-tind-client @ git+https://github.com/BerkeleyLibrary/python-tind-client.git@main",
+    "python-tind-client @ git+https://github.com/BerkeleyLibrary/python-tind-client.git@0.2.1",
 ]
 requires-python = ">= 3.12.12, < 3.14"
 authors = [
