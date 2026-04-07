@@ -1,6 +1,4 @@
-# Upper bounds derived from the base Airflow image (apache/airflow:3.2.0).
+# Restrict Mokelumne's packages so they don't conflict with Airflow's.
 # Regenerate when bumping AIRFLOW_VERSION:
 #   docker run --rm --entrypoint python apache/airflow:<version> -m pip freeze
 # then update bounds here to match.
-fsspec == 2026.2.0
-rich < 14

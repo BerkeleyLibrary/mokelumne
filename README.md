@@ -18,6 +18,8 @@ uv pip compile pyproject.toml -c constraints.txt --no-emit-package python-tind-c
 
 `constraints.txt` contains upper bounds derived from the base Airflow Docker image to prevent version conflicts with pre-installed packages. Regenerate it when bumping `AIRFLOW_VERSION`. `python-tind-client` is excluded from hash verification because pip doesn't support hashes on git-sourced packages.
 
+The Dockerfile runs `pip check` to ensure mokelumne's packages don't conflict with those pre-installed by Airflow. You only need to add pins to `constraints.txt` when there is a conflict.
+
 ## Development
 
 Spin up the application using Docker Compose. There are a number of dependencies (Postgres, Keycloak, and Redis) as well as Airflow components (api/web, processor, scheduler, triggerer), so it's hardly lightweight. For now you'll need to sequence startup so that core services are setup before the ones that depend on them:
