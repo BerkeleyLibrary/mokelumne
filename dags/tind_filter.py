@@ -6,7 +6,7 @@ from pathlib import Path
 from pymarc.marcxml import map_xml
 from airflow.sdk import dag, task, Asset, get_current_context
 
-from helpers.tind_filter_util import TindCsvWriter
+from mokelumne.util.tind_filter_util import TindCsvWriter
 from mokelumne.batch_image.assets import records_xml, to_process_csv, skipped_csv
 
 logger = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ def tind_filter():
         context = get_current_context()
 
         inlet_events = context["inlet_events"][records_xml]
-        
+
         xml_file = Path(inlet_events[-1].asset.uri.replace("file://", ""))
         batch_dir = xml_file.parent
 

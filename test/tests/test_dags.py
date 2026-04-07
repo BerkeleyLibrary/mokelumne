@@ -33,4 +33,4 @@ class DagLoadingTest(unittest.TestCase):
 
 
     def test_dags_load_with_no_errors(self) -> None:
-        assert len(self.dags.import_errors) == 0, "Error during Dag import"
+        assert len(self.dags.import_errors) == 0, ("Errors during Dag import: %s" % self.dags.import_errors)
