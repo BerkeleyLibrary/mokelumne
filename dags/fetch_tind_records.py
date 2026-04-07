@@ -6,7 +6,7 @@ from __future__ import annotations
 import logging
 
 from airflow.sdk import Asset, dag, task, Param, get_current_context
-from airflow.exceptions import AirflowFailException, AirflowSkipException
+from airflow.sdk.exceptions import AirflowFailException, AirflowSkipException
 
 from mokelumne.util.fetch_tind import FetchTind
 from mokelumne.util.storage import run_dir
