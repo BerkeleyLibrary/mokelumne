@@ -8,9 +8,9 @@ import logging
 from airflow.sdk import Asset, dag, task, Param, get_current_context
 from airflow.exceptions import AirflowFailException, AirflowSkipException
 
-from helpers.fetch_tind import FetchTind
-from mokelumne.util.storage import run_dir
 from mokelumne.batch_image.assets import records_xml
+from mokelumne.util.fetch_tind import FetchTind
+from mokelumne.util.storage import run_dir
 
 logger = logging.getLogger(__name__)
 

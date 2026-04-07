@@ -23,6 +23,7 @@ COPY --chown=airflow:0 requirements.txt .
 
 FROM reqs AS airflow
 ENV AIRFLOW_VERSION="${AIRFLOW_VERSION}"
+ENV AIRFLOW__CORE__DAGS_FOLDER="${AIRFLOW_HOME}/mokelumne/dags"
 
 USER airflow
 WORKDIR $AIRFLOW_HOME

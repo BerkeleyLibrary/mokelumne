@@ -9,10 +9,10 @@ from typing import List
 
 from airflow.sdk import dag, task, Asset, get_current_context
 
-from mokelumne.util.storage import run_dir
 from mokelumne.batch_image.assets import to_process_csv, fetched_csv
+from mokelumne.util.fetch_tind import FetchTind
+from mokelumne.util.storage import run_dir
 
-from helpers.fetch_tind import FetchTind
 
 logger = logging.getLogger(__name__)
 

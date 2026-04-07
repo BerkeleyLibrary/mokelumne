@@ -1,3 +1,5 @@
+"""Provides a helper class, TindCsvWriter, to write filtered TIND records to CSV."""
+
 import csv
 from pathlib import Path
 
@@ -15,17 +17,16 @@ class TindCsvWriter:
         self.count_p = 0
         self.count_s = 0
 
-    """
-    Add context manager
-    """
     def __enter__(self):
         self.fp = open(self.csv_p, 'w', newline='', encoding='utf-8')
         self.fs = open(self.csv_s, 'w', newline='', encoding='utf-8')
         self.writer_p = csv.writer(self.fp)
         self.writer_s = csv.writer(self.fs)
 
-        self.writer_p.writerow(['Record ID', '035__a', 'Collection name', 'Status', 'Link to record', 'Image Url'])
-        self.writer_s.writerow(['Record ID', '035__a', 'Collection name', 'Status', 'Link to record'])
+        self.writer_p.writerow(['Record ID', '035__a', 'Collection name', 'Status',
+                                'Link to record', 'Image Url'])
+        self.writer_s.writerow(['Record ID', '035__a', 'Collection name', 'Status',
+                                'Link to record'])
         return self
 
     def __exit__(self, _exc_type, _exc_val, _exc_tb):
@@ -64,7 +65,8 @@ class TindCsvWriter:
             self.count_s += 1
 
     def _get_subfield(self, record, field_tag, subfield_code):
-        return next((v for f in record.get_fields(field_tag) for v in f.get_subfields(subfield_code)), '')
+        return next((v for f in record.get_fields(field_tag)
+                     for v in f.get_subfields(subfield_code)), '')
 
     def _get_856_urls(self, record):
         return [
@@ -80,4 +82,3 @@ class TindCsvWriter:
             if not record_id
             else f"https://digicoll.lib.berkeley.edu/record/{record_id}?ln=en"
         )
-
