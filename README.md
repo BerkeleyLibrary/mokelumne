@@ -6,6 +6,18 @@ This is a proof of concept repo for Airflow under Docker Compose/Swarm. As is, i
 
 Consult [Running Airflow in Docker](https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html) for more information. The compose file in the initial commit reflects the composed file linked from those docs.
 
+## Dependencies
+
+Dependencies are declared in `pyproject.toml` and pinned in `requirements.txt`. The Dockerfile installs from `requirements.txt` using plain `pip`.
+
+When adding or changing dependencies, regenerate the pins with [uv](https://docs.astral.sh/uv/):
+
+```sh
+uv pip compile pyproject.toml --no-emit-package python-tind-client --generate-hashes -o requirements.txt
+```
+
+Note that python-tind-client has to be handled differently for now because pip doesn't support hash checks on git-sourced packages. Once that's published to PyPi we can install it the same way we do other packages.
+
 ## Development
 
 Spin up the application using Docker Compose. There are a number of dependencies (Postgres, Keycloak, and Redis) as well as Airflow components (api/web, processor, scheduler, triggerer), so it's hardly lightweight. For now you'll need to sequence startup so that core services are setup before the ones that depend on them:

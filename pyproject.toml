@@ -9,7 +9,8 @@ dependencies = [
     "apache-airflow-task-sdk",
     "langfuse",
     "lxml",
-    "unittest-xml-reporting"
+    "pymarc",
+    "python-tind-client @ git+https://github.com/BerkeleyLibrary/python-tind-client.git@main",
 ]
 requires-python = ">= 3.12.12, < 3.14"
 authors = [
@@ -23,6 +24,7 @@ license = "MIT"
 
 [project.optional-dependencies]
 test = [
+    "unittest-xml-reporting",
 ]
 lint = [
     "mypy ~= 1.17.1",
@@ -40,8 +42,8 @@ warn_unused_configs = true
 warn_redundant_casts = true
 warn_return_any = true
 
-[tool.setuptools]
-py-modules = ['mokelumne']
+[tool.setuptools.packages.find]
+include = ['mokelumne*']
 
 [tool.pydoclint]
 allow-init-docstring = true
