@@ -13,7 +13,6 @@ from mokelumne.batch_image.assets import to_process_csv, fetched_csv
 from mokelumne.util.fetch_tind import FetchTind
 from mokelumne.util.storage import run_dir
 
-
 logger = logging.getLogger(__name__)
 
 RunStatus = namedtuple('RunStatus', ('tind_id', 'status', 'path'))

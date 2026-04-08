@@ -27,7 +27,7 @@ def fetch_tind_records():
     @task
     def validate_params() -> None:
         """Validate that the tind_query parameter is not empty.
-        
+
         :raises AirflowFailException: If the tind_query parameter is empty.
         """
 
@@ -39,7 +39,7 @@ def fetch_tind_records():
     @task(outlets=[records_xml])
     def write_query_results_to_xml() -> int:
         """Fetch records matching the query and write them to an XML file.
-        
+
         :raises AirflowSkipException: If no records are found.
         :raises AirflowFailException: If it fails during the fetching or writing process.
         :return int: The number of records written.
