@@ -29,7 +29,6 @@ RUN pip install --no-cache-dir git+https://github.com/BerkeleyLibrary/python-tin
 # Install the project itself without pulling dependencies.
 COPY --chown=airflow:0 pyproject.toml ./
 COPY --chown=airflow:0 mokelumne mokelumne
-COPY --chown=airflow:0 dags dags
 COPY --chown=airflow:0 plugins plugins
 COPY --chown=airflow:0 webserver_config.py .
 RUN pip install --no-cache-dir --no-deps .
