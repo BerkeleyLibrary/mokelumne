@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mokelumne"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
     "apache-airflow-task-sdk == 1.2.0",
     "langchain[aws]",
