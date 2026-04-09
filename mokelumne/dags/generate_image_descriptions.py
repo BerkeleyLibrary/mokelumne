@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 @dag(
     schedule=[fetched_csv],
     catchup=False,
-    tags=["csv", "process", "llm", "generate-descriptions"],
+    tags=["batch-image", "csv", "process", "llm", "generate-descriptions"],
 )
 def generate_image_descriptions():
     """DAG that generates image descriptions for images listed in a CSV file, writing results
