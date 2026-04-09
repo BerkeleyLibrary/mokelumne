@@ -6,7 +6,7 @@ import logging
 import mimetypes
 import os
 
-from datetime import UTC
+from datetime import datetime, UTC
 from pathlib import Path
 
 from airflow.sdk import dag, task, Asset, get_current_context
@@ -37,23 +37,13 @@ def generate_image_descriptions():
 
         return {"prompt": prompt.prompt, "version": prompt.version}
 
-    @task()
-    def get_run_dir() -> str:
-        """Get the storage directory for the current DAG run."""
-
-        context = get_current_context()
-        run_id = context["run_id"]
-        run_dir_path = storage.run_dir(run_id)
-
-        return str(run_dir_path)
-
     @task(inlets=[fetched_csv])
-    def read_and_batch_csv() -> list[list[dict]]:
+    def read_and_batch_csv() -> list[list[dict[str, str]]]:
         """Fetch the CSV and chunk it for processing."""
 
         context = get_current_context()
         events = context["triggering_asset_events"][fetched_csv]
-        fetched_csv_path = Path(events[-1].asset.uri.replace("file://", ""))
+        fetched_csv_path = Path(events[0].asset.uri.replace("file://", ""))
 
         with open(fetched_csv_path, mode="r", encoding="utf-8") as f:
             reader = csv.DictReader(f)
@@ -63,7 +53,7 @@ def generate_image_descriptions():
         return [rows[i:i + 10] for i in range(0, len(rows), 10)]
 
     @task(max_active_tis_per_dagrun=10)
-    def invoke_llm_on_batch_with_prompt(batch: list[dict], prompt: dict[str, str]) -> list[dict]:
+    def invoke_llm_on_batch_with_prompt(batch: list[dict[str, str]], prompt: dict[str, str]) -> list[dict[str, str]]:
         """For each image in the batch, encode it and send to LLM for description generation."""
 
         results = []
@@ -79,6 +69,17 @@ def generate_image_descriptions():
                 record_meta = f"{record['Record ID']},{record['035__a']},{record['Image Path']}"
                 logger.warning(f"Invalid mime type for {{{record_meta}}}. Skipping record.")
                 record["Status"] = "failure: invalid mime type"
+                results.append(record)
+                continue
+
+            image_path = Path(record["Image Path"])
+            file_size = image_path.stat().st_size
+
+            # we could make this a constant or env var.
+            if file_size > 3.5 * 1024 * 1024:
+                record_meta = f"{record['Record ID']},{record['035__a']},{record['Image Path']}"
+                logger.warning(f"File size {file_size} exceeds limit for {{{record_meta}}}. Skipping record.")
+                record["Status"] = "failure: file size exceeds limit"
                 results.append(record)
                 continue
 
@@ -103,7 +104,7 @@ def generate_image_descriptions():
         return results
 
     @task()
-    def transform_results(batch_results: list[dict], prompt: dict[str, str]) -> list[dict]:
+    def transform_results(batch_results: list[dict[str, str]], prompt: dict[str, str]) -> list[dict[str, str]]:
         """Apply any necessary mapping or transformations to the batch results before writing to CSV."""
 
         processed_dicts = []
@@ -123,13 +124,15 @@ def generate_image_descriptions():
 
         return processed_dicts
 
-    @task(outlets=[processed_csv])
-    def write_output_csv(processed_dicts: list[list[dict]], run_dir: str) -> None:
+    @task(inlets=[fetched_csv], outlets=[processed_csv])
+    def write_output_csv(processed_dicts: list[list[dict[str, str]]]) -> None:
         """Write all batch results to a new CSV."""
 
         context = get_current_context()
+        events = context["triggering_asset_events"][fetched_csv]
+        fetched_csv_path = Path(events[0].asset.uri.replace("file://", ""))
+        processed_csv_path = Path(fetched_csv_path.parent) / "processed.csv"
 
-        processed_csv_path = Path(run_dir) / "processed.csv"
         all_results = [record for batch in processed_dicts for record in batch]
 
         if not all_results:
@@ -143,10 +146,9 @@ def generate_image_descriptions():
         context["outlet_events"][processed_csv].add(Asset(f"file://{processed_csv_path}"))
 
     prompt = get_prompt()
-    run_dir = get_run_dir()
     batches = read_and_batch_csv()
     batch_results = invoke_llm_on_batch_with_prompt.partial(prompt=prompt).expand(batch=batches)
     processed_dicts = transform_results.partial(prompt=prompt).expand(batch_results=batch_results)
-    write_output_csv(processed_dicts, run_dir)
+    write_output_csv(processed_dicts)
 
 generate_image_descriptions()
