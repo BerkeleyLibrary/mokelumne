@@ -39,7 +39,7 @@ def generate_image_descriptions():
 
     @task()
     def get_run_dir() -> str:
-        """Get the sto directory for the current DAG run"""
+        """Get the storage directory for the current DAG run."""
 
         context = get_current_context()
         run_id = context["run_id"]
@@ -47,7 +47,7 @@ def generate_image_descriptions():
 
         return str(run_dir_path)
 
-    @task()
+    @task(inlets=[fetched_csv])
     def read_and_batch_csv() -> list[list[dict]]:
         """Fetch the CSV and chunk it for processing."""
 
