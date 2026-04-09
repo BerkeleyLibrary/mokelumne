@@ -5,6 +5,7 @@ tmp
 artifacts/*
 logs/*
 download/*
+public/*
 __pycache__/
 *.py[cod]
 *$py.class

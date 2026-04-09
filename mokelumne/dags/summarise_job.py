@@ -1,0 +1,104 @@
+"""Collate the CSV output of the jobs and upload them to an object store."""
+
+from datetime import datetime, UTC
+from itertools import filterfalse
+from pathlib import Path
+from shutil import copyfile
+from uuid import uuid4
+
+import csv
+
+from airflow.sdk import dag, task, get_current_context, Asset
+
+from mokelumne.batch_image.assets import processed_csv
+from mokelumne.batch_image.assets import public_dir as public_dir_asset
+from mokelumne.util.storage import public_dir, public_path_to_url
+
+
+FILENAME_TEMPLATE: str = 'imagedesc_%s_{timestamp}.csv'
+"""The template for the generated filenames."""
+
+
+@dag(schedule=[processed_csv])
+def summarise_job():
+    """Summarise the DAG runs for the job."""
+
+    @task
+    def generate_id() -> str:
+        """Generate a URL-safe directory for collated output."""
+        path = public_dir() / str(uuid4())
+        path.mkdir()  # We don't exist_ok=True because it should be unique.
+        return str(path)
+
+    @task(inlets=[processed_csv])
+    def collate_csvs(out_str: str) -> str:
+        """Gather the CSVs from the DAG runs and place them in the given directory."""
+        context = get_current_context()
+        asset = context['triggering_asset_events'][processed_csv][0].asset
+        asset_path = Path(asset.uri.replace("file://", "")).parent
+        out_path = Path(out_str)
+
+        timestamp = datetime.now(UTC).strftime('%Y%m%d_%H%M%S')
+        template_name = FILENAME_TEMPLATE.format(timestamp=timestamp)
+
+        for csv in ('processed', 'fetched', 'skipped'):
+            copyfile(asset_path / f'{csv}.csv', out_path / (template_name % csv))
+
+        return timestamp
+
+    @task(outlets=[public_dir_asset])
+    def generate_summary(collated_str: str, timestamp: str) -> str:
+        """Generate a summary of the files in the collated path."""
+        collated_path = Path(collated_str)
+
+        template_name = FILENAME_TEMPLATE.format(timestamp=timestamp)
+        proc_path = collated_path / (template_name % 'processed')
+        fetched_path = collated_path / (template_name % 'fetched')
+        skipped_path = collated_path / (template_name % 'skipped')
+
+        with skipped_path.open(encoding='utf-8') as skipped:
+            skip_count = len(skipped.readlines()) - 1
+
+        with fetched_path.open(encoding='utf-8') as fetched:
+            reader = csv.reader(fetched)
+            header = next(reader)
+            all_fetched = list(reader)
+            fetch_count = len(all_fetched)
+            status_col = header.index('Status')
+            fetch_failures = len(list(filterfalse(lambda x: x == 'fetched',
+                                                  (row[status_col] for row in all_fetched))))
+            fetch_success = fetch_count - fetch_failures
+
+        with proc_path.open(encoding='utf-8') as processed:
+            reader = csv.reader(processed)
+            _header = next(reader)
+            proc_count = len(list(reader))
+
+        template_html = f"""
+        <html><head><title>Batch image description results</title></head><body>
+        <h1>Batch image description results for query</h1>
+        <dl>
+            <dt><a href="{public_path_to_url(proc_path)}">{proc_count} images processed</a></dt>
+            <dd>{proc_count} succeeded, {proc_count - fetch_success} failed</dd>
+            <dt><a href="{public_path_to_url(fetched_path)}">{fetch_count} images fetched</a></dt>
+            <dd>{fetch_success} succeeded, {fetch_failures} failed</dd>
+            <dt><a href="{public_path_to_url(skipped_path)}">{skip_count} records skipped</a></dt>
+            <dd>Records did not match filter criteria</dd>
+        </dl>
+        </body></html>
+        """
+
+        with (collated_path / 'index.html').open('w') as html:
+            html.write(template_html)
+
+        context = get_current_context()
+        context["outlet_events"][public_dir_asset].add(Asset(f"file://{collated_str}"))
+
+        return collated_str
+
+    directory = generate_id()
+    csv_timestamp = collate_csvs(directory)
+    generate_summary(directory, csv_timestamp)
+
+
+summarise_job()

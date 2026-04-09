@@ -68,6 +68,7 @@ x-airflow-common: &airflow-common
     - ./:/opt/airflow
     - ./artifacts:/home/airflow/artifacts
     - ./test:/home/airflow/test
+    - ./public:/opt/airflow/public
   user: "${AIRFLOW_UID:-40093}:0"
 
 services:

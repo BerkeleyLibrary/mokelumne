@@ -28,3 +28,20 @@ def record_dir(run_id: str, record_id: str) -> Path:
     record_path = run_dir(run_id) / record_id[0:2] / record_id
     record_path.mkdir(exist_ok=True, parents=True)
     return record_path
+
+
+def public_dir() -> Path:
+    """Retrieve the base directory path to use for *public* storage."""
+    public_env = os.environ.get("MOKELUMNE_PUBLIC_STORAGE", "/opt/airflow/public")
+    public_path = Path(public_env)
+    public_path.mkdir(exist_ok=True)
+    return public_path
+
+
+def public_path_to_url(public_path: Path) -> str:
+    """Take a public path, as a subdirectory of +public_dir()+, and return a publicly accessible
+    HTTPS URL."""
+    top = public_dir()
+    location = public_path.relative_to(top)
+    url_base = os.environ.get("MOKELUMNE_PUBLIC_URL", "https://mokelumne-assets.ucblib.org/")
+    return f"{url_base}{str(location)}"

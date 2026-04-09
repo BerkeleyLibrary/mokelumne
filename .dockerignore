@@ -1,3 +1,6 @@
 # Ignore generated files
 **/*.py[cod]
 **/__pycache__
+
+download/
+logs/

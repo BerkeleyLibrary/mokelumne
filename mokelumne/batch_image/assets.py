@@ -44,3 +44,10 @@ encountered one or more failures during processing.
 Emitted by: `generate_image_descriptions`
 Consumed by: `notify_user`
 """
+
+public_dir = AssetAlias('mokelumne/batch-image/public-dir')
+"""The publicly accessible directory where user-facing assets are stored.
+
+Emitted by: `summarise_job`
+Consumed by: `notify_user`
+"""
