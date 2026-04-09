@@ -29,6 +29,9 @@ docker run --rm --entrypoint python apache/airflow:<version> -m pip freeze
 Spin up the application using Docker Compose. There are a number of dependencies (Postgres, Keycloak, and Redis) as well as Airflow components (api/web, processor, scheduler, triggerer), so it's hardly lightweight. For now you'll need to sequence startup so that core services are setup before the ones that depend on them:
 
 ```sh
+# Mint a short term API key for AWS Bedrock. You'll add it to AWS_BEARER_TOKEN_BEDROCK in the .env file created in the next step.
+# (This will probably change in the future.)
+
 # Generate `.env` with unique secrets specific to your local machine
 docker compose run \
   --entrypoint /opt/airflow/scripts/setup_dev.py \
