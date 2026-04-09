@@ -71,6 +71,13 @@ Important environment variables for our build/environment:
 | `TIND_API_KEY` | API key for TIND access | `TIND_API_KEY="..."` |
 | `TIND_API_URL` | URL for TIND access | `TIND_API_URL="https://digicoll.lib.berkeley.edu/api/v1"` |
 | `MOKELUMNE_TIND_DOWNLOAD_DIR` | Path for downloaded image cache | `MOKELUMNE_TIND_DOWNLOAD_DIR="/some/path/to/download/to"` |
+|LANGFUSE_HOST|Host for Langfuse|`https://us.cloud.langfuse.com`|
+|LANGFUSE_SECRET_KEY|sets langfuse secret key|`sk-lf-blah-blah-blah`|
+|LANGFUSE_PUBLIC_KEY|sets langfuse public key|`pk-lf-blah-blah-blah`|
+|AWS_ENDPOINT_URL|AWS endpoint (don't forget the `https://`!)|`https://bedrock-runtime.us-west-1.amazonaws.com`|
+|AWS_DEFAULT_REGION|The AWS region to use; you probably want us-west-1.|`us-west-1`|
+|AWS_BEARER_TOKEN_BEDROCK|The IAM credential to use to access AWS. Use a short-term API key.<br>The key will expire after AWS console logout or 12 hours (whichever comes first).<br>Make sure that your region for the key matches the region above.|`bedrock-api-key-blah-blah-blah`|
+|AWS_MODEL_ID|The model to use. Make sure it's supported on the ARN|us.anthropic.claude-haiku-4-5-20251001-v1:0|
 
 Note: The `AIRFLOW_UID` example in `example.env` maps to the reserved `uid` for the `airflow` user in [lap/workflow](https://git.lib.berkeley.edu/lap/workflow/-/wikis/UIDs).
 
