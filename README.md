@@ -2,8 +2,6 @@
 
 UC Berkeley Library's Airflow installation, libraries, and Dags.
 
-This is a proof of concept repo for Airflow under Docker Compose/Swarm. As is, it should be deployed with caution.
-
 Consult [Running Airflow in Docker](https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html) for more information. The compose file in the initial commit reflects the composed file linked from those docs.
 
 ## Dependencies
@@ -13,7 +11,9 @@ Dependencies are declared in `pyproject.toml` and pinned in `requirements.txt` w
 When adding or changing dependencies, regenerate the pins with [uv](https://docs.astral.sh/uv/):
 
 ```sh
-uv pip compile pyproject.toml --extra test -c constraints.txt --no-emit-package python-tind-client --generate-hashes -o requirements.txt
+uv pip compile pyproject.toml --extra test -c constraints.txt \
+  --no-emit-package python-tind-client --generate-hashes \
+  -o requirements.txt
 ```
 
 `constraints.txt` contains upper bounds derived from the base Airflow Docker image to prevent version conflicts with pre-installed packages. Regenerate it when bumping `AIRFLOW_VERSION`:
@@ -29,7 +29,8 @@ docker run --rm --entrypoint python apache/airflow:<version> -m pip freeze
 Spin up the application using Docker Compose. There are a number of dependencies (Postgres, Keycloak, and Redis) as well as Airflow components (api/web, processor, scheduler, triggerer), so it's hardly lightweight. For now you'll need to sequence startup so that core services are setup before the ones that depend on them:
 
 ```sh
-# Mint a short term API key for AWS Bedrock. You'll add it to AWS_BEARER_TOKEN_BEDROCK in the .env file created in the next step.
+# Mint a short term API key for AWS Bedrock. You'll add it to
+# AWS_BEARER_TOKEN_BEDROCK in the .env file created in the next step.
 # (This will probably change in the future.)
 
 # Generate `.env` with unique secrets specific to your local machine
@@ -74,20 +75,20 @@ Important environment variables for our build/environment:
 | `TIND_API_KEY` | API key for TIND access | `TIND_API_KEY="..."` |
 | `TIND_API_URL` | URL for TIND access | `TIND_API_URL="https://digicoll.lib.berkeley.edu/api/v1"` |
 | `MOKELUMNE_TIND_DOWNLOAD_DIR` | Path for downloaded image cache | `MOKELUMNE_TIND_DOWNLOAD_DIR="/some/path/to/download/to"` |
-|LANGFUSE_HOST|Host for Langfuse|`https://us.cloud.langfuse.com`|
-|LANGFUSE_SECRET_KEY|sets langfuse secret key|`sk-lf-blah-blah-blah`|
-|LANGFUSE_PUBLIC_KEY|sets langfuse public key|`pk-lf-blah-blah-blah`|
-|AWS_ENDPOINT_URL|AWS endpoint (don't forget the `https://`!)|`https://bedrock-runtime.us-west-1.amazonaws.com`|
-|AWS_DEFAULT_REGION|The AWS region to use; you probably want us-west-1.|`us-west-1`|
-|AWS_BEARER_TOKEN_BEDROCK|The IAM credential to use to access AWS. Use a short-term API key.<br>The key will expire after AWS console logout or 12 hours (whichever comes first).<br>Make sure that your region for the key matches the region above.|`bedrock-api-key-blah-blah-blah`|
-|AWS_MODEL_ID|The model to use. Make sure it's supported on the ARN.|us.anthropic.claude-haiku-4-5-20251001-v1:0|
-|AWS_MODEL_LABEL|A human friendly label for the model. Will eventually be displayed in the Tind record.|Claude Haiku 4.5|
-|AWS_MODEL_PROVIDER|The provider for the model. |anthropic|
+|`LANGFUSE_HOST`|Host for Langfuse|`LANGFUSE_HOST="https://us.cloud.langfuse.com"`|
+|`LANGFUSE_SECRET_KEY`|sets langfuse secret key|`LANGFUSE_SECRET_KEY="sk-lf-blah-blah-blah"`|
+|`LANGFUSE_PUBLIC_KEY`|sets langfuse public key|`LANGFUSE_PUBLIC_KEY="pk-lf-blah-blah-blah"`|
+|`AWS_ENDPOINT_URL`|AWS endpoint (don't forget the `https://`!)|`AWS_ENDPOINT_URL="https://bedrock-runtime.us-west-1.amazonaws.com"`|
+|`AWS_DEFAULT_REGION`|The AWS region to use; you probably want `us-west-1`.|`AWS_DEFAULT_REGION=us-west-1`|
+|`AWS_BEARER_TOKEN_BEDROCK`|The IAM credential to use to access AWS. Use a short-term API key.<br>The key will expire after AWS console logout or 12 hours (whichever comes first).<br>Make sure that your region for the key matches the region above.|`AWS_BEARER_TOKEN_BEDROCK="bedrock-api-key-blah-blah-blah"`|
+|`AWS_MODEL_ID`|The model to use. Make sure it's supported on the ARN.|`AWS_MODEL_ID="us.anthropic.claude-haiku-4-5-20251001-v1:0"`|
+|`AWS_MODEL_LABEL`|A human friendly label for the model. Will eventually be displayed in the Tind record.|`AWS_MODEL_LABEL="Claude Haiku 4.5"`|
+|`AWS_MODEL_PROVIDER`|The provider for the model. |`AWS_MODEL_PROVIDER=anthropic`|
 
 Note: The `AIRFLOW_UID` example in `example.env` maps to the reserved `uid` for the `airflow` user in [lap/workflow](https://git.lib.berkeley.edu/lap/workflow/-/wikis/UIDs).
 
-### Dev keycloak credentials
-The `keycloak-config-cli` container will create a user/pass of `admin`/`admin` for the 'master' realm.
+### Dev Keycloak credentials
+The `keycloak-config-cli` container will create a user/pass of `admin`/`admin` for the `master` realm.
 It will also create the following users with roles mapped from calnet groups in the `berkeley-local` realm:
 
 | Username | Password | Role(s) |

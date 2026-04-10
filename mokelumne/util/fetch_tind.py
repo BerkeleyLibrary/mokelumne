@@ -2,10 +2,6 @@
 
 import csv
 
-from pathlib import Path
-
-from lxml import etree
-from pymarc import Record, XMLWriter
 from tind_client import TINDClient
 
 from mokelumne.util.storage import run_dir, record_dir
@@ -28,12 +24,6 @@ class FetchTind:
         record_path = record_dir(self.run_id, tind_id)
         return self.client.fetch_file(download_url, str(record_path))
 
-    def download_metadata_file(self, tind_id: str) -> None:
-        """Download the metadata XML for a given TIND ID."""
-        record = self.client.fetch_metadata(tind_id)
-        file_path = record_dir(self.run_id, tind_id) / f"{tind_id}.xml"
-        self._write_record_to_xml(record, file_path)
-
     def save_tind_ids_file(self, ids: list[str]) -> None:
         """Save matching TIND IDs to a CSV file."""
         file_path = run_dir(self.run_id) / "ids.csv"
@@ -48,13 +38,3 @@ class FetchTind:
         """Download the XML results of a search query from TIND."""
         records_written = self.client.write_search_results_to_file(tind_query, file_name)
         return int(records_written)
-
-    def _write_record_to_xml(self, record: Record, file_path: Path) -> None:
-        with file_path.open("wb") as f:
-            writer = XMLWriter(f)
-            writer.write(record)
-            writer.close()
-
-        parser = etree.XMLParser(remove_blank_text=True)
-        tree = etree.parse(str(file_path), parser)
-        tree.write(str(file_path), encoding="utf-8", xml_declaration=True, pretty_print=True)
