@@ -66,7 +66,9 @@ def generate_image_descriptions():
         results = []
 
         langfuse_handler = CallbackHandler()
-        model = ChatBedrock(model=os.environ["AWS_MODEL_ID"], provider="anthropic")
+        model = ChatBedrock(
+            model=os.environ["AWS_MODEL_ID"], provider=os.environ["AWS_MODEL_PROVIDER"]
+        )
         sys_msg = SystemMessage(prompt["prompt"])
 
         for record in batch:

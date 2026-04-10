@@ -82,6 +82,7 @@ Important environment variables for our build/environment:
 |AWS_BEARER_TOKEN_BEDROCK|The IAM credential to use to access AWS. Use a short-term API key.<br>The key will expire after AWS console logout or 12 hours (whichever comes first).<br>Make sure that your region for the key matches the region above.|`bedrock-api-key-blah-blah-blah`|
 |AWS_MODEL_ID|The model to use. Make sure it's supported on the ARN.|us.anthropic.claude-haiku-4-5-20251001-v1:0|
 |AWS_MODEL_LABEL|A human friendly label for the model. Will eventually be displayed in the Tind record.|Claude Haiku 4.5|
+|AWS_MODEL_PROVIDER|The provider for the model. |anthropic|
 
 Note: The `AIRFLOW_UID` example in `example.env` maps to the reserved `uid` for the `airflow` user in [lap/workflow](https://git.lib.berkeley.edu/lap/workflow/-/wikis/UIDs).
 
