@@ -24,7 +24,8 @@ flowchart TB
     end 
 
     subgraph generate_image_descriptions
-        fetch_prompt_from_langfuse & read_csv_fetched --> invoke_llm_with_prompt --> write_output_csv
+        get_prompt --> invoke_llm_on_batch_with_promptn
+        read_csv_fetched0 -->|batches of 10 records| invoke_llm_on_batch_with_promptn -->|batches| transform_resultsn-->|collect all batches\n of descriptions| write_output_csv0
     end
 
     subgraph notify_user
