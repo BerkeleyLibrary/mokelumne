@@ -20,12 +20,12 @@ flowchart TB
 
     subgraph fetch_images
         direction TB
-        read_csv_to_process --> fetch_image_to_record_directory & fetch_image_to_record_directory --> write_status_to_fetched_csv
+        read_csv_to_process --> fetch_image_to_record_directory0 & fetch_image_to_record_directoryn --> write_status_to_fetched_csv
     end 
 
     subgraph generate_image_descriptions
-        fetch_prompt_from_langfuse --> invoke_llm_with_prompt
-        read_csv_fetched -->|batches of 10 records| invoke_llm_on_batch_with_prompt -->|batches| transform_results-->|collect all batches\n of descriptions| write_output_csv
+        get_prompt --> invoke_llm_on_batch_with_promptn
+        read_csv_fetched0 -->|batches of 10 records| invoke_llm_on_batch_with_promptn -->|batches| transform_resultsn-->|collect all batches\n of descriptions| write_output_csv0
     end
 
     subgraph notify_user
