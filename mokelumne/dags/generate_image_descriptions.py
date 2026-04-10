@@ -1,7 +1,5 @@
 """DAG that generates image descriptions for images listed in a CSV file, writing results
-to a new CSV.
-
-"""
+to a new CSV."""
 
 from __future__ import annotations
 
