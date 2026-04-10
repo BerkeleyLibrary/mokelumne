@@ -1,3 +1,8 @@
+"""DAG that generates image descriptions for images listed in a CSV file, writing results
+to a new CSV.
+
+"""
+
 from __future__ import annotations
 
 import base64
@@ -14,7 +19,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_aws import ChatBedrock
 from langfuse.langchain import CallbackHandler
 from mokelumne.batch_image.assets import fetched_csv, processed_csv
-from mokelumne.util import langfuse, storage
+from mokelumne.util import langfuse
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +47,7 @@ def generate_image_descriptions():
         """Fetch the CSV and chunk it for processing."""
 
         context = get_current_context()
-        events = context["triggering_asset_events"][fetched_csv]
+        events = context["triggering_asset_events"][fetched_csv]  # type: ignore[index]
         fetched_csv_path = Path(events[0].asset.uri.replace("file://", ""))
 
         with open(fetched_csv_path, mode="r", encoding="utf-8") as f:
@@ -50,48 +55,51 @@ def generate_image_descriptions():
             rows = list(reader)
 
         # we could make the chunking a parameter or an env variable
-        return [rows[i:i + 10] for i in range(0, len(rows), 10)]
+        return [rows[i : i + 10] for i in range(0, len(rows), 10)]
 
     @task(max_active_tis_per_dagrun=10)
-    def invoke_llm_on_batch_with_prompt(batch: list[dict[str, str]], prompt: dict[str, str]) -> list[dict[str, str]]:
+    def invoke_llm_on_batch_with_prompt(
+        batch: list[dict[str, str]], prompt: dict[str, str]
+    ) -> list[dict[str, str]]:
         """For each image in the batch, encode it and send to LLM for description generation."""
 
         results = []
 
         langfuse_handler = CallbackHandler()
-        model = ChatBedrock(model=os.environ['AWS_MODEL_ID'], provider='anthropic')
+        model = ChatBedrock(model=os.environ["AWS_MODEL_ID"], provider="anthropic")
         sys_msg = SystemMessage(prompt["prompt"])
 
         for record in batch:
             mime_type, _ = mimetypes.guess_type(record["Image Path"])
-
-            if mime_type is None or not mime_type.startswith("image"):
-                record_meta = f"{record['Record ID']},{record['035__a']},{record['Image Path']}"
-                logger.warning(f"Invalid mime type for {{{record_meta}}}. Skipping record.")
-                record["Status"] = "failure: invalid mime type"
-                results.append(record)
-                continue
-
-            encoded = base64.b64encode(Path(record["Image Path"]).read_bytes()).decode("utf-8")
+            encoded = base64.b64encode(Path(record["Image Path"]).read_bytes()).decode(
+                "utf-8"
+            )
 
             # we could make this a constant or env var.
             if len(encoded) > 3.75 * 1024 * 1024:
-                record_meta = f"{record['Record ID']},{record['035__a']},{record['Image Path']}"
-                logger.warning(f"Encoded size {len(encoded)} exceeds limit for {{{record_meta}}}. Skipping record.")
+                record_meta = (
+                    f"{record['Record ID']},{record['035__a']},{record['Image Path']}"
+                )
+                logger.warning(
+                    "Encoded size %s exceeds limit for {%s}. Skipping record.",
+                    len(encoded),
+                    record_meta,
+                )
                 record["Status"] = "failure: file size exceeds limit"
                 results.append(record)
                 continue
 
-            image_msg = HumanMessage(content=[{'type': 'image',
-                                                'base64': encoded,
-                                                'mime_type': mime_type}])
+            image_msg = HumanMessage(
+                content=[{"type": "image", "base64": encoded, "mime_type": mime_type}]
+            )
 
-            result = model.invoke([sys_msg, image_msg],
-                                   config={'callbacks': [langfuse_handler]})
+            result = model.invoke(
+                [sys_msg, image_msg], config={"callbacks": [langfuse_handler]}
+            )
 
-            if hasattr(result, 'content'):
+            if hasattr(result, "content"):
                 record["Status"] = "success"
-                record["Description"] = result.content
+                record["Description"] = str(result.content)
 
                 results.append(record)
             else:
@@ -101,8 +109,11 @@ def generate_image_descriptions():
         return results
 
     @task()
-    def transform_results(batch_results: list[dict[str, str]], prompt: dict[str, str]) -> list[dict[str, str]]:
-        """Apply any necessary mapping or transformations to the batch results before writing to CSV."""
+    def transform_results(
+        batch_results: list[dict[str, str]], prompt: dict[str, str]
+    ) -> list[dict[str, str]]:
+        """Apply any necessary mapping or transformations to the batch results
+        before writing to CSV."""
 
         processed_dicts = []
         for record in batch_results:
@@ -112,10 +123,12 @@ def generate_image_descriptions():
                 "Image Name": Path(record["Image Path"]).name,
                 "Collection name": record["Collection name"],
                 "520__a-1": record.get("Description", ""),
-                "5880_a": f"Image description generated by AI ({os.environ.get('AWS_MODEL_ID')}) and reviewed on [MM/YYYY].",
-                "983__a-1": f"mokelumne-image-description|anthropic:{os.environ.get('AWS_MODEL_ID')}|mokelumne/{prompt['version']}",
+                "5880_a": f"Image description generated by AI ({os.environ.get('AWS_MODEL_LABEL')})"
+                " and reviewed on [MM/YYYY].",
+                "983__a-1": f"mokelumne-image-description|{os.environ.get('AWS_MODEL_ID')}"
+                f"|mokelumne/{prompt['version']}",
                 "983__d-1": datetime.now(UTC).strftime("%Y-%m-%d"),
-                "983__t-1": "520"
+                "983__t-1": "520",
             }
             processed_dicts.append(processed_dict)
 
@@ -126,7 +139,7 @@ def generate_image_descriptions():
         """Write all batch results to a new CSV."""
 
         context = get_current_context()
-        events = context["triggering_asset_events"][fetched_csv]
+        events = context["triggering_asset_events"][fetched_csv]  # type: ignore[index]
         fetched_csv_path = Path(events[0].asset.uri.replace("file://", ""))
         processed_csv_path = Path(fetched_csv_path.parent) / "processed.csv"
 
@@ -135,17 +148,24 @@ def generate_image_descriptions():
         if not all_results:
             raise ValueError("No results to write to CSV.")
 
-        with open(processed_csv_path, mode="w", encoding="utf-8", newline='') as f:
+        with open(processed_csv_path, mode="w", encoding="utf-8", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=all_results[0].keys())
             writer.writeheader()
             writer.writerows(all_results)
 
-        context["outlet_events"][processed_csv].add(Asset(f"file://{processed_csv_path}"))
+        context["outlet_events"][processed_csv].add(  # type: ignore[index]
+            Asset(f"file://{processed_csv_path}")
+        )
 
     prompt = get_prompt()
     batches = read_and_batch_csv()
-    batch_results = invoke_llm_on_batch_with_prompt.partial(prompt=prompt).expand(batch=batches)
-    processed_dicts = transform_results.partial(prompt=prompt).expand(batch_results=batch_results)
-    write_output_csv(processed_dicts)
+    batch_results = invoke_llm_on_batch_with_prompt.partial(prompt=prompt).expand(
+        batch=batches
+    )
+    processed_dicts = transform_results.partial(prompt=prompt).expand(
+        batch_results=batch_results
+    )
+    write_output_csv(processed_dicts)  # type: ignore[arg-type]
+
 
 generate_image_descriptions()
