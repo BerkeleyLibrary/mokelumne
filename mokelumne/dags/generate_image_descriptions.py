@@ -167,7 +167,7 @@ def generate_image_descriptions():
     processed_dicts = transform_results.partial(prompt=prompt).expand(
         batch_results=batch_results
     )
-    write_output_csv(processed_dicts)   # pyright: ignore[reportArgumentType]
+    write_output_csv(processed_dicts)  # pyright: ignore[reportArgumentType]
 
 
 generate_image_descriptions()

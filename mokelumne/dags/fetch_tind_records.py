@@ -67,7 +67,7 @@ def fetch_tind_records():
 
         return records_written
 
-    validate_params() >> write_query_results_to_xml() # pyright: ignore[reportUnusedExpression]
+    validate_params() >> write_query_results_to_xml()  # pyright: ignore[reportUnusedExpression]
 
 
 fetch_tind_records()
