@@ -1,3 +1,5 @@
+# pyright: reportTypedDictNotRequiredAccess=false
+
 """DAG that generates image descriptions for images listed in a CSV file, writing results
 to a new CSV."""
 
@@ -45,7 +47,7 @@ def generate_image_descriptions():
         """Fetch the CSV and chunk it for processing."""
 
         context = get_current_context()
-        events = context["triggering_asset_events"][fetched_csv]  # type: ignore[index]
+        events = context["triggering_asset_events"][fetched_csv]
         fetched_csv_path = Path(events[0].asset.uri.replace("file://", ""))
 
         with open(fetched_csv_path, mode="r", encoding="utf-8") as f:
@@ -139,7 +141,7 @@ def generate_image_descriptions():
         """Write all batch results to a new CSV."""
 
         context = get_current_context()
-        events = context["triggering_asset_events"][fetched_csv]  # type: ignore[index]
+        events = context["triggering_asset_events"][fetched_csv]
         fetched_csv_path = Path(events[0].asset.uri.replace("file://", ""))
         processed_csv_path = Path(fetched_csv_path.parent) / "processed.csv"
 
@@ -153,7 +155,7 @@ def generate_image_descriptions():
             writer.writeheader()
             writer.writerows(all_results)
 
-        context["outlet_events"][processed_csv].add(  # type: ignore[index]
+        context["outlet_events"][processed_csv].add(
             Asset(f"file://{processed_csv_path}")
         )
 
@@ -165,7 +167,7 @@ def generate_image_descriptions():
     processed_dicts = transform_results.partial(prompt=prompt).expand(
         batch_results=batch_results
     )
-    write_output_csv(processed_dicts)  # type: ignore[arg-type]
+    write_output_csv(processed_dicts)  # pyright: ignore[reportArgumentType]
 
 
 generate_image_descriptions()

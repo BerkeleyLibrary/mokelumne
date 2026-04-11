@@ -1,3 +1,5 @@
+# pyright: reportTypedDictNotRequiredAccess=false
+
 """fetch_tind_records.py
 
 DAG that fetches TIND records matching a query and writes them to an XML file.
@@ -65,7 +67,7 @@ def fetch_tind_records():
 
         return records_written
 
-    validate_params() >> write_query_results_to_xml()
+    validate_params() >> write_query_results_to_xml()  # pyright: ignore[reportUnusedExpression]
 
 
 fetch_tind_records()

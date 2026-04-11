@@ -1,3 +1,5 @@
+# pyright: reportTypedDictNotRequiredAccess=false
+
 """Filter TIND records on conditions matching the batch image processing workflow."""
 
 from __future__ import annotations
@@ -16,7 +18,7 @@ logger = logging.getLogger(__name__)
 @dag(
     schedule=[records_xml],
     catchup=False,
-    tags=["tind", "filter"],
+    tags=["batch-image", "filter", "tind"],
 )
 def tind_filter():
     """DAG that filters TIND records into to-process and skipped CSVs."""
@@ -27,9 +29,9 @@ def tind_filter():
 
         context = get_current_context()
 
-        inlet_events = context["inlet_events"][records_xml]
+        events = context["triggering_asset_events"][records_xml]
 
-        xml_file = Path(inlet_events[-1].asset.uri.replace("file://", ""))
+        xml_file = Path(events[0].asset.uri.replace("file://", ""))
         batch_dir = xml_file.parent
 
         with TindCsvWriter(batch_dir) as csv_writer:

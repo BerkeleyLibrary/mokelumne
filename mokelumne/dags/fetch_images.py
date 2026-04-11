@@ -1,3 +1,5 @@
+# pyright: reportTypedDictNotRequiredAccess=false
+
 """Given a list of records, fetch their corresponding image and save to storage."""
 
 import csv
