@@ -32,12 +32,9 @@ COPY --chown=airflow:0 pyproject.toml ./
 COPY --chown=airflow:0 mokelumne mokelumne
 COPY --chown=airflow:0 plugins plugins
 COPY --chown=airflow:0 webserver_config.py .
+COPY --chown=airflow:0 test test
 RUN pip install --no-cache-dir --no-deps .
 
 # Fail the build if any installed package has unsatisfied dependencies.
 # This catches conflicts between our pins and the base image's packages.
 RUN pip check
-
-# we want to isolate anything that airflow might not run directly
-WORKDIR $AIRFLOW_USER_HOME_DIR
-COPY --chown=airflow:0 test test

@@ -158,15 +158,15 @@ jobs:
         run: |
           docker compose up --detach
 
-      - name: Run Dag import test
+      - name: Run tests
         run: |
-          docker compose exec airflow-cli python test/run_tests.py
+          docker compose exec airflow-cli python -m pytest
 
       - name: Copy out artifacts
         if: ${{ always() }}
         id: artifacts
         run: |
-          docker compose cp airflow-cli:/home/airflow/artifacts/unittest "${ARTIFACTS_DIR}" || true
+          docker compose cp airflow-cli:/opt/airflow/artifacts/pytest "${ARTIFACTS_DIR}" || true
           docker compose logs | tee "${ARTIFACTS_DIR}/docker-services.log"
           docker compose config | tee "${ARTIFACTS_DIR}/docker-compose.merged.yml"
           docker events --json --since $TEST_START --until `date +%s` | tee "${ARTIFACTS_DIR}/docker-events.json"
