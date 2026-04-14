@@ -9,7 +9,6 @@ dependencies = [
     "apache-airflow-task-sdk == 1.2.0",
     "langchain[aws]",
     "langfuse",
-    "lxml",
     "pymarc",
     "python-tind-client @ git+https://github.com/BerkeleyLibrary/python-tind-client.git@0.2.1",
 ]
@@ -19,13 +18,14 @@ authors = [
     {name = "maría a. matienzo"},
     {name = "Jason Raitz"},
     {name = "Daniel Schmidt"},
+    {name = "Yuchai Zhou"},
 ]
 readme = "README.md"
 license = "MIT"
 
 [project.optional-dependencies]
 test = [
-    "unittest-xml-reporting",
+    "pytest",
 ]
 lint = [
     "mypy ~= 1.17.1",
@@ -53,3 +53,7 @@ style = "sphinx"
 
 [tool.pylint.messages_control]
 disable = ["expression-not-assigned"]
+
+[tool.pytest]
+minversion = "9.0"
+addopts = ["-v", "-s", "--junit-xml=artifacts/pytest/airflow_test.xml"]
