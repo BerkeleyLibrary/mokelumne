@@ -2,7 +2,9 @@
 
 import logging
 from os import environ as ENV
-from typing import Any
+from typing import Any, Optional
+
+from airflow.sdk import Connection
 
 import requests
 from piffle.image import IIIFImageClient
@@ -18,9 +20,24 @@ logger = logging.getLogger(__name__)
 
 class FetchTind:
     """Helper methods for fetching items from TIND using TINDClient."""
-    def __init__(self, _run_id: str):
+
+    def __init__(self, _run_id: str, tind_client: Optional[TINDClient] = None):
         self.run_id = _run_id
-        self.client = TINDClient(default_storage_dir=str(run_dir(_run_id)))
+        self.client = tind_client or TINDClient(
+            default_storage_dir=str(run_dir(_run_id))
+        )
+
+    @classmethod
+    def from_connection(cls, _run_id: str, conn: Connection | str) -> "FetchTind":
+        """Create a FetchTind instance from an Airflow Connection."""
+        if isinstance(conn, str):
+            conn = Connection.get(conn)
+        client = TINDClient(
+            api_url=conn.host,
+            api_key=conn.password,
+            default_storage_dir=str(run_dir(_run_id)),
+        )
+        return cls(_run_id, tind_client=client)
 
     def get_ids(self, tind_query: str) -> list[str]:
         """Return the TIND IDs that match a given query."""
@@ -75,5 +92,7 @@ class FetchTind:
 
     def write_query_results_to_xml(self, tind_query: str, file_name: str = "") -> int:
         """Download the XML results of a search query from TIND."""
-        records_written = self.client.write_search_results_to_file(tind_query, file_name)
+        records_written = self.client.write_search_results_to_file(
+            tind_query, file_name
+        )
         return int(records_written)

@@ -53,13 +53,16 @@ def fetch_images():
         record_ids: list[str] = []
         records: dict[str, list[str]] = {}
 
-        with csv_path.open('r', encoding='utf-8') as csv_file:
+        with csv_path.open("r", encoding="utf-8") as csv_file:
             reader = csv.reader(csv_file)
             for row in reader:
                 record_ids.append(row[0])
                 records[row[0]] = row
-        return {"record_ids": record_ids[1:], "records": records,
-                "original_run_id": original_run_id}
+        return {
+            "record_ids": record_ids[1:],
+            "records": records,
+            "original_run_id": original_run_id,
+        }
 
     @task
     def load_record_ids(processed: dict[str, List[str] | str]) -> List[str]:
@@ -67,8 +70,9 @@ def fetch_images():
         return processed["record_ids"]
 
     @task
-    def load_records(processed: dict[str, List[str] | str | dict[str, list[str]]])\
-            -> dict[str, list[str]]:
+    def load_records(
+        processed: dict[str, List[str] | str | dict[str, list[str]]],
+    ) -> dict[str, list[str]]:
         """Load the records from the to_process job."""
         return processed["records"]
 
@@ -76,11 +80,14 @@ def fetch_images():
     def fetch_image_to_record_directory(orig_run_id: str, tind_id: str) -> RunStatus:
         """Fetch an image from TIND to the target record's storage directory."""
         try:
-            client = FetchTind(orig_run_id)
+            client = FetchTind.from_connection(orig_run_id, conn="tind_default")
             filemd = client.get_first_file_metadata(tind_id)
             if not filemd.get("mime") in SUPPORTED_IMAGE_TYPES:
-                return RunStatus(tind_id=tind_id, path="",
-                                 status=f"skipped: Unsupported file type {filemd.get('mime')}")
+                return RunStatus(
+                    tind_id=tind_id,
+                    path="",
+                    status=f"skipped: Unsupported file type {filemd.get('mime')}",
+                )
 
             target_width = width = filemd.get("width", 0)
             target_height = height = filemd.get("height", 0)
@@ -130,17 +137,18 @@ def fetch_images():
         return RunStatus(tind_id=tind_id, status="fetched", path=path)
 
     @task(outlets=[fetched_csv])
-    def write_status_to_fetched_csv(orig_run_id: str, records: dict[str, list[str]],
-                                    statuses: List[RunStatus]) -> None:
+    def write_status_to_fetched_csv(
+        orig_run_id: str, records: dict[str, list[str]], statuses: List[RunStatus]
+    ) -> None:
         """Write the status of processed records to a CSV file."""
         context = get_current_context()
 
-        fetched_path = run_dir(orig_run_id) / 'fetched.csv'
-        with fetched_path.open('w', encoding='utf-8') as csv_file:
+        fetched_path = run_dir(orig_run_id) / "fetched.csv"
+        with fetched_path.open("w", encoding="utf-8") as csv_file:
             writer = csv.writer(csv_file)
-            writer.writerow((*records['Record ID'], 'Image Path'))
+            writer.writerow((*records["Record ID"], "Image Path"))
 
-            status_col = records['Record ID'].index('Status')
+            status_col = records["Record ID"].index("Status")
 
             for status in statuses:
                 record = [*records[status[0]], *status[2:]]
