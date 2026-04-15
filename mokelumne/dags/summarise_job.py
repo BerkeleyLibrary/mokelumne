@@ -19,7 +19,7 @@ FILENAME_TEMPLATE: str = 'imagedesc_%s_{timestamp}.csv'
 """The template for the generated filenames."""
 
 
-@dag(schedule=[processed_csv])
+@dag(schedule=[processed_csv], catchup=False, tags=["batch-image", "csv", "summary"])
 def summarise_job():
     """Summarise the DAG runs for the job."""
 
