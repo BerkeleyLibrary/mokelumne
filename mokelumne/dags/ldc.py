@@ -4,7 +4,10 @@ from __future__ import annotations
 import logging
 import re
 
+import mechanize
 import requests
+
+from requests.cookies import RequestsCookieJar, cookiejar_from_dict
 
 from airflow.sdk import BaseHook, Param, dag, get_current_context, task
 from airflow.sdk.exceptions import AirflowFailException
@@ -14,35 +17,41 @@ from mokelumne.util.storage import run_dir
 
 logger = logging.getLogger(__name__)
 
+    #     return br
 @dag(
     schedule=None,
     catchup=False,
-    params={"ldc_corpus": Param("", type="string")},
+    params={
+        "ldc_corpus": Param("", description="LDC Catalog ID", type="string")
+    },
 )
 def ldc_fetcher():
 
-    @task
-    def get_ldc_tokens() -> dict[str, str]:
+    def authed_browser() -> mechanize.Browser:
         conn = BaseHook.get_connection("ldc")
-        login_url = f"{conn.schema}://{conn.host}/login"
-        credentials = {
-            "spree_user[login]": conn.login, 
-            "spree_user[password]": conn.password
-        }
-        r = requests.post(login_url, data=credentials)
-        return r.cookies.get_dict()
-
+        br = mechanize.Browser()
+        br.set_debug_redirects(True)
+        br.set_debug_http(True)
+        br.set_handle_robots(False)
+        br.open(f"{conn.schema}://{conn.host}/login")
+        br.select_form(nr=0)
+        br["spree_user[login]"] = conn.login
+        br["spree_user[password]"] = conn.login
+        br.submit()
+        return br
 
     @task
-    def get_available_ldc_corpora(tokens) -> dict[str, dict[str, str]]:
-        corpora = {}
+    def get_available_ldc_corpora() -> dict[str, dict[str, str]]:
         conn = BaseHook.get_connection("ldc")
         datasets_url = f"{conn.schema}://{conn.host}/organization/downloads"
-        r = requests.get(datasets_url, cookies=tokens)
-        page = bs(r.text, 'html.parser')
+        br = authed_browser()
+        corpora_html = br.open(datasets_url)
+        page = bs(corpora_html.read(), 'html.parser')  # pyright: ignore[reportOptionalMemberAccess]
         corpora_table = page.find(id='user-corpora-download-table')
+        logger.debug(page.get_text())
         corpora_rows = corpora_table.tbody.find_all("tr")
 
+        corpora = {}
         for c in corpora_rows:
             data = c.find_all('td')
             cid = data[0].get_text(strip=True)
@@ -60,7 +69,8 @@ def ldc_fetcher():
         return corpora
 
     @task
-    def fetch_ldc_corpus(tokens, available_corpora):
+    def fetch_ldc_corpus(available_corpora):
+        br = authed_browser()
         context = get_current_context()
         conn = BaseHook.get_connection("ldc")
         corpus = context["params"].get("ldc_corpus", "")
@@ -73,9 +83,8 @@ def ldc_fetcher():
                 f"Requested LDC corpus {corpus} not found in available corpora"
             )
     
-    tokens = get_ldc_tokens()
-    available_corpora = get_available_ldc_corpora(tokens)
-    fetch_ldc_corpus(tokens, available_corpora)
+    available_corpora = get_available_ldc_corpora()
+    fetch_ldc_corpus(available_corpora)
 
     
     # @task
