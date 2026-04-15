@@ -64,6 +64,7 @@ x-airflow-common: &airflow-common
     AIRFLOW__CORE__EXECUTION_API_SERVER_URL: 'http://airflow-apiserver:8080/execution/'
     AIRFLOW__LOGGING__LOGGING_LEVEL: DEBUG
     AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
+    AIRFLOW_CONN_SMTP_DEFAULT: 'smtp://mailpit:1025?disable_ssl=true&disable_tls=true'
   volumes:
     - ./:/opt/airflow
     - ./artifacts:/home/airflow/artifacts
@@ -272,6 +273,11 @@ services:
     ports:
       - 127.0.0.1:6379:6379
     restart: always
+
+  mailpit:
+    image: axllent/mailpit
+    ports:
+      - 127.0.0.1:8025:8025
 
 volumes:
   postgres-db-volume:
