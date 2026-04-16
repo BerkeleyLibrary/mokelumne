@@ -9,7 +9,7 @@ import requests
 
 from requests.cookies import RequestsCookieJar, cookiejar_from_dict
 
-from airflow.sdk import BaseHook, Param, dag, get_current_context, task
+from airflow.sdk import Connection, Param, dag, get_current_context, task
 from airflow.sdk.exceptions import AirflowFailException
 from bs4 import BeautifulSoup as bs
 
@@ -17,7 +17,6 @@ from mokelumne.util.storage import run_dir
 
 logger = logging.getLogger(__name__)
 
-    #     return br
 @dag(
     schedule=None,
     catchup=False,
@@ -28,12 +27,12 @@ logger = logging.getLogger(__name__)
 def ldc_fetcher():
 
     def authed_browser() -> mechanize.Browser:
-        conn = BaseHook.get_connection("ldc")
+        conn = Connection.get("ldc")
         br = mechanize.Browser()
         br.set_debug_redirects(True)
         br.set_debug_http(True)
         br.set_handle_robots(False)
-        br.open(f"{conn.schema}://{conn.host}/login")
+        br.open(f"{conn.host}/login")
         br.select_form(nr=0)
         br["spree_user[login]"] = conn.login
         br["spree_user[password]"] = conn.login
@@ -42,12 +41,12 @@ def ldc_fetcher():
 
     @task
     def get_available_ldc_corpora() -> dict[str, dict[str, str]]:
-        conn = BaseHook.get_connection("ldc")
-        datasets_url = f"{conn.schema}://{conn.host}/organization/downloads"
+        conn = Connection.get("ldc")
+        datasets_url = f"{conn.host}/organization/downloads"
         br = authed_browser()
         corpora_html = br.open(datasets_url)
         page = bs(corpora_html.read(), 'html.parser')  # pyright: ignore[reportOptionalMemberAccess]
-        corpora_table = page.find(id='user-corpora-download-table')
+        corpora_table = page.find(id_='user-corpora-download-table')
         logger.debug(page.get_text())
         corpora_rows = corpora_table.tbody.find_all("tr")
 
@@ -72,15 +71,17 @@ def ldc_fetcher():
     def fetch_ldc_corpus(available_corpora):
         br = authed_browser()
         context = get_current_context()
-        conn = BaseHook.get_connection("ldc")
-        corpus = context["params"].get("ldc_corpus", "")
+        conn = Connection.get("ldc")
+        corpus = context["params"].get("ldc_corpus")
         if corpus in available_corpora:
+            dl_uri = f"{conn.host}/{available_corpora[corpus].get("download_link")}"
             logger.info(
-                f"TODO: fetch {conn.schema}://{conn.host}/{corpus.get("download_link")}"
+                f"TODO: fetch {dl_uri} for corpus {corpus}"
             )
         else:
             raise AirflowFailException(
-                f"Requested LDC corpus {corpus} not found in available corpora"
+                f"LDC corpus {corpus} not found in available corpora: ",
+                repr(available_corpora)
             )
     
     available_corpora = get_available_ldc_corpora()
