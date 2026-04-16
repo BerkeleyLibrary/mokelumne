@@ -521,6 +521,7 @@ greenlet==3.3.2 \
     --hash=sha256:e3cb43ce200f59483eb82949bf1835a99cf43d7571e900d7c8d5c62cdf25d2f9
     # via
     #   greenback
+    #   playwright
     #   sqlalchemy
 grpcio==1.80.0 \
     --hash=sha256:00168469238b022500e486c1c33916acf2f2a9b2c022202cf8a1885d2e3073c1 \
@@ -1398,6 +1399,18 @@ pendulum==3.2.0 \
     # via
     #   apache-airflow-core
     #   apache-airflow-task-sdk
+playwright==1.58.0 \
+    --hash=sha256:185e0132578733d02802dfddfbbc35f42be23a45ff49ccae5081f25952238117 \
+    --hash=sha256:1e03be090e75a0fabbdaeab65ce17c308c425d879fa48bb1d7986f96bfad0b99 \
+    --hash=sha256:32ffe5c303901a13a0ecab91d1c3f74baf73b84f4bedbb6b935f5bc11cc98e1b \
+    --hash=sha256:70c763694739d28df71ed578b9c8202bb83e8fe8fb9268c04dd13afe36301f71 \
+    --hash=sha256:8f9999948f1ab541d98812de25e3a8c410776aa516d948807140aff797b4bffa \
+    --hash=sha256:96e3204aac292ee639edbfdef6298b4be2ea0a55a16b7068df91adac077cc606 \
+    --hash=sha256:a2bf639d0ce33b3ba38de777e08697b0d8f3dc07ab6802e4ac53fb65e3907af8 \
+    --hash=sha256:c95568ba1eda83812598c1dc9be60b4406dffd60b149bc1536180ad108723d6b
+    # via
+    #   mokelumne (pyproject.toml)
+    #   pytest-playwright
 pluggy==1.6.0 \
     --hash=sha256:7dcc130b76258d33b90f61b658791dede3486c3e6bfb003ee5c9bfb396dd22f3 \
     --hash=sha256:e920276dd6813095e9377c0bc5566d94c932c33b27a3e3945d8389c374dd4746
@@ -1595,6 +1608,10 @@ pydantic-settings==2.13.1 \
     --hash=sha256:b4c11847b15237fb0171e1462bf540e294affb9b86db4d9aa5c01730bdbe4025 \
     --hash=sha256:d56fd801823dbeae7f0975e1f8c8e25c258eb75d278ea7abb5d9cebb01b56237
     # via fastapi
+pyee==13.0.1 \
+    --hash=sha256:0b931f7c14535667ed4c7e0d531716368715e860b988770fc7eb8578d1f67fc8 \
+    --hash=sha256:af2f8fede4171ef667dfded53f96e2ed0d6e6bd7ee3bb46437f77e3b57689228
+    # via playwright
 pygments==2.20.0 \
     --hash=sha256:6757cd03768053ff99f3039c1a36d6c0aa0b263438fcab17520b30a303a82b5f \
     --hash=sha256:81a9e26dd42fd28a23a2d169d86d7ac03b46e2f8b59ed4698fb4785f946d0176
@@ -1621,6 +1638,17 @@ pymarc==5.3.1 \
 pytest==9.0.3 \
     --hash=sha256:2c5efc453d45394fdd706ade797c0a81091eccd1d6e4bccfcd476e2b8e0ab5d9 \
     --hash=sha256:b86ada508af81d19edeb213c681b1d48246c1a91d304c6c81a427674c17eb91c
+    # via
+    #   mokelumne (pyproject.toml)
+    #   pytest-base-url
+    #   pytest-playwright
+pytest-base-url==2.1.0 \
+    --hash=sha256:02748589a54f9e63fcbe62301d6b0496da0d10231b753e950c63e03aee745d45 \
+    --hash=sha256:3ad15611778764d451927b2a53240c1a7a591b521ea44cebfe45849d2d2812e6
+    # via pytest-playwright
+pytest-playwright==0.7.2 \
+    --hash=sha256:247b61123b28c7e8febb993a187a07e54f14a9aa04edc166f7a976d88f04c770 \
+    --hash=sha256:8084e015b2b3ecff483c2160f1c8219b38b66c0d4578b23c0f700d1b0240ea38
     # via mokelumne (pyproject.toml)
 python-daemon==3.1.2 \
     --hash=sha256:b906833cef63502994ad48e2eab213259ed9bb18d54fa8774dcba2ff7864cec6 \
@@ -1648,7 +1676,9 @@ python-multipart==0.0.24 \
 python-slugify==8.0.4 \
     --hash=sha256:276540b79961052b66b7d116620b36518847f52d5fd9e3a70164fc8c50faa6b8 \
     --hash=sha256:59202371d1d05b54a9e7720c5e038f928f45daaffe41dd10822f3907b937c856
-    # via apache-airflow-core
+    # via
+    #   apache-airflow-core
+    #   pytest-playwright
 pyyaml==6.0.3 \
     --hash=sha256:00c4bdeba853cc34e7dd471f16b4114f4162dc03e6b7afcc2128711f0eca823c \
     --hash=sha256:0150219816b6a1fa26fb4699fb7daa9caf09eb1999f3b70fb6e786805e80375a \
@@ -1741,6 +1771,7 @@ requests==2.33.1 \
     #   apache-airflow-core
     #   langsmith
     #   opentelemetry-exporter-otlp-proto-http
+    #   pytest-base-url
     #   python-tind-client
     #   requests-toolbelt
 requests-toolbelt==1.0.0 \
@@ -2133,6 +2164,7 @@ typing-extensions==4.15.0 \
     #   pydantic
     #   pydantic-core
     #   pydantic-extra-types
+    #   pyee
     #   referencing
     #   rich-toolkit
     #   sqlalchemy

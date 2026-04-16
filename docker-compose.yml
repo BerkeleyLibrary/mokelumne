@@ -237,6 +237,12 @@ services:
     volumes:
       - ./keycloak/config:/config
 
+  playwright:
+    build: ./playwright
+    ports:
+      - 127.0.0.1:3000:3000
+    restart: unless-stopped
+
   postgres:
     environment:
       POSTGRES_USER: airflow

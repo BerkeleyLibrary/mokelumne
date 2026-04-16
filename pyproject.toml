@@ -26,6 +26,10 @@ license = "MIT"
 [project.optional-dependencies]
 test = [
     "pytest",
+    # Keep the playwright client aligned with the minor version
+    # of the playwright service in the Compose file.
+    "playwright ~= 1.58.0",
+    "pytest-playwright",
 ]
 lint = [
     "mypy ~= 1.17.1",
@@ -56,4 +60,14 @@ disable = ["expression-not-assigned"]
 
 [tool.pytest]
 minversion = "9.0"
-addopts = ["-v", "-s", "--junit-xml=artifacts/pytest/airflow_test.xml"]
+addopts = [
+    "-v",
+    "-s",
+    "--junit-xml=artifacts/pytest/airflow_test.xml",
+    "--tracing=retain-on-failure",
+    "--screenshot=only-on-failure",
+    "--output=artifacts/pytest/e2e",
+]
+markers = [
+    "e2e: end-to-end browser tests (require playwright sidecar and running Airflow stack)",
+]

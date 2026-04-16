@@ -53,6 +53,28 @@ Airflow keeps ephemeral information in Redis but persists virtually all state (a
 docker compose down -v --remove-orphans
 ```
 
+## Testing
+
+With the stack running, execute the tests by exec-ing pytest in one of the airflow containers (cli works well). A full rundown of pytest flags is out-of-scope for this README, but here are some common use-cases to get you going:
+
+```sh
+# Run all the tests
+docker compose exec airflow-cli python3 -m pytest
+
+# Run tests with a specific marker
+# Example: Only run the end-to-end (browser) tests
+docker compose exec airflow-cli python3 -m pytest -m e2e
+
+# Run a specific test file / folder
+# Example: Only run examples in the ./tests sub-folder
+docker compose exec airflow-cli python3 -m pytest test/tests
+
+# Run a test by name
+docker compose exec airflow-cli python3 -m pytest -k test_dags_load_with_no_errors
+```
+
+Test results / reports are written to the `./artifacts/pytest` directory.
+
 ## Configuration
 
 Airflow's configuration is propagated by environment variables [defined upstream by Airflow](https://airflow.apache.org/docs/apache-airflow/stable/configurations-ref.html) and that are defined and handled in the base image. You can use a `.env` file or pass them.
