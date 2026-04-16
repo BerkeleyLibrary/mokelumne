@@ -7,6 +7,7 @@ from shutil import copyfile
 from uuid import uuid4
 
 import csv
+import json
 
 from airflow.sdk import dag, task, get_current_context, Asset
 
@@ -43,6 +44,7 @@ def summarise_job():
 
         for csv in ('processed', 'fetched', 'skipped'):
             copyfile(asset_path / f'{csv}.csv', out_path / (template_name % csv))
+        copyfile(asset_path / 'params.json', out_path / 'params.json')
 
         return timestamp
 
@@ -55,6 +57,8 @@ def summarise_job():
         proc_path = collated_path / (template_name % 'processed')
         fetched_path = collated_path / (template_name % 'fetched')
         skipped_path = collated_path / (template_name % 'skipped')
+        with (collated_path / 'params.json').open(encoding='utf-8') as fp:
+            params = json.load(fp)
 
         with skipped_path.open(encoding='utf-8') as skipped:
             skip_count = len(skipped.readlines()) - 1
@@ -76,7 +80,8 @@ def summarise_job():
 
         template_html = f"""
         <html><head><title>Batch image description results</title></head><body>
-        <h1>Batch image description results for query</h1>
+        <h1>Batch image description results</h1>
+        <p>Query: {params['tind_query']}</p>
         <dl>
             <dt><a href="{public_path_to_url(proc_path)}">{proc_count} images processed</a></dt>
             <dd>{proc_count} succeeded, {proc_count - fetch_success} failed</dd>

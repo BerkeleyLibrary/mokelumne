@@ -5,6 +5,7 @@
 DAG that fetches TIND records matching a query and writes them to an XML file.
 """
 from __future__ import annotations
+import json
 import logging
 
 from airflow.sdk import Asset, dag, task, Param, get_current_context
@@ -28,7 +29,7 @@ def fetch_tind_records():
 
     @task
     def validate_params() -> None:
-        """Validate that the tind_query parameter is not empty.
+        """Validate that the tind_query parameter is not empty and serialise params to disk.
 
         :raises AirflowFailException: If the tind_query parameter is empty.
         """
@@ -37,6 +38,9 @@ def fetch_tind_records():
         val = context["params"].get("tind_query", "")
         if not val.strip():
             raise AirflowFailException("Parameter tind_query cannot be empty")
+
+        with (run_dir(context["run_id"]) / 'params.json').open('w', encoding='utf-8') as fp:
+            json.dump(context["params"], fp)
 
     @task(outlets=[records_xml])
     def write_query_results_to_xml() -> int:
