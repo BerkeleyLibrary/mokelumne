@@ -38,3 +38,11 @@ RUN pip install --no-cache-dir --no-deps .
 # Fail the build if any installed package has unsatisfied dependencies.
 # This catches conflicts between our pins and the base image's packages.
 RUN pip check
+
+# WORKDIR influences the value of $HOME in at least Podman.
+# Since Python's `getuserbase()` uses $HOME/.local, this means that we fail
+# the airflow-init task in Podman because $HOME/.local does not contain any
+# packages.  Setting PYTHONUSERBASE explicitly won't harm Docker workloads,
+# and is arguably the correct thing to do anyway since the value of $HOME
+# is not always guaranteed in Docker either.
+ENV PYTHONUSERBASE=${AIRFLOW_USER_HOME_DIR}/.local
