@@ -70,4 +70,5 @@ addopts = [
 ]
 markers = [
     "e2e: end-to-end browser tests (require playwright sidecar and running Airflow stack)",
+    "unit: fast isolated unit tests with no external dependencies",
 ]

@@ -10,8 +10,6 @@ from playwright.sync_api import Page, expect
 
 from .conftest import airflow_login_url, airflow_url
 
-pytestmark = pytest.mark.e2e
-
 
 # Matches the main div of the homepage. Absent from the login page.
 HOMEPAGE_MARKER = '[data-testid="main-content"]'

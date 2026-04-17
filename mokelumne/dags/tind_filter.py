@@ -11,7 +11,7 @@ from pymarc.marcxml import map_xml
 from airflow.sdk import dag, task, Asset, get_current_context
 
 from mokelumne.batch_image.assets import records_xml, to_process_csv, skipped_csv
-from mokelumne.util.tind_csv_writer import TindCsvWriter
+from mokelumne.util.tind_csv_writer import TindCsvWriter, is_single_image_record
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ def tind_filter():
         xml_file = Path(events[0].asset.uri.replace("file://", ""))
         batch_dir = xml_file.parent
 
-        with TindCsvWriter(batch_dir) as csv_writer:
+        with TindCsvWriter(batch_dir, is_single_image_record) as csv_writer:
             map_xml(csv_writer.process_tind_record, xml_file)
 
         logger.info(
