@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
     catchup=False,
     params={
         "tind_query": Param(
+            title="Tind query",
             type="string",
             description_md="""[Search query](https://digicoll.lib.berkeley.edu/docs/search-guide/)
 for the Tind [Search API](https://docs.tind.io/article/cmi2ci71w7-overview-of-the-search-api).
@@ -33,6 +34,7 @@ This is equivalent to the _p_ (pattern) parameter in the Tind query syntax.""",
         ),
         "langfuse_prompt_name": Param(
             "image-description",
+            title="Prompt name",
             type="string",
             section="Prompt configuration",
             description_md="""The name of the
@@ -41,19 +43,32 @@ to generate image descriptions."""
         ),
         "langfuse_prompt_version_or_label": Param(
             "production",
+            title="Version or label",
             type=["string", "integer"],
             section="Prompt configuration",
             examples=["production", "staging", "latest", 1, 2, 3],
             description_md="""
 The [version or label](https://langfuse.com/docs/prompt-management/features/prompt-version-control)
 for the Langfuse prompt used to generate image descriptions. You likely want to
-keep this as **production** unless you are testing a different prompt."""
+keep this as **production** unless you are testing prompts."""
         ),
     },
     tags=["tind", "records", "batch-image", "xml"]
 )
 def fetch_tind_records():
     """Fetch TIND records matching a query and write them to an XML file."""
+
+    @task
+    def validate_params() -> None:
+        """Validate that the tind_query parameter is not empty.
+
+        :raises AirflowFailException: If the tind_query parameter is empty.
+        """
+
+        context = get_current_context()
+        val = context["params"].get("tind_query", "")
+        if not val.strip():
+            raise AirflowFailException("Parameter tind_query cannot be empty")
 
     @task(outlets=[records_xml])
     def write_query_results_to_xml() -> int:
@@ -84,7 +99,7 @@ def fetch_tind_records():
 
         return records_written
 
-    write_query_results_to_xml()  # pyright: ignore[reportUnusedExpression]
+    validate_params() >> write_query_results_to_xml()  # pyright: ignore[reportUnusedExpression]
 
 
 fetch_tind_records()
