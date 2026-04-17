@@ -7,6 +7,8 @@ DAG that fetches TIND records matching a query and writes them to an XML file.
 from __future__ import annotations
 import logging
 
+from os import environ as ENV
+
 from airflow.sdk import Asset, dag, task, Param, get_current_context
 from airflow.exceptions import AirflowFailException, AirflowSkipException
 
@@ -20,7 +22,36 @@ logger = logging.getLogger(__name__)
 @dag(
     schedule=None,
     catchup=False,
-    params={"tind_query": Param("", type="string")},
+    params={
+        "tind_query": Param(
+            type="string",
+            description_md="""[Search query](https://digicoll.lib.berkeley.edu/docs/search-guide/)
+for the Tind [Search API](https://docs.tind.io/article/cmi2ci71w7-overview-of-the-search-api).
+This is equivalent to the _p_ (pattern) parameter in the Tind query syntax.""",
+            examples=[
+                "collection:[Ladies Relief Society]",
+                "\"ice cream\" AND 336__a:Image"
+            ]
+        ),
+        "langfuse_prompt_name": Param(
+            "image-description",
+            type="string",
+            section="Prompt configuration",
+            description_md="""The name of the
+[Langfuse prompt](https://langfuse.com/docs/prompt-management/overview) used
+to generate image descriptions."""
+        ),
+        "langfuse_prompt_version_or_label": Param(
+            "production",
+            type=["string", "integer"],
+            section="Prompt configuration",
+            examples=["production", "staging", "latest", 1, 2, 3],
+            description_md="""
+The [version or label](https://langfuse.com/docs/prompt-management/features/prompt-version-control)
+for the Langfuse prompt used to generate image descriptions. You likely want to
+keep this as **production** unless you are testing a different prompt."""
+        ),
+    },
     tags=["tind", "records", "batch-image", "xml"]
 )
 def fetch_tind_records():
