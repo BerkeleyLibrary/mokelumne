@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import base64
 import csv
+import json
 import logging
 import mimetypes
 import os
@@ -37,8 +38,16 @@ def generate_image_descriptions():
     @task()
     def get_prompt() -> dict[str, str]:
         """Fetch a prompt from Langfuse to use for generating image descriptions."""
+        context = get_current_context()
+        asset = context['triggering_asset_events'][fetched_csv][0].asset
+        asset_path = Path(asset.uri.replace("file://", "")).parent
+        with (asset_path / 'params.json').open(encoding='utf-8') as fp:
+            params = json.load(fp)
 
-        prompt = langfuse.get_prompt()
+        prompt = langfuse.get_prompt(
+            name=params["langfuse_prompt_name"],
+            version_or_label=params["langfuse_prompt_version_or_label"],
+        )
 
         return {"prompt": prompt.prompt, "version": prompt.version}
 
