@@ -4,12 +4,11 @@ from datetime import datetime, UTC
 from itertools import filterfalse
 from pathlib import Path
 from shutil import copyfile
-from uuid import uuid4
 
 import csv
 import json
 
-from airflow.sdk import dag, task, get_current_context, Asset
+from airflow.sdk import dag, task, get_current_context, Asset, DAG
 
 from mokelumne.batch_image.assets import processed_csv
 from mokelumne.batch_image.assets import public_dir as public_dir_asset
@@ -25,10 +24,11 @@ def summarise_job():
     """Summarise the DAG runs for the job."""
 
     @task
-    def generate_id() -> str:
-        """Generate a URL-safe directory for collated output."""
-        path = public_dir() / str(uuid4())
-        path.mkdir()  # We don't exist_ok=True because it should be unique.
+    def generate_id(dag: DAG, run_id: str) -> str:
+        """Creates the local storage path for the current DAG run"""
+        path = public_dir() / dag.dag_id / run_id
+        path.mkdir(exist_ok=True, parents=True)
+        # Cast to str because AirFlow can't serialize Path
         return str(path)
 
     @task(inlets=[processed_csv])

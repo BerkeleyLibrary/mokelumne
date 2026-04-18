@@ -10,6 +10,28 @@ class OIDCSecurityManager(FabAirflowSecurityManagerOverride):
     Provides a Security Manager implementation for CalNet/Keycloak.
     """
 
+    # Extra permissions granted to default roles on top of Airflow's built-in
+    # ROLE_CONFIGS. Re-applied every time sync_roles() runs (on api-server
+    # startup and `airflow sync-perm`), so these survive DB rebuilds.
+    #
+    # Plugins:can_read lets non-Op users load /api/v2/plugins, which the React
+    # UI calls to discover external_views (e.g. the DAG-Run "Files" tab).
+    EXTRA_ROLE_PERMS: dict[str, list[tuple[str, str]]] = {
+        "Viewer": [("can_read", "Plugins")],
+        "User": [("can_read", "Plugins")],
+    }
+
+    def sync_roles(self) -> None:
+        super().sync_roles()
+        for role_name, perms in self.EXTRA_ROLE_PERMS.items():
+            role = self.find_role(role_name)
+            if role is None:
+                continue
+            for action_name, resource_name in perms:
+                self.add_permission_to_role(
+                    role, self.create_permission(action_name, resource_name)
+                )
+
     def get_oauth_user_info(self, provider, response):
         """
         Extracts userinfo from Keycloak/Calnet OIDC response

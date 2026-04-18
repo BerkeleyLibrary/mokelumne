@@ -43,5 +43,5 @@ def public_path_to_url(public_path: Path) -> str:
     HTTPS URL."""
     top = public_dir()
     location = public_path.relative_to(top)
-    url_base = os.environ.get("MOKELUMNE_PUBLIC_URL", "https://mokelumne-assets.ucblib.org/")
+    url_base = os.environ.get("MOKELUMNE_PUBLIC_URL", "http://localhost:8080/public/")
     return f"{url_base}{str(location)}"
