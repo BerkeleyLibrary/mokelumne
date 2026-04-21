@@ -26,6 +26,7 @@ license = "MIT"
 [project.optional-dependencies]
 test = [
     "pytest",
+    "pytest-cov",
     # Keep the playwright client aligned with the minor version
     # of the playwright service in the Compose file.
     "playwright ~= 1.58.0",
@@ -67,6 +68,9 @@ addopts = [
     "--tracing=retain-on-failure",
     "--screenshot=only-on-failure",
     "--output=artifacts/pytest/e2e",
+    "--cov-report=term",
+    "--cov-report=html:artifacts/coverage",
+    "--cov=mokelumne",
 ]
 markers = [
     "e2e: end-to-end browser tests (require playwright sidecar and running Airflow stack)",

@@ -24,16 +24,6 @@ class FetchTind:
         record_path = record_dir(self.run_id, tind_id)
         return self.client.fetch_file(download_url, str(record_path))
 
-    def save_tind_ids_file(self, ids: list[str]) -> None:
-        """Save matching TIND IDs to a CSV file."""
-        file_path = run_dir(self.run_id) / "ids.csv"
-
-        with file_path.open("w", newline="", encoding="utf-8") as csv_file:
-            writer = csv.writer(csv_file)
-            writer.writerow(["TIND_ID"])
-            for tind_id in ids:
-                writer.writerow([tind_id])
-
     def write_query_results_to_xml(self, tind_query: str, file_name: str = "") -> int:
         """Download the XML results of a search query from TIND."""
         records_written = self.client.write_search_results_to_file(tind_query, file_name)

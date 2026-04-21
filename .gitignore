@@ -12,3 +12,4 @@ __pycache__/
 config
 airflow.cfg
 *.egg-info
+.coverage
