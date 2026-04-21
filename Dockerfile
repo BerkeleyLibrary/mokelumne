@@ -25,7 +25,6 @@ WORKDIR $AIRFLOW_HOME
 # hashes on git-sourced packages.
 COPY --chown=airflow:0 requirements.txt ./
 RUN pip install --no-cache-dir --require-hashes -r requirements.txt
-RUN pip install --no-cache-dir git+https://github.com/BerkeleyLibrary/python-tind-client.git@0.2.1
 
 # Install the project itself without pulling dependencies.
 COPY --chown=airflow:0 pyproject.toml ./

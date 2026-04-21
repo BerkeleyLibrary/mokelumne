@@ -12,8 +12,7 @@ When adding or changing dependencies, regenerate the pins with [uv](https://docs
 
 ```sh
 uv pip compile pyproject.toml --extra test -c constraints.txt \
-  --no-emit-package python-tind-client --generate-hashes \
-  -o requirements.txt
+  --generate-hashes -o requirements.txt
 ```
 
 `constraints.txt` contains upper bounds derived from the base Airflow Docker image to prevent version conflicts with pre-installed packages. Regenerate it when bumping `AIRFLOW_VERSION`:
@@ -21,8 +20,6 @@ uv pip compile pyproject.toml --extra test -c constraints.txt \
 ```sh
 docker run --rm --entrypoint python apache/airflow:<version> -m pip freeze
 ```
-
-`python-tind-client` is excluded from `requirements.txt` because `pip` cannot verify hashes on git-sourced packages. It is installed separately in the Dockerfile.
 
 ## Development
 
