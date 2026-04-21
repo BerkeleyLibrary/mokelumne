@@ -85,6 +85,9 @@ def generate_image_descriptions():
             encoded = base64.b64encode(Path(record["Image Path"]).read_bytes()).decode(
                 "utf-8"
             )
+            logger.info(
+                f"Processing {record['Record ID']} with file {record['Image Path']} ..."
+            )
 
             # we could make this a constant or env var.
             if len(encoded) > 3.75 * 1024 * 1024:
