@@ -10,7 +10,7 @@ dependencies = [
     "langchain[aws]",
     "langfuse",
     "pymarc",
-    "python-tind-client @ git+https://github.com/BerkeleyLibrary/python-tind-client.git@0.2.1",
+    "python-tind-client",
 ]
 requires-python = ">= 3.12.12, < 3.14"
 authors = [
