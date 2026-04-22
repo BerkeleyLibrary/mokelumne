@@ -75,8 +75,12 @@ def summarise_job():
 
         with proc_path.open(encoding='utf-8') as processed:
             reader = csv.reader(processed)
-            _header = next(reader)
-            proc_count = len(list(reader))
+            header = next(reader)
+            all_processed = list(reader)
+            proc_count = len(all_processed)
+            status_col = header.index('Status')
+            proc_failures = len(list(filterfalse(lambda x: x == 'success',
+                                                 (row[status_col] for row in all_processed))))
 
         template_html = f"""
         <html><head><title>Batch image description results</title></head><body>
@@ -84,7 +88,7 @@ def summarise_job():
         <p>Query: {params['tind_query']}</p>
         <dl>
             <dt><a href="{public_path_to_url(proc_path)}">{proc_count} images processed</a></dt>
-            <dd>{proc_count} succeeded, {proc_count - fetch_success} failed</dd>
+            <dd>{proc_count - proc_failures} succeeded, {proc_failures} failed</dd>
             <dt><a href="{public_path_to_url(fetched_path)}">{fetch_count} images fetched</a></dt>
             <dd>{fetch_success} succeeded, {fetch_failures} failed</dd>
             <dt><a href="{public_path_to_url(skipped_path)}">{skip_count} records skipped</a></dt>
