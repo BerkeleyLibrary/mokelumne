@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 RunStatus = namedtuple('RunStatus', ('tind_id', 'status', 'path'))
 
+SUPPORTED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
 
 @dag(schedule=[to_process_csv], catchup=False, tags=["tind", "fetch", "batch-image"])
 def fetch_images():
@@ -58,11 +59,17 @@ def fetch_images():
         """Fetch an image from TIND to the target record's storage directory."""
         try:
             client = FetchTind(orig_run_id)
-            path = client.download_image_file(tind_id)
+            filemd = client.client.fetch_file_metadata(tind_id)
+            if filemd[0].get("mime") in SUPPORTED_IMAGE_TYPES:
+               path = client.download_image_file(tind_id)
+               status = "fetched"
+            else:
+                path = ""
+                status = f"skipped: Unsupported file type {filemd[0].get('mime')}"
         except Exception as ex:  # pylint: disable=broad-exception-caught
             return RunStatus(tind_id=tind_id, status=f'failed: {str(ex)}', path='')
 
-        return RunStatus(tind_id=tind_id, status='fetched', path=path)
+        return RunStatus(tind_id=tind_id, status=status, path=path)
 
     @task(outlets=[fetched_csv])
     def write_status_to_fetched_csv(orig_run_id: str, records: dict[str, list[str]],
