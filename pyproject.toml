@@ -12,7 +12,7 @@ dependencies = [
     "pymarc",
     "python-tind-client",
 ]
-requires-python = ">= 3.13"
+requires-python = ">= 3.13, < 3.15"
 authors = [
     {name = "Anna Wilcox"},
     {name = "maría a. matienzo"},
