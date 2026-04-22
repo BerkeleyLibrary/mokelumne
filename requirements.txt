@@ -33,24 +33,24 @@ anyio==4.13.0 \
     #   httpx
     #   starlette
     #   watchfiles
-apache-airflow==3.2.0 \
-    --hash=sha256:06f644d874d629903a2a04accd4c240e1ef703a2bbc14832927cf30bb56ea381 \
-    --hash=sha256:6758333a148aba68df48b9697d15733ff5cf53f50bb39642f15c50b2db203d1f
+apache-airflow==3.2.1 \
+    --hash=sha256:0369c10195401c3b6866f81c03a98c97395c3ceb10fe8e1498ef0bb748b11e8d \
+    --hash=sha256:40ad5acdfa4711499815015691e020e4a849883efc32b8473525ff66aeaaeca7
     # via
     #   apache-airflow-providers-common-compat
     #   apache-airflow-providers-common-io
     #   apache-airflow-providers-common-sql
     #   apache-airflow-providers-smtp
     #   apache-airflow-providers-standard
-apache-airflow-core==3.2.0 \
-    --hash=sha256:187e944d5f51452659a492d5c6449e7f6d2ad22ffdb5813e9206f1c95881680e \
-    --hash=sha256:b04b35b1224549a20786aab37af73e1608e67830fda61341a3fcd7480f13192b
+apache-airflow-core==3.2.1 \
+    --hash=sha256:737688a2df62b4827419161fccfb6c90e15d5eb4254c06a52014434d354931c1 \
+    --hash=sha256:9f13bb8bde8ab5e4910c5fc2d1fd637af488f56e4c32c062c1de6dc83593a1b5
     # via
     #   apache-airflow
     #   apache-airflow-task-sdk
-apache-airflow-providers-common-compat==1.14.2 \
-    --hash=sha256:7164b4430fb69a692d45f08983d0c42c06d6e47409e6e114d32b0262d2fed45a \
-    --hash=sha256:f4c848cd8a1f5b6fb2309dff30fbe0627d56f914f570c20c9e3b8e147cc43c1a
+apache-airflow-providers-common-compat==1.14.3 \
+    --hash=sha256:1ecba0c30b4ac2c40983e9aa627927576f49e8d466fcabdf464d1f7c6e8c54f7 \
+    --hash=sha256:269f48d21ff275d02c7db617d9e477aee6ad8eab39690f18b7342f1f3eba073b
     # via
     #   apache-airflow-core
     #   apache-airflow-providers-common-io
@@ -73,9 +73,9 @@ apache-airflow-providers-standard==1.12.2 \
     --hash=sha256:16160df2ee4d22c6b721710b8f346e5ea545e5119f805da387315655597b2d5b \
     --hash=sha256:6db3b8506a572df70051dae3698755d440ae28fc7265060436a2af241f61f6b7
     # via apache-airflow-core
-apache-airflow-task-sdk==1.2.0 \
-    --hash=sha256:a20b98493905ad879ec3f806a0b92da3f1f7fb95e1f196c0ff1985e6286aad4e \
-    --hash=sha256:d2c4d173388f751e1d900a3f5e67fea3518822b63dd20b60a1bdbf92cdf96e8c
+apache-airflow-task-sdk==1.2.1 \
+    --hash=sha256:2816d191b0777034e69cc5a73b81a8cacaa77f6b95f6daa48f1563339a14c6f1 \
+    --hash=sha256:ac9400cb477473a9d9eb6a5b50d2979fd1b0b50f96c6d29b4d0e924defc6179c
     # via
     #   mokelumne (pyproject.toml)
     #   apache-airflow
@@ -109,15 +109,15 @@ backoff==2.2.1 \
     --hash=sha256:03f829f5bb1923180821643f8753b0502c3b682293992485b0eef2807afa5cba \
     --hash=sha256:63579f9a0628e06278f7e47b7d7d5b6ce20dc65c5e96a6f3ca99a6adca0396e8
     # via langfuse
-boto3==1.42.70 \
-    --hash=sha256:18a108c4d5df89a200b3949de0d39c0879b100c455e3229ea38275dd392db0f4 \
-    --hash=sha256:d060b0d83d2832e403671b9a895e73c3b025df8bb5896d89e401b0678705aac4
+boto3==1.42.84 \
+    --hash=sha256:4d03ad3211832484037337292586f71f48707141288d9ac23049c04204f4ab03 \
+    --hash=sha256:6a84b3293a5d8b3adf827a54588e7dcffcf0a85410d7dadca615544f97d27579
     # via
     #   -c constraints.txt
     #   langchain-aws
-botocore==1.42.70 \
-    --hash=sha256:54ed9d25f05f810efd22b0dfda0bb9178df3ad8952b2e4359e05156c9321bd3c \
-    --hash=sha256:9ee17553b7febd1a0c1253b3b62ab5d79607eb6163c8fb943470a8893c31d4fa
+botocore==1.42.84 \
+    --hash=sha256:15f3fe07dfa6545e46a60c4b049fe2bdf63803c595ae4a4eec90e8f8172764f3 \
+    --hash=sha256:234064604c80d9272a5e9f6b3566d260bcaa053a5e05246db90d7eca1c2cf44b
     # via
     #   -c constraints.txt
     #   boto3
@@ -556,9 +556,9 @@ fastapi-cli==0.0.24 \
     --hash=sha256:1afc9c9e21d7ebc8a3ca5e31790cd8d837742be7e4f8b9236e99cb3451f0de00 \
     --hash=sha256:4a1f78ed798f106b4fee85ca93b85d8fe33c0a3570f775964d37edb80b8f0edc
     # via fastapi
-fsspec==2026.2.0 \
-    --hash=sha256:6544e34b16869f5aacd5b90bdf1a71acb37792ea3ddf6125ee69a22a53fb8bff \
-    --hash=sha256:98de475b5cb3bd66bedd5c4679e87b4fdfe1a3bf4d707b151b3c07e58c9a2437
+fsspec==2026.3.0 \
+    --hash=sha256:1ee6a0e28677557f8c2f994e3eea77db6392b4de9cd1f5d7a9e87a0ae9d01b41 \
+    --hash=sha256:d2ceafaad1b3457968ed14efa28798162f1638dbb5d2a6868a2db002a5ee39a4
     # via
     #   -c constraints.txt
     #   apache-airflow-task-sdk
@@ -817,9 +817,9 @@ langchain==1.2.15 \
     --hash=sha256:1717b6719daefae90b2728314a5e2a117ff916291e2862595b6c3d6fba33d652 \
     --hash=sha256:e349db349cb3e9550c4044077cf90a1717691756cc236438404b23500e615874
     # via mokelumne (pyproject.toml)
-langchain-aws==1.4.3 \
-    --hash=sha256:74e0a2b341da2214bbf6fd25a91da48223f815078d22beb9aa88797666879843 \
-    --hash=sha256:a4eea654bd266bb4084553dc2df25fd5d7f68ad388f0111719685126bd16f3bd
+langchain-aws==1.4.5 \
+    --hash=sha256:7571cf0f277b6221ec4ece05afe4ac0281c1dd0e0c9042d8f50260ef024051ec \
+    --hash=sha256:9cd1b3940ed6b7c630c091c48d16d158f097b4b3a52d8a28e815832c28a0e977
     # via langchain
 langchain-core==1.2.28 \
     --hash=sha256:271a3d8bd618f795fdeba112b0753980457fc90537c46a0c11998516a74dc2cb \
@@ -1234,9 +1234,9 @@ numpy==2.4.4 \
     --hash=sha256:fbc356aae7adf9e6336d336b9c8111d390a05df88f1805573ebb0807bd06fd1d \
     --hash=sha256:fcfe2045fd2e8f3cb0ce9d4ba6dba6333b8fa05bb8a4939c908cd43322d14c7e
     # via langchain-aws
-opentelemetry-api==1.40.0 \
-    --hash=sha256:159be641c0b04d11e9ecd576906462773eb97ae1b657730f0ecf64d32071569f \
-    --hash=sha256:82dd69331ae74b06f6a874704be0cfaa49a1650e1537d4a813b86ecef7d0ecf9
+opentelemetry-api==1.41.0 \
+    --hash=sha256:0e77c806e6a89c9e4f8d372034622f3e1418a11bdbe1c80a50b3d3397ad0fa4f \
+    --hash=sha256:9421d911326ec12dee8bc933f7839090cad7a3f13fcfb0f9e82f8174dc003c09
     # via
     #   apache-airflow-core
     #   langfuse
@@ -1244,44 +1244,44 @@ opentelemetry-api==1.40.0 \
     #   opentelemetry-exporter-otlp-proto-http
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
-opentelemetry-exporter-otlp==1.40.0 \
-    --hash=sha256:48c87e539ec9afb30dc443775a1334cc5487de2f72a770a4c00b1610bf6c697d \
-    --hash=sha256:7caa0870b95e2fcb59d64e16e2b639ecffb07771b6cd0000b5d12e5e4fef765a
+opentelemetry-exporter-otlp==1.41.0 \
+    --hash=sha256:443b6a45c990ae4c55e147f97049a86c5f5b704f3d78b48b44a073a886ec4d6e \
+    --hash=sha256:97ff847321f8d4c919032a67d20d3137fb7b34eac0c47f13f71112858927fc5b
     # via apache-airflow-core
-opentelemetry-exporter-otlp-proto-common==1.40.0 \
-    --hash=sha256:1cbee86a4064790b362a86601ee7934f368b81cd4cc2f2e163902a6e7818a0fa \
-    --hash=sha256:7081ff453835a82417bf38dccf122c827c3cbc94f2079b03bba02a3165f25149
+opentelemetry-exporter-otlp-proto-common==1.41.0 \
+    --hash=sha256:7a99177bf61f85f4f9ed2072f54d676364719c066f6d11f515acc6c745c7acf0 \
+    --hash=sha256:966bbce537e9edb166154779a7c4f8ab6b8654a03a28024aeaf1a3eacb07d6ee
     # via
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
-opentelemetry-exporter-otlp-proto-grpc==1.40.0 \
-    --hash=sha256:2aa0ca53483fe0cf6405087a7491472b70335bc5c7944378a0a8e72e86995c52 \
-    --hash=sha256:bd4015183e40b635b3dab8da528b27161ba83bf4ef545776b196f0fb4ec47740
+opentelemetry-exporter-otlp-proto-grpc==1.41.0 \
+    --hash=sha256:3a1a86bd24806ccf136ec9737dbfa4c09b069f9130ff66b0acb014f9c5255fd1 \
+    --hash=sha256:f704201251c6f65772b11bddea1c948000554459101bdbb0116e0a01b70592f6
     # via opentelemetry-exporter-otlp
-opentelemetry-exporter-otlp-proto-http==1.40.0 \
-    --hash=sha256:a8d1dab28f504c5d96577d6509f80a8150e44e8f45f82cdbe0e34c99ab040069 \
-    --hash=sha256:db48f5e0f33217588bbc00274a31517ba830da576e59503507c839b38fa0869c
+opentelemetry-exporter-otlp-proto-http==1.41.0 \
+    --hash=sha256:a9c4ee69cce9c3f4d7ee736ad1b44e3c9654002c0816900abbafd9f3cf289751 \
+    --hash=sha256:dcd6e0686f56277db4eecbadd5262124e8f2cc739cadbc3fae3d08a12c976cf5
     # via
     #   langfuse
     #   opentelemetry-exporter-otlp
-opentelemetry-proto==1.40.0 \
-    --hash=sha256:03f639ca129ba513f5819810f5b1f42bcb371391405d99c168fe6937c62febcd \
-    --hash=sha256:266c4385d88923a23d63e353e9761af0f47a6ed0d486979777fe4de59dc9b25f
+opentelemetry-proto==1.41.0 \
+    --hash=sha256:95d2e576f9fb1800473a3e4cfcca054295d06bdb869fda4dc9f4f779dc68f7b6 \
+    --hash=sha256:b970ab537309f9eed296be482c3e7cca05d8aca8165346e929f658dbe153b247
     # via
     #   apache-airflow-core
     #   opentelemetry-exporter-otlp-proto-common
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
-opentelemetry-sdk==1.40.0 \
-    --hash=sha256:18e9f5ec20d859d268c7cb3c5198c8d105d073714db3de50b593b8c1345a48f2 \
-    --hash=sha256:787d2154a71f4b3d81f20524a8ce061b7db667d24e46753f32a7bc48f1c1f3f1
+opentelemetry-sdk==1.41.0 \
+    --hash=sha256:7bddf3961131b318fc2d158947971a8e37e38b1cd23470cfb72b624e7cc108bd \
+    --hash=sha256:a596f5687964a3e0d7f8edfdcf5b79cbca9c93c7025ebf5fb00f398a9443b0bd
     # via
     #   langfuse
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
-opentelemetry-semantic-conventions==0.61b0 \
-    --hash=sha256:072f65473c5d7c6dc0355b27d6c9d1a679d63b6d4b4b16a9773062cb7e31192a \
-    --hash=sha256:fa530a96be229795f8cef353739b618148b0fe2b4b3f005e60e262926c4d38e2
+opentelemetry-semantic-conventions==0.62b0 \
+    --hash=sha256:0ddac1ce59eaf1a827d9987ab60d9315fb27aea23304144242d1fcad9e16b489 \
+    --hash=sha256:cbfb3c8fc259575cf68a6e1b94083cc35adc4a6b06e8cf431efa0d62606c0097
     # via opentelemetry-sdk
 orjson==3.11.8 \
     --hash=sha256:0022bb50f90da04b009ce32c512dc1885910daa7cb10b7b0cba4505b16db82a8 \

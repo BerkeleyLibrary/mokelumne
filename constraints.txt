@@ -2,8 +2,7 @@
 # Regenerate when bumping AIRFLOW_VERSION:
 #   docker run --rm --entrypoint python apache/airflow:<version> -m pip freeze
 # then update bounds here to match.
-fsspec == 2026.2.0
+fsspec == 2026.3.0
 rich < 14
-# aiobotocore 3.3.0 (from base image) requires botocore<1.42.71
-botocore < 1.42.71
-boto3 < 1.42.71
+boto3 == 1.42.84
+botocore == 1.42.84
