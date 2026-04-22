@@ -9,6 +9,7 @@ from mokelumne.util.storage import run_dir, record_dir
 
 class FetchTind:
     """Helper methods for fetching items from TIND using TINDClient."""
+
     def __init__(self, _run_id: str):
         self.run_id = _run_id
         self.client = TINDClient(default_storage_dir=str(run_dir(_run_id)))
@@ -16,6 +17,16 @@ class FetchTind:
     def get_ids(self, tind_query: str) -> list[str]:
         """Return the TIND IDs that match a given query."""
         return self.client.fetch_ids_search(tind_query)
+
+    def get_image_metadata(
+        self, tind_id: str
+    ) -> dict[str, int | float | str | None] | None:
+        """Returns relevant metadata for the first image file given a tind_id."""
+        record = self.client.fetch_file_metadata(tind_id)
+        if not record or not record[0]:
+            return None
+        filemd = record[0]
+        return {k: filemd.get(k) for k in ("size", "mime", "width", "height", "url")}
 
     def download_image_file(self, tind_id: str) -> str:
         """Download the first file attachment for a given TIND ID."""

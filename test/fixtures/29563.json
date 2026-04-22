@@ -1,0 +1,27 @@
+[
+    {
+        "bibdocid": 71086,
+        "name": "I0051198A",
+        "format": ".jpg",
+        "subformat": "",
+        "version": 1,
+        "mime": "image/jpeg",
+        "checksum": "e59f8ca200a7f378f033b37aacd04e67",
+        "url": "https://digicoll.lib.berkeley.edu/api/v1/record/29563/files/I0051198A.jpg/download/?version=1",
+        "location": "TOS",
+        "size": 199139,
+        "description": null,
+        "status": "Public",
+        "comment": null,
+        "restricted": false,
+        "modified": "2026-01-21 01:10:46",
+        "validation_status": "revalidation-pending",
+        "validated": true,
+        "order": 1.0,
+        "width": 1024.0,
+        "height": 1536.0,
+        "key": "7f7df611-bbe6-4855-8725-2fbd8f9e3d90",
+        "status_class": "file-open",
+        "status_icon": "icon-lock-unlock-1"
+    }
+]

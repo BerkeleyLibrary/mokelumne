@@ -1,0 +1,107 @@
+{
+  "@context": "http://iiif.io/api/presentation/3/context.json",
+  "id": "https://digicoll.lib.berkeley.edu/record/29563/export/iiif_manifest",
+  "type": "Manifest",
+  "label": {
+    "none": [
+      "Old Emperor Norton in 1876"
+    ]
+  },
+  "metadata": [
+    {
+      "label": {
+        "none": [
+          "Title"
+        ]
+      },
+      "value": {
+        "none": [
+          "Old Emperor Norton in 1876"
+        ]
+      }
+    },
+    {
+      "label": {
+        "none": [
+          "Collections"
+        ]
+      },
+      "value": {
+        "none": [
+          "Bancroft Library, Digital Collections, Jesse Brown Cook Scrapbooks"
+        ]
+      }
+    }
+  ],
+  "viewingDirection": "left-to-right",
+  "behavior": [
+    "paged"
+  ],
+  "items": [
+    {
+      "id": "https://digicoll.lib.berkeley.edu/nanna/iiif/29563/canvas/0",
+      "type": "Canvas",
+      "label": {
+        "none": [null]
+      },
+      "height": 1536,
+      "width": 1024,
+      "items": [
+        {
+          "id": "https://digicoll.lib.berkeley.edu/nanna/iiif/29563/page/0",
+          "type": "AnnotationPage",
+          "items": [
+            {
+              "id": "https://digicoll.lib.berkeley.edu/nanna/iiif/29563/image/0",
+              "target": "https://digicoll.lib.berkeley.edu/nanna/iiif/29563/canvas/0",
+              "type": "Annotation",
+              "motivation": "painting",
+              "body": {
+                "id": "https://digicoll.lib.berkeley.edu/nanna/api/multimedia/image/v2/recid:29563-I0051198A.jpg",
+                "type": "Image",
+                "format": "image/jpeg",
+                "height": 1536,
+                "width": 1024,
+                "service": [
+                  {
+                    "@context": "http://iiif.io/api/image/2/context.json",
+                    "@id": "https://digicoll.lib.berkeley.edu/nanna/api/multimedia/image/v2/recid:29563-I0051198A.jpg",
+                    "@type": "ImageService2",
+                    "height": 1536,
+                    "width": 1024,
+                    "profile": "http://iiif.io/api/image/2/level2.json",
+                    "protocol": "http://iiif.io/api/image",
+                    "tiles": [
+                      {
+                        "scaleFactors": [1, 2, 4, 8, 16, 32],
+                        "width": 1024
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "annotations": [],
+      "metadata": [],
+      "thumbnail": [
+        {
+          "id": "https://digicoll.lib.berkeley.edu/nanna/api/multimedia/image/v2/recid:29563-I0051198A.jpg/full/90,/0/default.jpg",
+          "type": "Image",
+          "service": [
+            {
+              "@context": "http://iiif.io/api/image/2/context.json",
+              "@id": "https://digicoll.lib.berkeley.edu/nanna/api/multimedia/image/v2/recid:29563-I0051198A.jpg",
+              "@type": "ImageService2",
+              "profile": "http://iiif.io/api/image/2/level2.json"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "rendering": [],
+  "service": []
+}
