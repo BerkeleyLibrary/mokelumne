@@ -86,7 +86,7 @@ def generate_image_descriptions():
                 "utf-8"
             )
             logger.info(
-                f"Processing {record['Record ID']} with file {record['Image Path']} ..."
+                "Processing %s with file %s...", record['Record ID'], record['Image Path']
             )
 
             # we could make this a constant or env var.
