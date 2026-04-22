@@ -112,14 +112,11 @@ backoff==2.2.1 \
 boto3==1.42.84 \
     --hash=sha256:4d03ad3211832484037337292586f71f48707141288d9ac23049c04204f4ab03 \
     --hash=sha256:6a84b3293a5d8b3adf827a54588e7dcffcf0a85410d7dadca615544f97d27579
-    # via
-    #   -c constraints.txt
-    #   langchain-aws
+    # via langchain-aws
 botocore==1.42.84 \
     --hash=sha256:15f3fe07dfa6545e46a60c4b049fe2bdf63803c595ae4a4eec90e8f8172764f3 \
     --hash=sha256:234064604c80d9272a5e9f6b3566d260bcaa053a5e05246db90d7eca1c2cf44b
     # via
-    #   -c constraints.txt
     #   boto3
     #   s3transfer
 cadwyn==6.2.0 \
