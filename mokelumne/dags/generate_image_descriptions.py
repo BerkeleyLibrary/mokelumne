@@ -61,7 +61,7 @@ def generate_image_descriptions():
 
         with open(fetched_csv_path, mode="r", encoding="utf-8") as f:
             reader = csv.DictReader(f)
-            rows = list(reader)
+            rows = list(filter(lambda x: x["Status"] == "fetched", reader))
 
         # we could make the chunking a parameter or an env variable
         return [rows[i : i + 10] for i in range(0, len(rows), 10)]
