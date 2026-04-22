@@ -61,8 +61,8 @@ def fetch_images():
             client = FetchTind(orig_run_id)
             filemd = client.client.fetch_file_metadata(tind_id)
             if filemd[0].get("mime") in SUPPORTED_IMAGE_TYPES:
-               path = client.download_image_file(tind_id)
-               status = "fetched"
+                path = client.download_image_file(tind_id)
+                status = "fetched"
             else:
                 path = ""
                 status = f"skipped: Unsupported file type {filemd[0].get('mime')}"
