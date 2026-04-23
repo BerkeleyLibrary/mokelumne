@@ -9,6 +9,7 @@ dependencies = [
     "apache-airflow-task-sdk == 1.2.1",
     "langchain[aws]",
     "langfuse",
+    "piffle",  # IIIF API used in batch image description DAG
     "pymarc",
     "python-tind-client",
 ]
