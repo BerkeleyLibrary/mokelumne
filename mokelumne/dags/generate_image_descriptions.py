@@ -25,6 +25,20 @@ from mokelumne.util import langfuse
 
 logger = logging.getLogger(__name__)
 
+# fallback headers for zero processed result
+FALLBACK_HEADERS = [
+    "035__a",
+    "5880_a",
+    "Status",
+    "520__a-1",
+    "983__a-1",
+    "983__d-1",
+    "983__t-1",
+    "Image Name",
+    "Link to record",
+    "Collection name",
+]
+
 
 @dag(
     schedule=[fetched_csv],
@@ -65,7 +79,8 @@ def generate_image_descriptions():
             rows = list(filter(lambda x: x["Status"] == "fetched", reader))
 
         # we could make the chunking a parameter or an env variable
-        return [rows[i : i + 10] for i in range(0, len(rows), 10)]
+        # we want to pass an empty batch through to the downstream tasks to continue the pipeline
+        return [rows[i : i + 10] for i in range(0, len(rows), 10)] or [[]]
 
     @task(max_active_tis_per_dagrun=10)
     def invoke_llm_on_batch_with_prompt(
@@ -166,11 +181,11 @@ def generate_image_descriptions():
 
         all_results = [record for batch in processed_dicts for record in batch]
 
-        if not all_results:
-            raise ValueError("No results to write to CSV.")
+        # if no results, we want to write a CSV with headers to continue downstream processing
+        fieldnames = all_results[0].keys() if all_results else FALLBACK_HEADERS
 
         with open(processed_csv_path, mode="w", encoding="utf-8", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=all_results[0].keys())
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(all_results)
 
