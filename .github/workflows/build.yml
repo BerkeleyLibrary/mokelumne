@@ -160,7 +160,7 @@ jobs:
 
       - name: Run tests
         run: |
-          docker compose exec airflow-apiserver python -m pytest
+          docker compose exec airflow-cli python -m pytest
 
       - name: Copy out artifacts
         if: ${{ always() }}
