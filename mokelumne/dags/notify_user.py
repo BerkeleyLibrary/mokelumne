@@ -7,7 +7,6 @@ from airflow.providers.smtp.operators.smtp import EmailOperator
 from airflow.sdk import dag, task, get_current_context
 
 from mokelumne.batch_image.assets import public_dir
-from mokelumne.util.storage import public_path_to_url
 
 
 @dag(schedule=[public_dir], catchup=False, tags=["batch-image", "notification"])
