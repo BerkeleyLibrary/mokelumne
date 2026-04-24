@@ -86,12 +86,16 @@ def fetch_tind_records():
         context = get_current_context()
         run_id = context["run_id"]
         tind_query = context["params"]["tind_query"]
-        fetch_tind = FetchTind(run_id)
+        fetch_tind = FetchTind.from_connection(run_id, conn="tind_default")
 
         try:
-            records_written = fetch_tind.write_query_results_to_xml(tind_query, "tind_bulk.xml")
+            records_written = fetch_tind.write_query_results_to_xml(
+                tind_query, "tind_bulk.xml"
+            )
         except Exception as ex:
-            raise AirflowFailException(f"Failed to write query results to XML: {ex}") from ex
+            raise AirflowFailException(
+                f"Failed to write query results to XML: {ex}"
+            ) from ex
 
         if records_written == 0:
             raise AirflowSkipException(f"No records found for query: {tind_query}")
@@ -103,7 +107,9 @@ def fetch_tind_records():
 
         return records_written
 
-    validate_params() >> write_query_results_to_xml()  # pyright: ignore[reportUnusedExpression]
+    (
+        validate_params() >> write_query_results_to_xml()
+    )  # pyright: ignore[reportUnusedExpression]
 
 
 fetch_tind_records()
