@@ -154,6 +154,15 @@ jobs:
             --volume ./:/opt/airflow \
             airflow-init
 
+      - name: Chown the public volume
+        run: |
+          docker compose run \
+            --entrypoint chown \
+            --no-deps \
+            --rm \
+            --user root \
+            airflow-init airflow:root /opt/airflow/public
+
       - name: Start the stack
         run: |
           docker compose up --detach
