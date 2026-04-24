@@ -3,42 +3,52 @@ services:
     build: !reset
     develop: !reset
     image: ${DOCKER_APP_IMAGE}
-    volumes: !reset
+    volumes: !override
+      - public:/opt/airflow/public
 
   airflow-cli:
     build: !reset
     develop: !reset
     image: ${DOCKER_APP_IMAGE}
-    volumes: !reset
+    volumes: !override
+      - public:/opt/airflow/public
 
   airflow-dag-processor:
     build: !reset
     develop: !reset
     image: ${DOCKER_APP_IMAGE}
-    volumes: !reset
+    volumes: !override
+      - public:/opt/airflow/public
 
   airflow-init:
     build: !reset
     develop: !reset
     image: ${DOCKER_APP_IMAGE}
-    volumes: !reset
+    volumes: !override
+      - public:/opt/airflow/public
 
   airflow-scheduler:
     build: !reset
     develop: !reset
     image: ${DOCKER_APP_IMAGE}
-    volumes: !reset
+    volumes: !override
+      - public:/opt/airflow/public
 
   airflow-triggerer:
     build: !reset
     develop: !reset
     image: ${DOCKER_APP_IMAGE}
-    volumes: !reset
+    volumes: !override
+      - public:/opt/airflow/public
 
   airflow-worker:
     build: !reset
     develop: !reset
     image: ${DOCKER_APP_IMAGE}
-    volumes: !reset
+    volumes: !override
+      - public:/opt/airflow/public
 
   flower: !reset
+
+volumes:
+  public:
