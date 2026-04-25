@@ -1,7 +1,10 @@
 import logging
 import os
+
 from flask import abort, flash
 from airflow.providers.fab.auth_manager.security_manager.override import FabAirflowSecurityManagerOverride
+
+from oidc_remote_user_view import OIDCRemoteUserView
 
 log = logging.getLogger(__name__)
 
@@ -9,6 +12,7 @@ class OIDCSecurityManager(FabAirflowSecurityManagerOverride):
     """
     Provides a Security Manager implementation for CalNet/Keycloak.
     """
+    authoauthview = OIDCRemoteUserView 
 
     def get_oauth_user_info(self, provider, response):
         """

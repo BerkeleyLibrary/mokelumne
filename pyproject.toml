@@ -6,7 +6,9 @@ build-backend = "setuptools.build_meta"
 name = "mokelumne"
 version = "0.5.0"
 dependencies = [
+    "apache-airflow-providers-fab>=3.6.1",
     "apache-airflow-task-sdk == 1.2.1",
+    "flask-appbuilder",
     "langchain[aws]",
     "langfuse",
     "piffle",  # IIIF API used in batch image description DAG
