@@ -1,4 +1,7 @@
 import os
+from urllib.parse import urljoin
+from airflow.configuration import conf
+from airflow.providers.fab.auth_manager.fab_auth_manager import FabAuthManager
 from flask_appbuilder.security.manager import AUTH_OAUTH
 from oidc_security_manager import OIDCSecurityManager
 
@@ -36,3 +39,9 @@ OAUTH_PROVIDERS = [
         },
     }
 ]
+
+BASE_URL = conf.get("api", "base_url", fallback="/")
+
+class OIDCAuthManager(FabAuthManager):
+    def get_url_logout(self) -> str | None:
+        return urljoin(BASE_URL, "auth/start_logout")
