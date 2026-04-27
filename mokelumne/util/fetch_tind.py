@@ -43,12 +43,19 @@ class FetchTind:
         """Return the TIND IDs that match a given query."""
         return self.client.fetch_ids_search(tind_query)
 
-    def get_first_file_metadata(self, tind_id: str) -> dict[str, Any]:
+    def get_file_metadata(self, tind_id: str) -> list[dict[str, Any]]:
         """Return the file metadata for a given TIND ID."""
         record = self.client.fetch_file_metadata(tind_id)
-        if not record or not record[0]:
+        if not record:
+            return []
+        return record
+
+    def get_first_file_metadata(self, tind_id: str) -> dict[str, Any]:
+        """Return the file metadata for a given TIND ID."""
+        metadata = self.get_file_metadata(tind_id)
+        if len(metadata) == 0:
             return {}
-        return record[0]
+        return metadata[0]
 
     def download_image_file(self, tind_id: str) -> str:
         """Download the first file attachment for a given TIND ID."""
