@@ -1,11 +1,19 @@
 import os
-from urllib.parse import urljoin
-from airflow.configuration import conf
+
+import requests
 from airflow.providers.fab.auth_manager.fab_auth_manager import FabAuthManager
 from flask_appbuilder.security.manager import AUTH_OAUTH
-from oidc_security_manager import OIDCSecurityManager
+from oidc_security_manager import OIDCSecurityManager   # pyright: ignore[reportMissingImports]
+from oidc_auth_manager import OIDCAuthManager   # pyright: ignore[reportMissingImports]
+
+AIRFLOW__API__BASE_URL= os.getenv(
+    "AIRFLOW__API__BASE_URL", "http://localhost:8080/"
+)
 
 SECURITY_MANAGER_CLASS = OIDCSecurityManager
+
+# There seems to be no other way to do this than monkeypatching this method.
+FabAuthManager.get_url_logout = OIDCAuthManager.get_url_logout
 
 AUTH_TYPE = AUTH_OAUTH
 AUTH_ROLES_SYNC_AT_LOGIN = True
@@ -24,6 +32,13 @@ AUTH_ROLES_MAPPING = {
     OIDC_USER_GROUP: ["User"],
 }
 
+server_metadata = requests.get(OIDC_WELL_KNOWN).json()
+
+LOGOUT_REDIRECT_URL = (
+    f"{server_metadata["end_session_endpoint"]}?post_logout_redirect_uri="
+    f"{AIRFLOW__API__BASE_URL}&client_id={OIDC_CLIENT_ID}"
+)
+
 OAUTH_PROVIDERS = [
     {
         "name": OIDC_NAME,
@@ -39,9 +54,3 @@ OAUTH_PROVIDERS = [
         },
     }
 ]
-
-BASE_URL = conf.get("api", "base_url", fallback="/")
-
-class OIDCAuthManager(FabAuthManager):
-    def get_url_logout(self) -> str | None:
-        return urljoin(BASE_URL, "auth/start_logout")
