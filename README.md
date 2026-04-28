@@ -83,6 +83,7 @@ Important environment variables for our build/environment:
 | `AIRFLOW_UID` | Set the `uid` the container runs as. | `AIRFLOW_UID="40093"` |
 | `AIRFLOW_VERSION` | Sets the Airflow release version. Used to identify the base Airflow image and to define it as a Python constraint | `AIRFLOW_VERSION="3.1.7"` |
 | `AIRFLOW_IMAGE_NAME` | Sets an alternate base image for Airflow, e.g. for `slim` images | `AIRFLOW_IMAGE_NAME="apache/airflow:slim-latest"` |
+| `AIRFLOW__API__BASE_URL` | Where Airflow's webserver is reachable from. | `AIRFLOW__API__BASE_URL=http://localhost:8080` |
 | `AIRFLOW__CORE__FERNET_KEY` | [Fernet](https://airflow.apache.org/docs/apache-airflow/stable/security/secrets/fernet.html) encryption key used to encrypt Airflow secrets | `AIRFLOW__CORE__FERNET_KEY="somebase64value="` |
 | `AIRFLOW__API_AUTH__JWT_SECRET` | Secret key used to sign JWT tokens for Airflow's API authentication. The default value used in development and testing should be replaced in production. | `AIRFLOW__API_AUTH__JWT_SECRET="some32bytesecret"` |
 | `AIRFLOW_CONN_TIND_DEFAULT` | Airflow connection json string for TIND access.<br>Note: the Connection params listed in the example are all needed! | `AIRFLOW_CONN_TIND_DEFAULT='{"conn_type": "http","password": "your-tind-key-here","host": "https://digicoll.lib.berkeley.edu/api/v1","schema": "https"}'` |
