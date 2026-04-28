@@ -83,7 +83,7 @@ Important environment variables for our build/environment:
 | `AIRFLOW_UID` | Set the `uid` the container runs as. | `AIRFLOW_UID="40093"` |
 | `AIRFLOW_VERSION` | Sets the Airflow release version. Used to identify the base Airflow image and to define it as a Python constraint | `AIRFLOW_VERSION="3.1.7"` |
 | `AIRFLOW_IMAGE_NAME` | Sets an alternate base image for Airflow, e.g. for `slim` images | `AIRFLOW_IMAGE_NAME="apache/airflow:slim-latest"` |
-| `AIRFLOW__API__BASE_URL` | Where Airflow's webserver is reachable from. | `AIRFLOW__API__BASE_URL=http://localhost:8080` |
+| `AIRFLOW__API__BASE_URL` | Where Airflow's webserver is reachable. Must contain a trailing slash. | `AIRFLOW__API__BASE_URL="http://localhost:8080/"` |
 | `AIRFLOW__CORE__FERNET_KEY` | [Fernet](https://airflow.apache.org/docs/apache-airflow/stable/security/secrets/fernet.html) encryption key used to encrypt Airflow secrets | `AIRFLOW__CORE__FERNET_KEY="somebase64value="` |
 | `AIRFLOW__API_AUTH__JWT_SECRET` | Secret key used to sign JWT tokens for Airflow's API authentication. The default value used in development and testing should be replaced in production. | `AIRFLOW__API_AUTH__JWT_SECRET="some32bytesecret"` |
 | `AIRFLOW_CONN_TIND_DEFAULT` | Airflow connection json string for TIND access.<br>Note: the Connection params listed in the example are all needed! | `AIRFLOW_CONN_TIND_DEFAULT='{"conn_type": "http","password": "your-tind-key-here","host": "https://digicoll.lib.berkeley.edu/api/v1","schema": "https"}'` |
@@ -91,7 +91,7 @@ Important environment variables for our build/environment:
 | `OIDC_NAME` | Name appended to the OIDC login button | `OIDC_NAME="keycloak"` |
 | `OIDC_CLIENT_ID` | Client ID specified in the OIDC provider. | `OIDC_CLIENT_ID="mokelumne"` |
 | `OIDC_WELL_KNOWN` | URL for the OIDC provider's well-known configuration. Used by the Airflow webserver to fetch the OIDC provider's public key for validating OIDC tokens in development and testing. Dev should be configured to point at keycloak's well known and prod points to CAS OIDC well known | `OIDC_WELL_KNOWN="http://keycloak:8180/realms/berkeley-local/.well-known/openid-configuration"` |
-| `OIDC_END_SESSION_ENDPOINT` | URL for the OIDC provider's end session endpoint. Used to completely log the user out of both Airflow and the OIDC provder. | `OIDC_END_SESSION_ENDPOINT="http://keycloak:8180/realms/berkeley-local/protocol/openid-connect/logout` |
+| `OIDC_END_SESSION_ENDPOINT` | URL for the OIDC provider's end session endpoint. Used to completely log the user out of both Airflow and the OIDC provder. | `OIDC_END_SESSION_ENDPOINT="http://keycloak:8180/realms/berkeley-local/protocol/openid-connect/logout"` |
 | `OIDC_ADMIN_GROUP` | Name of the OIDC group whose members should be mapped to the "Admin" role in Airflow. Used by keycloak-config-cli to configure group membership for the 'testadmin' user and by the Airflow webserver to map OIDC groups to Airflow roles in development and testing. For simplicity this should match the what we use for prod | `OIDC_ADMIN_GROUP="cn=edu:berkeley:org:libr:mokelumne:admins,ou=campus groups,dc=berkeley,dc=edu"` |
 | `OIDC_USER_GROUP` | Similar to admin group. This group is for users in both admin and user roles.| `OIDC_USER_GROUP="cn=edu:berkeley:org:libr:mokelumne:users,ou=campus groups,dc=berkeley,dc=edu"` |
 | `TIND_IIIF_MANIFEST_URL_PATTERN` | URL pattern for TIND IIIF manifests | `TIND_IIIF_MANIFEST_URL_PATTERN="https://digicoll.lib.berkeley.edu/record/{tind_id}/export/iiif_manifest"` |

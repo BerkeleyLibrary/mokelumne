@@ -1,11 +1,15 @@
 import os
 
+from airflow.api_fastapi.app import AUTH_MANAGER_FASTAPI_APP_PREFIX
 from airflow.providers.fab.auth_manager.fab_auth_manager import FabAuthManager
 from flask_appbuilder.security.manager import AUTH_OAUTH
 
-from oidc_security_manager import OIDCSecurityManager   # pyright: ignore[reportMissingImports]
-from oidc_auth_manager import OIDCAuthManager   # pyright: ignore[reportMissingImports]
+from mokelumne.oidc.auth_manager import OIDCAuthManager
+from mokelumne.oidc.security_manager import OIDCSecurityManager
 
+# despite this being an Airflow configuration option, we are intentionally not
+# pulling in airflow.configuration.conf here as this module gets loaded before
+# the configuration might be fully initialized
 AIRFLOW__API__BASE_URL= os.getenv(
     "AIRFLOW__API__BASE_URL", "http://localhost:8080/"
 )
@@ -13,7 +17,7 @@ AIRFLOW__API__BASE_URL= os.getenv(
 SECURITY_MANAGER_CLASS = OIDCSecurityManager
 
 # There seems to be no other way to do this than monkeypatching this method.
-FabAuthManager.get_url_logout = OIDCAuthManager.get_url_logout
+FabAuthManager.get_url_logout = OIDCAuthManager.get_url_logout   # pyright: ignore[reportAttributeAccessIssue]
 
 AUTH_TYPE = AUTH_OAUTH
 AUTH_ROLES_SYNC_AT_LOGIN = True
@@ -33,9 +37,11 @@ AUTH_ROLES_MAPPING = {
     OIDC_USER_GROUP: ["User"],
 }
 
+LOGIN_URL = f"{AIRFLOW__API__BASE_URL}{AUTH_MANAGER_FASTAPI_APP_PREFIX}/login"
+
 LOGOUT_REDIRECT_URL = (
-    f"{OIDC_END_SESSION_ENDPOINT}?post_logout_redirect_uri="
-    f"{AIRFLOW__API__BASE_URL}&client_id={OIDC_CLIENT_ID}"
+    f"{OIDC_END_SESSION_ENDPOINT}?post_logout_redirect_uri={LOGIN_URL}"
+    f"&client_id={OIDC_CLIENT_ID}"
 )
 
 OAUTH_PROVIDERS = [
