@@ -1,8 +1,8 @@
 import os
 
-import requests
 from airflow.providers.fab.auth_manager.fab_auth_manager import FabAuthManager
 from flask_appbuilder.security.manager import AUTH_OAUTH
+
 from oidc_security_manager import OIDCSecurityManager   # pyright: ignore[reportMissingImports]
 from oidc_auth_manager import OIDCAuthManager   # pyright: ignore[reportMissingImports]
 
@@ -23,6 +23,7 @@ AUTH_USER_REGISTRATION_ROLE = os.getenv("AUTH_USER_REGISTRATION_ROLE", "Public")
 OIDC_NAME = os.getenv("OIDC_NAME")
 OIDC_CLIENT_ID = os.getenv("OIDC_CLIENT_ID")
 OIDC_CLIENT_SECRET = os.getenv("OIDC_CLIENT_SECRET")
+OIDC_END_SESSION_ENDPOINT = os.getenv("OIDC_END_SESSION_ENDPOINT")
 OIDC_WELL_KNOWN = os.getenv("OIDC_WELL_KNOWN")
 OIDC_ADMIN_GROUP = os.getenv("OIDC_ADMIN_GROUP")
 OIDC_USER_GROUP = os.getenv("OIDC_USER_GROUP")
@@ -32,10 +33,8 @@ AUTH_ROLES_MAPPING = {
     OIDC_USER_GROUP: ["User"],
 }
 
-server_metadata = requests.get(OIDC_WELL_KNOWN).json()
-
 LOGOUT_REDIRECT_URL = (
-    f"{server_metadata["end_session_endpoint"]}?post_logout_redirect_uri="
+    f"{OIDC_END_SESSION_ENDPOINT}?post_logout_redirect_uri="
     f"{AIRFLOW__API__BASE_URL}&client_id={OIDC_CLIENT_ID}"
 )
 
