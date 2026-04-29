@@ -68,8 +68,8 @@ x-airflow-common: &airflow-common
   volumes:
     - ./:/opt/airflow
     - ./artifacts:/home/airflow/artifacts
+    - ./storage:/opt/airflow/storage
     - ./test:/opt/airflow/test
-    - ./public:/opt/airflow/public
   user: "${AIRFLOW_UID:-40093}:0"
 
 services:

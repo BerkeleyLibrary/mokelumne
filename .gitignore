@@ -12,5 +12,6 @@ config
 download/*
 logs/*
 public/*
+storage/*
 tmp
 uv.lock
