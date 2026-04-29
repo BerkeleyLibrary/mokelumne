@@ -1,7 +1,10 @@
 import logging
 import os
+
 from flask import abort, flash
 from airflow.providers.fab.auth_manager.security_manager.override import FabAirflowSecurityManagerOverride
+
+from mokelumne.oidc.views import OIDCAuthOAuthView
 
 log = logging.getLogger(__name__)
 
@@ -9,8 +12,9 @@ class OIDCSecurityManager(FabAirflowSecurityManagerOverride):
     """
     Provides a Security Manager implementation for CalNet/Keycloak.
     """
+    authoauthview = OIDCAuthOAuthView
 
-    def get_oauth_user_info(self, provider, response):
+    def get_oauth_user_info(self, provider, resp):
         """
         Extracts userinfo from Keycloak/Calnet OIDC response
 
@@ -25,7 +29,7 @@ class OIDCSecurityManager(FabAirflowSecurityManagerOverride):
         if provider != os.getenv("OIDC_NAME"):
             return {}
 
-        userinfo = response["userinfo"]
+        userinfo = resp["userinfo"]
         username = userinfo["preferred_username"]
         user_groups = set(userinfo["groups"])
 

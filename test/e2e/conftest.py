@@ -60,6 +60,15 @@ def keycloak_login_url() -> re.Pattern[str]:
     return keycloak_url("/realms/berkeley-local/protocol/openid-connect/auth.*")
 
 
+def keycloak_logout_url() -> re.Pattern[str]:
+    """
+    Shorthand for matching KeyCloak's mocked logout page
+    """
+    return keycloak_url(
+        "/realms/berkeley-local/protocol/openid-connect/logout.*"
+    )
+
+
 def login(page: Page, username: str, password: str) -> None:
     """Walk a fresh page through the Airflow -> Keycloak OIDC login flow.
 
@@ -74,6 +83,16 @@ def login(page: Page, username: str, password: str) -> None:
     page.locator("#password").fill(password)
     page.locator("#kc-login").click()
     page.wait_for_url(airflow_url())
+
+
+def logout(page: Page) -> None:
+    """
+    Given a logged in session, walk through the logout flow
+    """
+    page.get_by_label("User").click()
+    page.locator('div[data-value="logout"]').click()
+    page.get_by_test_id("confirmation-confirm-button").click()
+    page.wait_for_url(keycloak_logout_url())
 
 
 @pytest.fixture

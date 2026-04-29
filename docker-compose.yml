@@ -65,6 +65,7 @@ x-airflow-common: &airflow-common
     AIRFLOW__LOGGING__LOGGING_LEVEL: DEBUG
     AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
     AIRFLOW_CONN_SMTP_DEFAULT: 'smtp://mailpit:1025?disable_ssl=true&disable_tls=true'
+    CI: ${CI:-}
   volumes:
     - ./:/opt/airflow
     - ./artifacts:/home/airflow/artifacts
@@ -204,6 +205,7 @@ services:
       OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET}
       OIDC_NAME: ${OIDC_NAME}
       OIDC_WELL_KNOWN: ${OIDC_WELL_KNOWN}
+      OIDC_END_SESSION_ENDPOINT: ${OIDC_END_SESSION_ENDPOINT}
       OIDC_ADMIN_GROUP: ${OIDC_ADMIN_GROUP}
       OIDC_USER_GROUP: ${OIDC_USER_GROUP}
     healthcheck:
