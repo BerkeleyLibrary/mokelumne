@@ -6,16 +6,18 @@ Playwright-driven e2e tests for the OIDC login flow.
 
 import pytest
 
-from playwright.sync_api import Page, expect
+from playwright.sync_api import Page, expect, BrowserContext
 
-from .conftest import airflow_login_url, airflow_url
-
+from .conftest import (
+    airflow_login_url, airflow_url, context, keycloak_logout_url, logout
+)
 
 # Matches the main div of the homepage. Absent from the login page.
 HOMEPAGE_MARKER = '[data-testid="main-content"]'
 
 # Matches the Admin tab in the left navbar.
 ADMIN_MARKER = 'button[aria-label="Admin"]'
+
 
 
 def test_airflow_requires_login(page: Page) -> None:
@@ -46,3 +48,13 @@ def test_admin_user_can_view_admin_tab(page_as_testadmin: Page) -> None:
     page_as_testadmin.goto('/')
     expect(page_as_testadmin).to_have_url(airflow_url("/"))
     expect(page_as_testadmin.locator(ADMIN_MARKER)).to_be_visible()
+
+
+def test_logout_redirects(page_as_testuser: Page, context: BrowserContext) -> None:
+    page_as_testuser.goto('/')
+    logout(page_as_testuser)
+    expect(page_as_testuser).to_have_url(keycloak_logout_url())
+    page_as_testuser.get_by_text("Logout").click()
+    page_as_testuser.wait_for_url(airflow_login_url())
+    expect(page_as_testuser).to_have_url(airflow_login_url())
+    assert [c.get("name") != "_token" for c in context.cookies()]

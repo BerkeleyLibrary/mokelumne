@@ -1,4 +1,5 @@
 import os
+from urllib.parse import urljoin
 
 from airflow.api_fastapi.app import AUTH_MANAGER_FASTAPI_APP_PREFIX
 from airflow.providers.fab.auth_manager.fab_auth_manager import FabAuthManager
@@ -11,7 +12,7 @@ from mokelumne.oidc.security_manager import OIDCSecurityManager
 # pulling in airflow.configuration.conf here as this module gets loaded before
 # the configuration might be fully initialized
 AIRFLOW__API__BASE_URL= os.getenv(
-    "AIRFLOW__API__BASE_URL", "http://localhost:8080/"
+    "AIRFLOW__API__BASE_URL", "http://localhost:8080"
 )
 
 SECURITY_MANAGER_CLASS = OIDCSecurityManager
@@ -37,7 +38,9 @@ AUTH_ROLES_MAPPING = {
     OIDC_USER_GROUP: ["User"],
 }
 
-LOGIN_URL = f"{AIRFLOW__API__BASE_URL}{AUTH_MANAGER_FASTAPI_APP_PREFIX}/login"
+LOGIN_URL = urljoin(
+    AIRFLOW__API__BASE_URL, f"{AUTH_MANAGER_FASTAPI_APP_PREFIX}/login"
+)
 
 LOGOUT_REDIRECT_URL = (
     f"{OIDC_END_SESSION_ENDPOINT}?post_logout_redirect_uri={LOGIN_URL}"
