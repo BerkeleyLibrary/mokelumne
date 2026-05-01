@@ -12,7 +12,7 @@ from airflow.sdk import Asset, dag, task, Param, get_current_context
 from airflow.exceptions import AirflowFailException, AirflowSkipException
 
 from mokelumne.batch_image.assets import records_xml
-from mokelumne.util.fetch_tind import FetchTind
+from mokelumne.providers.tind.hooks.tind import TindHook
 from mokelumne.util.storage import run_dir
 
 logger = logging.getLogger(__name__)
@@ -30,8 +30,8 @@ for the Tind [Search API](https://docs.tind.io/article/cmi2ci71w7-overview-of-th
 This is equivalent to the _p_ (pattern) parameter in the Tind query syntax.""",
             examples=[
                 "collection:[Ladies Relief Society]",
-                "\"ice cream\" AND 336__a:Image"
-            ]
+                "\"ice cream\" AND 336__a:Image",
+            ],
         ),
         "langfuse_prompt_name": Param(
             "image-description",
@@ -86,11 +86,11 @@ def fetch_tind_records():
         context = get_current_context()
         run_id = context["run_id"]
         tind_query = context["params"]["tind_query"]
-        fetch_tind = FetchTind.from_connection(run_id, conn="tind_default")
+        hook = TindHook()
 
         try:
-            records_written = fetch_tind.write_query_results_to_xml(
-                tind_query, "tind_bulk.xml"
+            records_written = hook.write_query_results_to_xml(
+                tind_query, "tind_bulk.xml", output_dir=str(run_dir(run_id))
             )
         except Exception as ex:
             raise AirflowFailException(

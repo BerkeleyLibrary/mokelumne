@@ -1998,8 +1998,9 @@ python-slugify==8.0.4 \
     # via
     #   apache-airflow-core
     #   pytest-playwright
-python-tind-client==0.2.1 \
-    --hash=sha256:1b66c2fc43779da379862ec15969b7ec8937671735d3267f31fc9bffd886e8e3
+python-tind-client==0.2.3 \
+    --hash=sha256:8d5286b1af0df3a87ffc4c80a7199663fb02983dbe2b576601ae76cf50e0e915 \
+    --hash=sha256:dfeb0590267c6af5f60832eedb4a7fa4794844cc44bb75066febe9d9698599cc
     # via mokelumne (pyproject.toml)
 pytz==2026.1.post1 \
     --hash=sha256:3378dde6a0c3d26719182142c56e60c7f9af7e968076f31aae569d72a0358ee1 \

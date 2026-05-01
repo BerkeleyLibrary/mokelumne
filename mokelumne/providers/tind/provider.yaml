@@ -1,0 +1,19 @@
+package-name: mokelumne
+name: Tind
+description: Tind Airflow provider.
+connection-types:
+  - connection-type: tind
+    hook-class-name: mokelumne.providers.tind.hooks.tind.TindHook
+    hook-name: Tind
+    ui-field-behaviour:
+      hidden-fields:
+        - port
+        - schema
+        - login
+        - extra
+      relabeling:
+        host: TIND API URL
+        password: TIND API Key
+      placeholders:
+        host: "e.g. https://digicoll.lib.berkeley.edu/api/v1"
+        password: Your-Tind-API-key

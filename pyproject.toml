@@ -45,6 +45,9 @@ lint = [
 Repository = "https://github.com/BerkeleyLibrary/mokelumne"
 Issues = "https://github.com/BerkeleyLibrary/mokelumne/issues"
 
+[project.entry-points."apache_airflow_provider"]
+tind = "mokelumne.providers.tind.get_provider_info:get_provider_info"
+
 [tool.mypy]
 python_version = "3.13"
 warn_unused_configs = true
@@ -53,6 +56,9 @@ warn_return_any = true
 
 [tool.setuptools.packages.find]
 include = ['mokelumne*']
+
+[tool.setuptools.package-data]
+"mokelumne.providers.tind" = ["provider.yaml"]
 
 [tool.pydoclint]
 allow-init-docstring = true
