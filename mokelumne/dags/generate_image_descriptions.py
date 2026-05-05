@@ -5,23 +5,19 @@ to a new CSV."""
 
 from __future__ import annotations
 
-import base64
 import csv
 import json
 import logging
-import mimetypes
 import os
 
 from datetime import datetime, UTC
 from pathlib import Path
 
 from airflow.sdk import dag, task, Asset, get_current_context
-from botocore.exceptions import ClientError
-from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_aws import ChatBedrock
-from langfuse.langchain import CallbackHandler
 from mokelumne.batch_image.assets import fetched_csv, processed_csv
 from mokelumne.util import langfuse
+from mokelumne.util.image_describer import ImageDescriber
 
 logger = logging.getLogger(__name__)
 
@@ -90,56 +86,13 @@ def generate_image_descriptions():
 
         results = []
 
-        langfuse_handler = CallbackHandler()
         model = ChatBedrock(
             model=os.environ["AWS_MODEL_ID"], provider=os.environ["AWS_MODEL_PROVIDER"]
         )
-        sys_msg = SystemMessage(prompt["prompt"])
+        describer = ImageDescriber(model, prompt["prompt"])
 
         for record in batch:
-            mime_type, _ = mimetypes.guess_type(record["Image Path"])
-            encoded = base64.b64encode(Path(record["Image Path"]).read_bytes()).decode(
-                "utf-8"
-            )
-            logger.info(
-                "Processing %s with file %s...", record['Record ID'], record['Image Path']
-            )
-
-            # we could make this a constant or env var.
-            if len(encoded) > 3.75 * 1024 * 1024:
-                record_meta = (
-                    f"{record['Record ID']},{record['035__a']},{record['Image Path']}"
-                )
-                logger.warning(
-                    "Encoded size %s exceeds limit for {%s}. Skipping record.",
-                    len(encoded),
-                    record_meta,
-                )
-                record["Status"] = "failure: file size exceeds limit"
-                results.append(record)
-                continue
-
-            image_msg = HumanMessage(
-                content=[{"type": "image", "base64": encoded, "mime_type": mime_type}]
-            )
-
-            try:
-                result = model.invoke(
-                    [sys_msg, image_msg], config={"callbacks": [langfuse_handler]}
-                )
-            except ClientError as exc:
-                record["Status"] = f"failure: {exc.response['Error']['Message']}"
-                results.append(record)
-                continue
-
-            if hasattr(result, "content"):
-                record["Status"] = "success"
-                record["Description"] = str(result.content)
-
-                results.append(record)
-            else:
-                record["Status"] = "failure: no content in response"
-                results.append(record)
+            results.append(describer.describe(record))
 
         return results
 
