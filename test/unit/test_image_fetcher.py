@@ -150,5 +150,5 @@ class TestImageFetcher:
         my_transform.assert_called_with(481229)
         my_tind.download_image_file.assert_not_called()
         my_tind.download_image_from_record_sized.assert_has_calls([
-            call('12345', 'test_run', 534, 400), call('12345', 264, 197)
+            call('12345', 'test_run', 534, 400), call('12345', 'test_run', 264, 197)
         ])
