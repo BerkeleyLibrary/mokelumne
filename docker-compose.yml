@@ -116,15 +116,12 @@ services:
         set -eo pipefail
         /entrypoint airflow db migrate
         if [ -n "${TIND_API_KEY:-}" ]; then
+          airflow connections delete tind_default || true;
           airflow connections add tind_default \
             --conn-type tind \
-            --conn-host "${TIND_BASE_URL}" \
+            --conn-host "${TIND_API_URL}" \
             --conn-password "${TIND_API_KEY}" \
-            --conn-description "TIND API connection" || \
-          airflow connections set tind_default \
-            --conn-type tind \
-            --conn-host "${TIND_BASE_URL}" \
-            --conn-password "${TIND_API_KEY}"
+            --conn-description "TIND API connection"
         fi
     depends_on:
       postgres:
