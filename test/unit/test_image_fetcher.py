@@ -73,7 +73,7 @@ def fetch_factory(tind_mock: MockTindHook, **kwargs) -> ImageFetcher:
 
     This method is factored out so that we don't duplicate the pyright pragma in each test.
     """
-    fetcher = ImageFetcher(tind_mock, run_id='test_run', **kwargs)  # pyright: ignore[reportArgumentType]
+    fetcher = ImageFetcher(tind_mock, **kwargs)  # pyright: ignore[reportArgumentType]
     return fetcher
 
 
@@ -98,23 +98,23 @@ class TestImageFetcher:
     def test_fetch_one_image(self):
         """Test a simple `fetch_one_image_for_record` with no constraints."""
         fetcher = fetch_factory(MockTindHook())
-        fetcher.fetch_one_image_for_record('12345')
+        fetcher.fetch_one_image_for_record('12345', 'test_run')
 
     def test_fetch_one_image_bounds(self):
         """Test calling `fetch_one_image_for_record` with an out-of-bounds index."""
         fetcher = fetch_factory(MockTindHook())
-        assert fetcher.fetch_one_image_for_record('12345', 1337) is None
+        assert fetcher.fetch_one_image_for_record('12345', 'test_run', 1337) is None
 
     def test_fetch_multiple_images(self):
         """Test a simple `fetch_images_for_record` call."""
         fetcher = fetch_factory(MockTindHookWithMultipleFiles())
-        result = fetcher.fetch_images_for_record('12345')
+        result = fetcher.fetch_images_for_record('12345', 'test_run')
         assert len(result) == 2
 
     def test_fetch_all_images_single(self):
         """Test a simple `fetch_images_for_record` call with a single-file record."""
         fetcher = fetch_factory(MockTindHook())
-        result = fetcher.fetch_images_for_record('12345')
+        result = fetcher.fetch_images_for_record('12345', 'test_run')
         assert len(result) == 1
 
     def test_fetch_scale_unneeded(self):
@@ -122,7 +122,7 @@ class TestImageFetcher:
         tind = MockTindHook()
         my_tind = Mock(wraps=tind)
         fetcher = fetch_factory(my_tind, max_h=2000, max_w=2000, max_size=1048576)
-        fetcher.fetch_one_image_for_record('12345')
+        fetcher.fetch_one_image_for_record('12345', 'test_run')
         my_tind.download_image_file.assert_called_once()
         my_tind.download_image_from_record_sized.assert_not_called()
 
@@ -131,7 +131,7 @@ class TestImageFetcher:
         tind = MockTindHookThatScales()
         my_tind = Mock(wraps=tind)
         fetcher = fetch_factory(my_tind, max_h=2000, max_w=2000, max_size=1048576)
-        fetcher.fetch_one_image_for_record('12345')
+        fetcher.fetch_one_image_for_record('12345', 'test_run')
         my_tind.download_image_file.assert_not_called()
         my_tind.download_image_from_record_sized.assert_called_once()
 
@@ -146,7 +146,7 @@ class TestImageFetcher:
         my_transform = Mock(wraps=transform)
         fetcher = fetch_factory(my_tind, max_h=2000, max_w=2000, max_size=262144,
                                 size_transform=my_transform)
-        fetcher.fetch_one_image_for_record('12345')
+        fetcher.fetch_one_image_for_record('12345', 'test_run')
         my_transform.assert_called_with(481229)
         my_tind.download_image_file.assert_not_called()
         my_tind.download_image_from_record_sized.assert_has_calls([

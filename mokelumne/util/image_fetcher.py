@@ -28,7 +28,6 @@ class ImageFetcher:
     """Provides an object that can fetch images from TIND."""
 
     def __init__(self, client: TindHook,
-                 run_id: str,
                  max_w: Optional[int] = None,
                  max_h: Optional[int] = None,
                  max_size: Optional[int] = None,
@@ -36,8 +35,6 @@ class ImageFetcher:
         """Create a new ImageFetcher.
 
         :param TindHook client: The TIND client object to use for fetching images.
-
-        :param str run_id: The ID of the run for which to fetch images.
 
         :param Optional[int] max_w: The maximum width for an image.
         If None is specified, images will not have a set maximum width.
@@ -57,7 +54,6 @@ class ImageFetcher:
         """
 
         self.client = client
-        self.run_id = run_id
         self.max_width = max_w
         self.max_height = max_h
         self.max_size = max_size
@@ -68,10 +64,13 @@ class ImageFetcher:
         """Fetch the metadata for a given record."""
         return self.client.get_file_metadata(record_id)
 
-    def fetch_one_image_for_record(self, record_id: str, index: int = 0) -> Optional[Path]:
+    def fetch_one_image_for_record(self, record_id: str,
+                                   run_id: str,
+                                   index: int = 0) -> Optional[Path]:
         """Fetch a single image for a given record.
 
         :param str record_id: The TIND record ID containing the image to fetch.
+        :param str run_id: The ID of the run for which to fetch images.
         :param int index: The 0-based index of the image to fetch.  Defaults to 0, the first image.
         :returns: The Path representing the on-disk path of the image fetched.
         """
@@ -103,8 +102,7 @@ class ImageFetcher:
 
         if (curr_width != target_width) or (curr_height != target_height):
             # downsample using IIIF
-            path = self.client.download_image_from_record_sized(record_id,
-                                                                self.run_id,
+            path = self.client.download_image_from_record_sized(record_id, run_id,
                                                                 target_width, target_height)
 
             # TIND resampling may cause the image to be larger than original.  recalculate.
@@ -118,20 +116,20 @@ class ImageFetcher:
                 target_width = int(trunc(target_width * factor))
                 target_height = int(trunc(target_height * factor))
                 # Only re-download if it actually does exceed the limit.
-                path = self.client.download_image_from_record_sized(record_id,
-                                                                    self.run_id,
+                path = self.client.download_image_from_record_sized(record_id, run_id,
                                                                     target_width, target_height)
         else:
-            path = self.client.download_image_file(record_id, self.run_id)
+            path = self.client.download_image_file(record_id, run_id)
         return Path(path)
 
-    def fetch_images_for_record(self, record_id: str) -> list[Optional[Path]]:
+    def fetch_images_for_record(self, record_id: str, run_id: str) -> list[Optional[Path]]:
         """Fetch all images for a given record.
 
         :param str record_id: The TIND record ID containing the images to fetch.
+        :param str run_id: The ID of the run for which to fetch images.
         :returns: A list of Paths representing the on-disk paths of all images fetched.
         """
         record_md = self.get_metadata_for_record(record_id)
-        return [self.fetch_one_image_for_record(record_id, index)
+        return [self.fetch_one_image_for_record(record_id, run_id, index)
                 for index in range(len(record_md))]
 

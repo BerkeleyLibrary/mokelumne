@@ -1,14 +1,10 @@
 # pyright: reportTypedDictNotRequiredAccess=false
 
-"""fetch_tind_records.py
-
-DAG that fetches TIND records matching a query and writes them to an XML file.
-"""
+"""Shared task that fetches TIND records matching a query and writes them to an XML file."""
 from __future__ import annotations
-import json
 import logging
 
-from airflow.sdk import Asset, dag, task, Param, get_current_context
+from airflow.sdk import Asset, task, get_current_context
 from airflow.exceptions import AirflowFailException, AirflowSkipException
 
 from mokelumne.batch_image.assets import records_xml
@@ -18,98 +14,34 @@ from mokelumne.util.storage import run_dir
 logger = logging.getLogger(__name__)
 
 
-@dag(
-    schedule=None,
-    catchup=False,
-    params={
-        "tind_query": Param(
-            title="Tind query",
-            type="string",
-            description_md="""[Search query](https://digicoll.lib.berkeley.edu/docs/search-guide/)
-for the Tind [Search API](https://docs.tind.io/article/cmi2ci71w7-overview-of-the-search-api).
-This is equivalent to the _p_ (pattern) parameter in the Tind query syntax.""",
-            examples=[
-                "collection:[Ladies Relief Society]",
-                "\"ice cream\" AND 336__a:Image",
-            ],
-        ),
-        "langfuse_prompt_name": Param(
-            "image-description",
-            title="Prompt name",
-            type="string",
-            section="Prompt configuration",
-            description_md="""The name of the
-[Langfuse prompt](https://langfuse.com/docs/prompt-management/overview) used
-to generate image descriptions."""
-        ),
-        "langfuse_prompt_version_or_label": Param(
-            "production",
-            title="Version or label",
-            type=["string", "integer"],
-            section="Prompt configuration",
-            examples=["production", "staging", "latest", 1, 2, 3],
-            description_md="""
-The [version or label](https://langfuse.com/docs/prompt-management/features/prompt-version-control)
-for the Langfuse prompt used to generate image descriptions. You likely want to
-keep this as **production** unless you are testing prompts."""
-        ),
-    },
-    tags=["tind", "records", "batch-image", "xml"]
-)
-def fetch_tind_records():
-    """Fetch TIND records matching a query and write them to an XML file."""
+@task(outlets=[records_xml])
+def write_query_results_to_xml(tind_query: str) -> int:
+    """Fetch records matching the query and write them to an XML file.
 
-    @task
-    def validate_params() -> None:
-        """Validate that the tind_query parameter is not empty and serialise params to disk.
+    :raises AirflowSkipException: If no records are found.
+    :raises AirflowFailException: If it fails during the fetching or writing process.
+    :return int: The number of records written.
+    """
 
-        :raises AirflowFailException: If the tind_query parameter is empty.
-        """
+    context = get_current_context()
+    run_id = context["run_id"]
+    hook = TindHook()
 
-        context = get_current_context()
-        val = context["params"].get("tind_query", "")
-        if not val.strip():
-            raise AirflowFailException("Parameter tind_query cannot be empty")
+    try:
+        records_written = hook.write_query_results_to_xml(
+            tind_query, "tind_bulk.xml", output_dir=str(run_dir(run_id))
+        )
+    except Exception as ex:
+        raise AirflowFailException(
+            f"Failed to write query results to XML: {ex}"
+        ) from ex
 
-        with (run_dir(context["run_id"]) / 'params.json').open('w', encoding='utf-8') as fp:
-            json.dump(context["params"], fp)
+    if records_written == 0:
+        raise AirflowSkipException(f"No records found for query: {tind_query}")
 
-    @task(outlets=[records_xml])
-    def write_query_results_to_xml() -> int:
-        """Fetch records matching the query and write them to an XML file.
+    actual_path = run_dir(run_id) / "tind_bulk.xml"
+    logger.info("Query results written to XML file at: %s", actual_path)
 
-        :raises AirflowSkipException: If no records are found.
-        :raises AirflowFailException: If it fails during the fetching or writing process.
-        :return int: The number of records written.
-        """
+    context["outlet_events"][records_xml].add(Asset(f"file://{actual_path}"))
 
-        context = get_current_context()
-        run_id = context["run_id"]
-        tind_query = context["params"]["tind_query"]
-        hook = TindHook()
-
-        try:
-            records_written = hook.write_query_results_to_xml(
-                tind_query, "tind_bulk.xml", output_dir=str(run_dir(run_id))
-            )
-        except Exception as ex:
-            raise AirflowFailException(
-                f"Failed to write query results to XML: {ex}"
-            ) from ex
-
-        if records_written == 0:
-            raise AirflowSkipException(f"No records found for query: {tind_query}")
-
-        actual_path = run_dir(run_id) / "tind_bulk.xml"
-        logger.info("Query results written to XML file at: %s", actual_path)
-
-        context["outlet_events"][records_xml].add(Asset(f"file://{actual_path}"))
-
-        return records_written
-
-    (
-        validate_params() >> write_query_results_to_xml()
-    )  # pyright: ignore[reportUnusedExpression]
-
-
-fetch_tind_records()
+    return records_written
