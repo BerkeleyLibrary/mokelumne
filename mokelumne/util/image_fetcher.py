@@ -7,7 +7,7 @@ from math import ceil, trunc
 from pathlib import Path
 from typing import Any, Callable, Optional
 
-from mokelumne.util.fetch_tind import FetchTind
+from mokelumne.providers.tind.hooks.tind import TindHook
 
 logger = logging.getLogger(__name__)
 """The logger for this module."""
@@ -27,12 +27,17 @@ def base64_size(s: int | float) -> int:
 class ImageFetcher:
     """Provides an object that can fetch images from TIND."""
 
-    def __init__(self, client: FetchTind, max_w: Optional[int] = None,
-                 max_h: Optional[int] = None, max_size: Optional[int] = None,
+    def __init__(self, client: TindHook,
+                 run_id: str,
+                 max_w: Optional[int] = None,
+                 max_h: Optional[int] = None,
+                 max_size: Optional[int] = None,
                  size_transform: Callable[[int | float], int] = None):
         """Create a new ImageFetcher.
 
-        :param FetchTind client: The TIND client object to use for fetching images.
+        :param TindHook client: The TIND client object to use for fetching images.
+
+        :param str run_id: The ID of the run for which to fetch images.
 
         :param Optional[int] max_w: The maximum width for an image.
         If None is specified, images will not have a set maximum width.
@@ -52,6 +57,7 @@ class ImageFetcher:
         """
 
         self.client = client
+        self.run_id = run_id
         self.max_width = max_w
         self.max_height = max_h
         self.max_size = max_size
@@ -98,6 +104,7 @@ class ImageFetcher:
         if (curr_width != target_width) or (curr_height != target_height):
             # downsample using IIIF
             path = self.client.download_image_from_record_sized(record_id,
+                                                                self.run_id,
                                                                 target_width, target_height)
 
             # TIND resampling may cause the image to be larger than original.  recalculate.
@@ -112,9 +119,10 @@ class ImageFetcher:
                 target_height = int(trunc(target_height * factor))
                 # Only re-download if it actually does exceed the limit.
                 path = self.client.download_image_from_record_sized(record_id,
+                                                                    self.run_id,
                                                                     target_width, target_height)
         else:
-            path = self.client.download_image_file(record_id)
+            path = self.client.download_image_file(record_id, self.run_id)
         return Path(path)
 
     def fetch_images_for_record(self, record_id: str) -> list[Optional[Path]]:

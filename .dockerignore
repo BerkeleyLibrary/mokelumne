@@ -1,6 +1,7 @@
 # Ignore generated files
 **/*.py[cod]
 **/__pycache__
+*.egg-info
 
 download/
 logs/

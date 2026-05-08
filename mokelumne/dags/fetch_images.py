@@ -12,7 +12,7 @@ from typing import List
 from airflow.sdk import dag, task, Asset, get_current_context
 
 from mokelumne.batch_image.assets import to_process_csv, fetched_csv
-from mokelumne.util.fetch_tind import FetchTind
+from mokelumne.providers.tind.hooks.tind import TindHook
 from mokelumne.util.image_fetcher import ImageFetcher, base64_size
 from mokelumne.util.storage import run_dir
 
@@ -106,8 +106,8 @@ def fetch_images():
 
     processed = read_csv_to_process()
     orig_run_id = processed["original_run_id"]
-    client = FetchTind.from_connection(str(orig_run_id), conn="tind_default")
-    fetcher = ImageFetcher(client, 8000, 8000, SIZE_LIMIT, size_transform=base64_size)
+    tindhook = TindHook()
+    fetcher = ImageFetcher(tindhook, orig_run_id, 8000, 8000, SIZE_LIMIT, size_transform=base64_size)
     fetch_partial = fetch_image_to_record_directory.partial(fetcher=fetcher)
     results = fetch_partial.expand(tind_id=load_record_ids(processed))
     write_status_to_fetched_csv(orig_run_id, load_records(processed), results)
