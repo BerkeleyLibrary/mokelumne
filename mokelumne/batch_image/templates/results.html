@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Batch image description results</title>
+</head>
+<body>
+  <h1>Batch image description results</h1>
+  <p>Query: {{ query }}</p>
+  <dl>
+    <dt><a href="{{ processed.url }}">{{ processed.count }} images processed</a></dt>
+    <dd>{{ processed.success }} succeeded, {{ processed.failures }} failed</dd>
+    <dt><a href="{{ fetched.url }}">{{ fetched.count }} images fetched</a></dt>
+    <dd>{{ fetched.success }} succeeded, {{ fetched.failures }} failed</dd>
+    <dt><a href="{{ skipped.url }}">{{ skipped.count }} records skipped</a></dt>
+    <dd>These records did not match filter criteria</dd>
+  </dl>
+</body>
+</html>

@@ -69,8 +69,8 @@ x-airflow-common: &airflow-common
   volumes:
     - ./:/opt/airflow
     - ./artifacts:/home/airflow/artifacts
+    - ./files:/opt/airflow/files
     - ./test:/opt/airflow/test
-    - ./public:/opt/airflow/public
   user: "${AIRFLOW_UID:-40093}:0"
 
 services:
@@ -123,11 +123,16 @@ services:
             --conn-password "${TIND_API_KEY}" \
             --conn-description "TIND API connection"
         fi
+        chown -cR airflow:root /opt/airflow/files
+        chmod 0775 /opt/airflow/files
     depends_on:
       postgres:
         condition: service_healthy
     entrypoint: /bin/bash
     restart: on-failure:3
+    # Runs as root to chown the files directory. Necessary in GitHub Actions
+    # where it's initialized as root:root.
+    user: root
 
   airflow-scheduler:
     <<: *airflow-common

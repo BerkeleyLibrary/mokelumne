@@ -1,44 +1,45 @@
+x-airflow-common-overrides: &airflow-common-overrides
+  image: ${DOCKER_APP_IMAGE}
+  volumes: !override
+    - airflow_files:/opt/airflow/files
+
 services:
   airflow-apiserver:
+    <<: *airflow-common-overrides
     build: !reset
     develop: !reset
-    image: ${DOCKER_APP_IMAGE}
-    volumes: !reset
 
   airflow-cli:
+    <<: *airflow-common-overrides
     build: !reset
     develop: !reset
-    image: ${DOCKER_APP_IMAGE}
-    volumes: !reset
 
   airflow-dag-processor:
+    <<: *airflow-common-overrides
     build: !reset
     develop: !reset
-    image: ${DOCKER_APP_IMAGE}
-    volumes: !reset
 
   airflow-init:
+    <<: *airflow-common-overrides
     build: !reset
     develop: !reset
-    image: ${DOCKER_APP_IMAGE}
-    volumes: !reset
 
   airflow-scheduler:
+    <<: *airflow-common-overrides
     build: !reset
     develop: !reset
-    image: ${DOCKER_APP_IMAGE}
-    volumes: !reset
 
   airflow-triggerer:
+    <<: *airflow-common-overrides
     build: !reset
     develop: !reset
-    image: ${DOCKER_APP_IMAGE}
-    volumes: !reset
 
   airflow-worker:
+    <<: *airflow-common-overrides
     build: !reset
     develop: !reset
-    image: ${DOCKER_APP_IMAGE}
-    volumes: !reset
 
   flower: !reset
+
+volumes:
+  airflow_files: {}

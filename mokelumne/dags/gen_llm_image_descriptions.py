@@ -7,26 +7,25 @@ import json
 import logging
 from collections import namedtuple
 from datetime import datetime, UTC
-from html import escape
 from itertools import filterfalse
 from os import environ as ENV
 from pathlib import Path
 from shutil import copyfile
 from typing import List
-from uuid import uuid4
-
 from airflow.exceptions import AirflowFailException
 from airflow.providers.smtp.operators.smtp import EmailOperator
 from airflow.sdk import dag, task, task_group, Param, get_current_context
 from pymarc.marcxml import map_xml
 
 from langchain_aws import ChatBedrock
+from mokelumne.batch_image.templates import render_results_html
 from mokelumne.dags.fetch_tind_records import write_query_results_to_xml
 from mokelumne.providers.tind.hooks.tind import TindHook
 from mokelumne.util import langfuse
 from mokelumne.util.image_describer import ImageDescriber
 from mokelumne.util.image_fetcher import ImageFetcher, base64_size
-from mokelumne.util.storage import run_dir, public_dir, public_path_to_url
+from mokelumne.plugins.static_files.helpers import static_files_run_dir
+from mokelumne.util.storage import run_dir
 from mokelumne.util.tind_csv_writer import TindCsvWriter, is_single_image_record
 
 
@@ -357,9 +356,14 @@ def gen_llm_image_descriptions():
 
         @task
         def generate_id() -> str:
-            """Generate a URL-safe directory for collated output."""
-            output_path = public_dir() / str(uuid4())
-            output_path.mkdir()  # We don't exist_ok=True because it should be unique.
+            """Return the per-run public output directory, creating it if needed.
+
+            The static_files plugin's DAG-run "Files" tab links to
+            ``<STATIC_FILES_ROOT>/<dag_id>/<run_id>/``, so collated outputs must
+            land there for the tab to find them.
+            """
+            context = get_current_context()
+            output_path = static_files_run_dir(context["dag"].dag_id, context["run_id"])
             return str(output_path)
 
         @task
@@ -413,22 +417,26 @@ def gen_llm_image_descriptions():
                 count_success_fail_of_csv(proc_path, "success")
             )
 
-            template_html = f"""
-<html><head><title>Batch image description results</title></head><body>
-<h1>Batch image description results</h1>
-<p>Query: {escape(params['tind_query'])}</p>
-<dl>
-    <dt><a href="{public_path_to_url(proc_path)}">{proc_count} images processed</a></dt>
-    <dd>{proc_success} succeeded, {proc_failures} failed</dd>
-    <dt><a href="{public_path_to_url(fetched_path)}">{fetch_count} images fetched</a></dt>
-    <dd>{fetch_success} succeeded, {fetch_failures} failed</dd>
-    <dt><a href="{public_path_to_url(skipped_path)}">{skip_count} records skipped</a></dt>
-    <dd>These records did not match filter criteria</dd>
-</dl>
-</body></html>"""
+            def render(embed: bool) -> str:
+                return render_results_html(
+                    query=params['tind_query'],
+                    processed_path=proc_path,
+                    processed_count=proc_count,
+                    processed_success=proc_success,
+                    processed_failures=proc_failures,
+                    fetched_path=fetched_path,
+                    fetched_count=fetch_count,
+                    fetched_success=fetch_success,
+                    fetched_failures=fetch_failures,
+                    skipped_path=skipped_path,
+                    skipped_count=skip_count,
+                    embed=embed,
+                )
 
-            with (output_path / 'index.html').open('w') as html:
-                html.write(template_html)
+            # index.html: served from AirFlow's iFrame, so downloads are blocked (embed=True)
+            (output_path / 'index.html').write_text(render(embed=True), encoding='utf-8')
+            # email.html: opened from email client, so downloads are allowed (embed=False)
+            (output_path / 'email.html').write_text(render(embed=False), encoding='utf-8')
 
             return output_dir_str
 
@@ -442,11 +450,10 @@ def gen_llm_image_descriptions():
 
         @task
         def render_email_template(asset_directory: str) -> str:
-            """Create the HTML template for the email message that will be sent."""
+            """Read the pre-rendered email body for this run."""
             asset_path = Path(str(asset_directory))
 
-            with (asset_path / "index.html").open(encoding='utf-8') as html:
-                return html.read()
+            return (asset_path / "email.html").read_text(encoding='utf-8')
 
         EmailOperator(
             task_id='send_email',
