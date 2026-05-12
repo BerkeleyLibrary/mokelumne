@@ -1,12 +1,15 @@
 """Provides Langfuse prompt management routines."""
 
 import importlib.metadata
+import json
 import logging
 
 from collections import namedtuple
 from os import environ as ENV
 
+from airflow.sdk.bases.hook import BaseHook
 from langfuse import Langfuse
+# from langfuse.langchain import CallbackHandler
 
 
 Prompt = namedtuple('Prompt', ['prompt', 'version'])
@@ -16,11 +19,53 @@ Prompt.version.__doc__ = 'The version of the prompt, for use in tracing and debu
 
 logger = logging.getLogger(__name__)
 
+CONN_ID = 'langfuse_default'
+
+def _host(conn):
+    """Normalize host by preserving scheme or defaulting to https."""
+    host = conn.host
+    if not host:
+        return host
+    if host.startswith(('http://', 'https://')):
+        return host
+    return f'https://{host}'
+
+def _get_langfuse_connection_settings() -> tuple[str, str, str]:
+    """Return host/public/secret key tuple from the Langfuse Airflow connection."""
+    conn = BaseHook.get_connection(CONN_ID)
+    host = _host(conn)
+    extras = conn.extra_dejson
+    raw = extras.get('extra')
+    creds = json.loads(raw)
+    public_key = creds.get('public_key')
+    secret_key = creds.get('secret_key')
+    if not public_key or not secret_key or not host:
+        raise ValueError(
+            f'Missing public_key/secret_key or host in Airflow connection {CONN_ID}. '
+            'Please check AIRFLOW_CONN_LANGFUSE_DEFAULT.'
+        )
+    return host, public_key, secret_key
+
+def get_langfuse_client() -> Langfuse:
+    """Return a Langfuse client configured from the ``langfuse_default`` Airflow connection."""
+    host, public_key, secret_key = _get_langfuse_connection_settings()
+    return Langfuse(
+        host=host,
+        public_key=public_key,
+        secret_key=secret_key,
+        release=importlib.metadata.version('mokelumne'),
+        environment=ENV.get('DEPLOYMENT_ID', 'default'),
+    )
+
+# def get_langfuse_callback_handler() -> CallbackHandler:
+#     """Return a LangChain CallbackHandler configured from the ``langfuse_default`` Airflow connection."""
+#     get_langfuse_client()
+#     _, public_key, _ = _get_langfuse_connection_settings()
+#     return CallbackHandler(public_key=public_key)
 
 def get_prompt(name: str, version_or_label: int | str) -> Prompt:
     """Return the current prompt to use."""
-    langfuse = Langfuse(release=importlib.metadata.version('mokelumne'),
-                        environment=ENV.get('DEPLOYMENT_ID', 'default'))
+    langfuse = get_langfuse_client()
     if isinstance(version_or_label, int):
         logger.debug(
             f"Getting Langfuse prompt {name}, version {version_or_label}"
