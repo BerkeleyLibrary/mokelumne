@@ -9,8 +9,6 @@ from os import environ as ENV
 
 from airflow.sdk.bases.hook import BaseHook
 from langfuse import Langfuse
-# from langfuse.langchain import CallbackHandler
-
 
 Prompt = namedtuple('Prompt', ['prompt', 'version'])
 Prompt.__doc__ += ': Contains a LLM prompt for generating image descriptions.'
@@ -56,12 +54,6 @@ def get_langfuse_client() -> Langfuse:
         release=importlib.metadata.version('mokelumne'),
         environment=ENV.get('DEPLOYMENT_ID', 'default'),
     )
-
-# def get_langfuse_callback_handler() -> CallbackHandler:
-#     """Return a LangChain CallbackHandler configured from the ``langfuse_default`` Airflow connection."""
-#     get_langfuse_client()
-#     _, public_key, _ = _get_langfuse_connection_settings()
-#     return CallbackHandler(public_key=public_key)
 
 def get_prompt(name: str, version_or_label: int | str) -> Prompt:
     """Return the current prompt to use."""
