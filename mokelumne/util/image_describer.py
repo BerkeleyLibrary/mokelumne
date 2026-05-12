@@ -43,7 +43,8 @@ class ImageDescriber:
                 len(encoded),
                 record_meta,
             )
-            record["Status"] = "failure: file size exceeds limit"
+            record["Status"] = "failure"
+            record["Status description"] = "file size exceeds limit"
             return record
 
         image_msg = HumanMessage(
@@ -55,13 +56,15 @@ class ImageDescriber:
                 [self.sys_msg, image_msg], config={"callbacks": [self.langfuse_handler]}
             )
         except ClientError as exc:
-            record["Status"] = f"failure: {exc.response['Error']['Message']}"
+            record["Status"] = "failure"
+            record["Status description"] = exc.response["Error"]["Message"]
             return record
 
         if hasattr(result, "content"):
             record["Status"] = "success"
             record["Description"] = str(result.content)
         else:
-            record["Status"] = "failure: no content in response"
+            record["Status"] = "failure"
+            record["Status description"] = "no content in response"
 
         return record

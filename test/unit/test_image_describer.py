@@ -78,8 +78,7 @@ class TestImageDescriber:
         describer = image_describer.ImageDescriber(model, TEST_PROMPT)
         result = describer.describe(NORMAL_RECORD_FIXTURE)
         assert "failure" in result["Status"]
-        # NOTE: When we separate the Status column, this will need to change.
-        assert err in result["Status"]
+        assert err in result["Status description"]
 
     def test_size_error(self):
         """Test case where the record's image is too large."""
