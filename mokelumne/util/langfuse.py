@@ -24,8 +24,6 @@ def _host(conn):
     host = conn.host
     if not host:
         return host
-    if host.startswith(('http://', 'https://')):
-        return host
     return f'https://{host}'
 
 def _get_langfuse_connection_settings() -> tuple[str, str, str]:
