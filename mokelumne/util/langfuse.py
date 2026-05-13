@@ -18,30 +18,22 @@ Prompt.version.__doc__ = 'The version of the prompt, for use in tracing and debu
 logger = logging.getLogger(__name__)
 
 
-def _base_url(conn):
-    """Normalize host by preserving scheme or defaulting to https."""
-    host = conn.host
-    if not host:
-        return host
-    return f'https://{host}'
-
 def _get_langfuse_connection_settings(conn_id: str) -> tuple[str, str, str]:
     """Return host/public/secret key tuple from the Langfuse Airflow connection."""
     conn = BaseHook.get_connection(conn_id)
-    base_url = _base_url(conn)
+    base_url = f'https://{conn.host}'
     extras = conn.extra_dejson
     raw = extras.get('extra')
     creds = json.loads(raw)
     public_key = creds.get('public_key')
     secret_key = creds.get('secret_key')
-    if not public_key or not secret_key or not base_url:
+    if not public_key or not secret_key:
         raise ValueError(
-            f'Missing public_key/secret_key or base_url in Airflow connection {conn_id}. '
-            'Please check AIRFLOW_CONN_LANGFUSE_DEFAULT.'
+            f'Missing public_key/secret_key in Airflow connection {conn_id}. '
         )
     return base_url, public_key, secret_key
-
-def get_langfuse_client(conn_id: str = 'langfuse_default') -> Langfuse:
+    
+def get_langfuse_client(conn_id: str) -> Langfuse:
     """Return a Langfuse client configured from the ``langfuse_default`` Airflow connection."""
     base_url, public_key, secret_key = _get_langfuse_connection_settings(conn_id)
     return Langfuse(
@@ -52,9 +44,9 @@ def get_langfuse_client(conn_id: str = 'langfuse_default') -> Langfuse:
         environment=ENV.get('DEPLOYMENT_ID', 'default'),
     )
 
-def get_prompt(name: str, version_or_label: int | str) -> Prompt:
+def get_prompt(name: str, version_or_label: int | str, conn_id: str = 'langfuse_default') -> Prompt:
     """Return the current prompt to use."""
-    langfuse = get_langfuse_client()
+    langfuse = get_langfuse_client(conn_id)
     if isinstance(version_or_label, int):
         logger.debug(
             f"Getting Langfuse prompt {name}, version {version_or_label}"

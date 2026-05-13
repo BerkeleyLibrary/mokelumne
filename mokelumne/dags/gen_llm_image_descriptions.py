@@ -259,7 +259,7 @@ def gen_llm_image_descriptions():
             context = get_current_context()
             prompt = langfuse.get_prompt(
                 name=context["params"]["langfuse_prompt_name"],
-                version_or_label=context["params"]["langfuse_prompt_version_or_label"],
+                version_or_label=context["params"]["langfuse_prompt_version_or_label"]
             )
 
             return {"prompt": prompt.prompt, "version": prompt.version}
