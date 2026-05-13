@@ -10,10 +10,10 @@ DEFAULT_TEST_PROMPT: str = "A test prompt."
 DEFAULT_TEST_VERSION: int = 67
 """The version used if none is specified to the mocked Langfuse object."""
 
-FAKE_HOST: str = "https://langfuse.example.com"
+FAKE_BASE_URL: str = "https://langfuse.example.com"
 FAKE_PUBLIC_KEY: str = "pk-test-123"
 FAKE_SECRET_KEY: str = "sk-test-456"
-FAKE_CONN_SETTINGS: tuple[str, str, str] = (FAKE_HOST, FAKE_PUBLIC_KEY, FAKE_SECRET_KEY)
+FAKE_CONN_SETTINGS: tuple[str, str, str] = (FAKE_BASE_URL, FAKE_PUBLIC_KEY, FAKE_SECRET_KEY)
 
 
 class MockResult:
@@ -43,7 +43,7 @@ class MockLangfuse:
 def mock_conn_settings(monkeypatch):
     """Patch _get_langfuse_connection_settings to avoid hitting Airflow."""
     monkeypatch.setattr(
-        langfuse, '_get_langfuse_connection_settings', lambda: FAKE_CONN_SETTINGS
+        langfuse, '_get_langfuse_connection_settings', lambda conn_id: FAKE_CONN_SETTINGS
     )
 
 
@@ -58,32 +58,13 @@ class MockConnection:
         return self._extra_dejson
 
 
-class TestHost:
-    """Tests for _host."""
-
-    def test_preserves_https_scheme(self):
-        """Ensure https:// scheme is preserved."""
-        conn = MockConnection(host="https://example.com")
-        assert langfuse._host(conn) == "https://example.com"
-
-    def test_adds_https_to_plain_host(self):
-        """Ensure https:// is prepended to plain host."""
-        conn = MockConnection(host="example.com")
-        assert langfuse._host(conn) == "https://example.com"
-
-    def test_returns_none_host(self):
-        """Ensure None host is returned as-is."""
-        conn = MockConnection(host=None)
-        assert langfuse._host(conn) is None
-
-
 class TestGetLangfuseConnectionSettings:
     """Tests for _get_langfuse_connection_settings."""
 
     def test_returns_correct_settings(self, monkeypatch):
         """Ensure connection settings are correctly extracted and returned."""
         mock_conn = MockConnection(
-            host="https://langfuse.example.com",
+            host="langfuse.example.com",
             extras={
                 'extra': '{"public_key": "pk-123", "secret_key": "sk-456"}'
             }
@@ -92,7 +73,7 @@ class TestGetLangfuseConnectionSettings:
             langfuse.BaseHook, 'get_connection', Mock(return_value=mock_conn)
         )
 
-        host, public_key, secret_key = langfuse._get_langfuse_connection_settings()
+        host, public_key, secret_key = langfuse._get_langfuse_connection_settings('langfuse_default')
 
         assert host == "https://langfuse.example.com"
         assert public_key == "pk-123"
@@ -101,7 +82,7 @@ class TestGetLangfuseConnectionSettings:
     def test_raises_on_missing_public_key(self, monkeypatch):
         """Ensure ValueError is raised when public_key is missing."""
         mock_conn = MockConnection(
-            host="https://langfuse.example.com",
+            host="langfuse.example.com",
             extras={
                 'extra': '{"secret_key": "sk-456"}'
             }
@@ -111,7 +92,7 @@ class TestGetLangfuseConnectionSettings:
         )
 
         with pytest.raises(ValueError, match="Missing public_key"):
-            langfuse._get_langfuse_connection_settings()
+            langfuse._get_langfuse_connection_settings('langfuse_default')
 
 
 @pytest.mark.usefixtures("mock_conn_settings")
@@ -123,11 +104,11 @@ class TestGetLangfuseClient:
         mock_langfuse_cls = Mock(return_value=Mock())
         monkeypatch.setattr(langfuse, 'Langfuse', mock_langfuse_cls)
 
-        client = langfuse.get_langfuse_client()
+        client = langfuse.get_langfuse_client('langfuse_default')
 
         mock_langfuse_cls.assert_called_once()
         call_kwargs = mock_langfuse_cls.call_args.kwargs
-        assert call_kwargs['host'] == FAKE_HOST
+        assert call_kwargs['base_url'] == FAKE_BASE_URL
         assert call_kwargs['public_key'] == FAKE_PUBLIC_KEY
         assert call_kwargs['secret_key'] == FAKE_SECRET_KEY
         assert client is mock_langfuse_cls.return_value
@@ -138,7 +119,7 @@ class TestGetLangfuseClient:
         monkeypatch.setattr(langfuse, 'Langfuse', mock_langfuse_cls)
         monkeypatch.setenv('DEPLOYMENT_ID', 'staging')
 
-        langfuse.get_langfuse_client()
+        langfuse.get_langfuse_client('langfuse_default')
 
         call_kwargs = mock_langfuse_cls.call_args.kwargs
         assert call_kwargs['environment'] == 'staging'
@@ -153,7 +134,7 @@ class TestGetPrompt:
         """Test a simple call of the `get_prompt` method."""
         with monkeypatch.context() as m:
             m.setattr(langfuse, 'Langfuse', MockLangfuse)
-            result = langfuse.get_prompt('test', 'production')
+            result = langfuse.get_prompt('test', 'production', 'langfuse_default')
         assert result.prompt == DEFAULT_TEST_PROMPT
         assert result.version == DEFAULT_TEST_VERSION
 
@@ -167,7 +148,7 @@ class TestGetPrompt:
 
         with monkeypatch.context() as m:
             m.setattr(langfuse, 'Langfuse', mock)
-            langfuse.get_prompt(name, label)
+            langfuse.get_prompt(name, label, 'langfuse_default')
 
         lf_object.get_prompt.assert_called_with(name, label=label)
 
@@ -181,6 +162,6 @@ class TestGetPrompt:
 
         with monkeypatch.context() as m:
             m.setattr(langfuse, 'Langfuse', mock)
-            langfuse.get_prompt(name, version)
+            langfuse.get_prompt(name, version, 'langfuse_default')
 
         lf_object.get_prompt.assert_called_with(name, version=version)
