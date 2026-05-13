@@ -107,7 +107,6 @@ Important environment variables for our build/environment:
 |`AWS_MODEL_ID`|The model to use. Make sure it's supported on the ARN.|`AWS_MODEL_ID="us.anthropic.claude-haiku-4-5-20251001-v1:0"`|
 |`AWS_MODEL_LABEL`|A human friendly label for the model. Will eventually be displayed in the Tind record.|`AWS_MODEL_LABEL="Claude Haiku 4.5"`|
 |`AWS_MODEL_PROVIDER`|The provider for the model. |`AWS_MODEL_PROVIDER=anthropic`|
-|`MOKELUMNE_PUBLIC_STORAGE`|Path for public assets|`MOKELUMNE_PUBLIC_STORAGE=/opt/airflow/public`|
 |`MOKELUMNE_PUBLIC_URL`|URL to access public assets - must end in `/`|`MOKELUMNE_PUBLIC_URL=https://mokelumne-assets.ucblib.org/`|
 
 Note: The `AIRFLOW_UID` example in `example.env` maps to the reserved `uid` for the `airflow` user in [lap/workflow](https://git.lib.berkeley.edu/lap/workflow/-/wikis/UIDs).

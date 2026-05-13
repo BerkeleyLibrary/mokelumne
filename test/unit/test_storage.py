@@ -15,14 +15,6 @@ def test_dl_dir(monkeypatch, tmp_path: Path) -> Path:
     return test_path
 
 
-@pytest.fixture
-def test_pub_dir(monkeypatch, tmp_path: Path) -> Path:
-    """Create a public directory and set `MOKELUMNE_PUBLIC_STORAGE` to it."""
-    pub_path = tmp_path
-    monkeypatch.setenv("MOKELUMNE_PUBLIC_STORAGE", str(pub_path))
-    return pub_path
-
-
 class TestStorage:
     """Tests for the Mokelumne storage module."""
 
@@ -65,21 +57,3 @@ class TestStorage:
         result = storage.record_dir("TestRun", "123456")
         assert result.parts[-2:] == ("12", "123456")
 
-    def test_public_dir(self, test_pub_dir):
-        """Ensure that `public_dir` respects the `MOKELUMNE_PUBLIC_STORAGE` variable."""
-        result = storage.public_dir()
-        assert result == test_pub_dir
-
-    def test_public_dir_default(self, monkeypatch):
-        """Ensure that `public_dir` has a reasonable default."""
-        monkeypatch.delenv("MOKELUMNE_PUBLIC_STORAGE", raising=False)
-        result = storage.public_dir()
-        assert result == Path('/opt/airflow/public')
-
-    def test_public_path_to_url(self, monkeypatch, test_pub_dir):
-        """Ensure that we can turn a public path into a URL."""
-        test_url = "https://test.example/"
-        monkeypatch.setenv("MOKELUMNE_PUBLIC_URL", test_url)
-        test_path = test_pub_dir / "some_run" / "some_asset.file"
-        result = storage.public_path_to_url(test_path)
-        assert result == f"{test_url}some_run/some_asset.file"

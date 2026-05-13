@@ -30,6 +30,11 @@ license = "MIT"
 test = [
     "pytest",
     "pytest-cov",
+    # Declared explicitly (rather than relying on Airflow's transitive install)
+    # so unit tests for FastAPI plugins keep working if Airflow ever drops or
+    # swaps its FastAPI dependency.
+    "fastapi",
+    "httpx",
     # Keep the playwright client aligned with the minor version
     # of the playwright service in the Compose file.
     "playwright ~= 1.58.0",
@@ -48,6 +53,9 @@ Issues = "https://github.com/BerkeleyLibrary/mokelumne/issues"
 [project.entry-points."apache_airflow_provider"]
 tind = "mokelumne.providers.tind.get_provider_info:get_provider_info"
 
+[project.entry-points."airflow.plugins"]
+static_files = "mokelumne.plugins.static_files:StaticFilesPlugin"
+
 [tool.mypy]
 python_version = "3.13"
 warn_unused_configs = true
@@ -59,6 +67,8 @@ include = ['mokelumne*']
 
 [tool.setuptools.package-data]
 "mokelumne.providers.tind" = ["provider.yaml"]
+"mokelumne.plugins.static_files" = ["templates/*.html"]
+"mokelumne.batch_image.templates" = ["*.html"]
 
 [tool.pydoclint]
 allow-init-docstring = true
