@@ -17,36 +17,35 @@ Prompt.version.__doc__ = 'The version of the prompt, for use in tracing and debu
 
 logger = logging.getLogger(__name__)
 
-CONN_ID = 'langfuse_default'
 
-def _host(conn):
+def _base_url(conn):
     """Normalize host by preserving scheme or defaulting to https."""
     host = conn.host
     if not host:
         return host
     return f'https://{host}'
 
-def _get_langfuse_connection_settings() -> tuple[str, str, str]:
+def _get_langfuse_connection_settings(conn_id: str) -> tuple[str, str, str]:
     """Return host/public/secret key tuple from the Langfuse Airflow connection."""
-    conn = BaseHook.get_connection(CONN_ID)
-    host = _host(conn)
+    conn = BaseHook.get_connection(conn_id)
+    base_url = _base_url(conn)
     extras = conn.extra_dejson
     raw = extras.get('extra')
     creds = json.loads(raw)
     public_key = creds.get('public_key')
     secret_key = creds.get('secret_key')
-    if not public_key or not secret_key or not host:
+    if not public_key or not secret_key or not base_url:
         raise ValueError(
-            f'Missing public_key/secret_key or host in Airflow connection {CONN_ID}. '
+            f'Missing public_key/secret_key or base_url in Airflow connection {conn_id}. '
             'Please check AIRFLOW_CONN_LANGFUSE_DEFAULT.'
         )
-    return host, public_key, secret_key
+    return base_url, public_key, secret_key
 
-def get_langfuse_client() -> Langfuse:
+def get_langfuse_client(conn_id: str = 'langfuse_default') -> Langfuse:
     """Return a Langfuse client configured from the ``langfuse_default`` Airflow connection."""
-    host, public_key, secret_key = _get_langfuse_connection_settings()
+    base_url, public_key, secret_key = _get_langfuse_connection_settings(conn_id)
     return Langfuse(
-        host=host,
+        base_url=base_url,
         public_key=public_key,
         secret_key=secret_key,
         release=importlib.metadata.version('mokelumne'),
