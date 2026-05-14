@@ -7,7 +7,7 @@ import mimetypes
 
 from botocore.exceptions import ClientError
 from langchain_core.messages import HumanMessage, SystemMessage
-from langfuse.langchain import CallbackHandler
+from mokelumne.util import langfuse
 
 
 logger = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ class ImageDescriber:
         """Initialise an image describer with a given model and prompt."""
         self.model = model
         self.prompt = prompt
-        self.langfuse_handler = CallbackHandler()
+        self.langfuse_handler = langfuse.get_langfuse_callback_handler()
         self.sys_msg = SystemMessage(prompt)
 
     def describe(self, record: dict[str, str]) -> dict[str, str]:
