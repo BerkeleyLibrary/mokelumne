@@ -125,6 +125,26 @@ class TestGetLangfuseClient:
 
 
 @pytest.mark.usefixtures("mock_conn_settings")
+class TestGetLangfuseCallbackHandler:
+    """Tests for get_langfuse_callback_handler."""
+
+    def test_callback_handler_uses_given_conn_id(self, monkeypatch):
+        """Ensure callback handler setup forwards custom conn_id."""
+        callback_handler_cls = Mock(return_value=Mock())
+        get_client = Mock(return_value=Mock())
+        get_conn_settings = Mock(return_value=FAKE_CONN_SETTINGS)
+
+        monkeypatch.setattr(langfuse, 'CallbackHandler', callback_handler_cls)
+        monkeypatch.setattr(langfuse, 'get_langfuse_client', get_client)
+        monkeypatch.setattr(langfuse, '_get_langfuse_connection_settings', get_conn_settings)
+
+        langfuse.get_langfuse_callback_handler('langfuse_custom')
+
+        get_client.assert_called_once_with('langfuse_custom')
+        get_conn_settings.assert_called_once_with('langfuse_custom')
+
+
+@pytest.mark.usefixtures("mock_conn_settings")
 class TestGetPrompt:
     """Tests for get_prompt."""
 
