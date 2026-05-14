@@ -32,10 +32,10 @@ def _get_langfuse_connection_settings(conn_id: str) -> tuple[str, str, str]:
         )
     return base_url, public_key, secret_key
 
-def get_langfuse_callback_handler() -> CallbackHandler:
+def get_langfuse_callback_handler(conn_id: str) -> CallbackHandler:
     """Return a LangChain CallbackHandler configured from the ``langfuse_default`` Airflow connection."""
-    get_langfuse_client()
-    _, public_key, _ = _get_langfuse_connection_settings()
+    get_langfuse_client(conn_id)
+    _, public_key, _ = _get_langfuse_connection_settings(conn_id)
     return CallbackHandler(public_key=public_key)
 
 def get_langfuse_client(conn_id: str) -> Langfuse:
