@@ -8,6 +8,7 @@ from os import environ as ENV
 
 from airflow.sdk import BaseHook
 from langfuse import Langfuse
+from langfuse.langchain import CallbackHandler
 
 Prompt = namedtuple('Prompt', ['prompt', 'version'])
 Prompt.__doc__ += ': Contains a LLM prompt for generating image descriptions.'
@@ -30,6 +31,12 @@ def _get_langfuse_connection_settings(conn_id: str) -> tuple[str, str, str]:
             'Set login/password on the connection.'
         )
     return base_url, public_key, secret_key
+
+def get_langfuse_callback_handler(conn_id: str) -> CallbackHandler:
+    """Return a LangChain CallbackHandler configured from the given Airflow connection."""
+    get_langfuse_client(conn_id)
+    _, public_key, _ = _get_langfuse_connection_settings(conn_id)
+    return CallbackHandler(public_key=public_key)
 
 def get_langfuse_client(conn_id: str) -> Langfuse:
     """Return a Langfuse client configured from the ``langfuse_default`` Airflow connection."""
