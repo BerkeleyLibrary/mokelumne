@@ -49,25 +49,23 @@ def mock_conn_settings(monkeypatch):
 
 class MockConnection:
     """Mock Airflow connection object."""
-    def __init__(self, host, extras=None):
+    def __init__(self, host, schema=None, login=None, password=None):
         self.host = host
-        self._extra_dejson = extras or {}
-
-    @property
-    def extra_dejson(self):
-        return self._extra_dejson
+        self.schema = schema
+        self.login = login
+        self.password = password
 
 
 class TestGetLangfuseConnectionSettings:
     """Tests for _get_langfuse_connection_settings."""
 
-    def test_returns_correct_settings(self, monkeypatch):
-        """Ensure connection settings are correctly extracted and returned."""
+    def test_extracts_credentials_from_airflow_connection(self, monkeypatch):
+        """Ensure Langfuse credentials are extracted from Airflow connection fields."""
         mock_conn = MockConnection(
             host="langfuse.example.com",
-            extras={
-                'extra': '{"public_key": "pk-123", "secret_key": "sk-456"}'
-            }
+            schema="https",
+            login="pk-123",
+            password="sk-456"
         )
         monkeypatch.setattr(
             langfuse.BaseHook, 'get_connection', Mock(return_value=mock_conn)
@@ -79,19 +77,19 @@ class TestGetLangfuseConnectionSettings:
         assert public_key == "pk-123"
         assert secret_key == "sk-456"
 
-    def test_raises_on_missing_public_key(self, monkeypatch):
-        """Ensure ValueError is raised when public_key is missing."""
+    def test_raises_on_missing_login_credentials(self, monkeypatch):
+        """Ensure ValueError is raised when login (public key) is missing."""
         mock_conn = MockConnection(
             host="langfuse.example.com",
-            extras={
-                'extra': '{"secret_key": "sk-456"}'
-            }
+            schema="https",
+            login=None,
+            password="sk-456"
         )
         monkeypatch.setattr(
             langfuse.BaseHook, 'get_connection', Mock(return_value=mock_conn)
         )
 
-        with pytest.raises(ValueError, match="Missing public_key"):
+        with pytest.raises(ValueError, match="Missing Langfuse credentials"):
             langfuse._get_langfuse_connection_settings('langfuse_default')
 
 
