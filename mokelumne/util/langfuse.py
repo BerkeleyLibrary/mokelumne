@@ -6,8 +6,8 @@ import logging
 from collections import namedtuple
 from os import environ as ENV
 
+from airflow.sdk import BaseHook
 from langfuse import Langfuse
-
 
 Prompt = namedtuple('Prompt', ['prompt', 'version'])
 Prompt.__doc__ += ': Contains a LLM prompt for generating image descriptions.'
@@ -17,10 +17,34 @@ Prompt.version.__doc__ = 'The version of the prompt, for use in tracing and debu
 logger = logging.getLogger(__name__)
 
 
-def get_prompt(name: str, version_or_label: int | str) -> Prompt:
+def _get_langfuse_connection_settings(conn_id: str) -> tuple[str, str, str]:
+    """Return host/public/secret key tuple from the Langfuse Airflow connection."""
+    conn = BaseHook.get_connection(conn_id)
+    base_url = f'{conn.schema}://{conn.host}'
+    public_key = conn.login
+    secret_key = conn.password
+
+    if not public_key or not secret_key:
+        raise ValueError(
+            f'Missing Langfuse credentials in Airflow connection {conn_id}. '
+            'Set login/password on the connection.'
+        )
+    return base_url, public_key, secret_key
+
+def get_langfuse_client(conn_id: str) -> Langfuse:
+    """Return a Langfuse client configured from the ``langfuse_default`` Airflow connection."""
+    base_url, public_key, secret_key = _get_langfuse_connection_settings(conn_id)
+    return Langfuse(
+        base_url=base_url,
+        public_key=public_key,
+        secret_key=secret_key,
+        release=importlib.metadata.version('mokelumne'),
+        environment=ENV.get('DEPLOYMENT_ID', 'default'),
+    )
+
+def get_prompt(name: str, version_or_label: int | str, conn_id: str = 'langfuse_default') -> Prompt:
     """Return the current prompt to use."""
-    langfuse = Langfuse(release=importlib.metadata.version('mokelumne'),
-                        environment=ENV.get('DEPLOYMENT_ID', 'default'))
+    langfuse = get_langfuse_client(conn_id)
     if isinstance(version_or_label, int):
         logger.debug(
             f"Getting Langfuse prompt {name}, version {version_or_label}"

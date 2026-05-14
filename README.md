@@ -86,6 +86,7 @@ Important environment variables for our build/environment:
 | `AIRFLOW__API__BASE_URL` | Where Airflow's webserver is reachable. | `AIRFLOW__API__BASE_URL="http://localhost:8080"` |
 | `AIRFLOW__CORE__FERNET_KEY` | [Fernet](https://airflow.apache.org/docs/apache-airflow/stable/security/secrets/fernet.html) encryption key used to encrypt Airflow secrets | `AIRFLOW__CORE__FERNET_KEY="somebase64value="` |
 | `AIRFLOW__API_AUTH__JWT_SECRET` | Secret key used to sign JWT tokens for Airflow's API authentication. The default value used in development and testing should be replaced in production. | `AIRFLOW__API_AUTH__JWT_SECRET="some32bytesecret"` |
+| `AIRFLOW_CONN_LANGFUSE_DEFAULT` | Airflow connection string for Langfuse access.<br>Note: This will create a `langfuse_default` conn_id, will not store the connection in the Airflow metastore, and will override any other connection settings.  | `AIRFLOW_CONN_LANGFUSE_DEFAULT='{"conn_type":"langfuse","host":"us.cloud.langfuse.com","schema":"https","login":"pk-lf-blah-blah-blah","password":"ssk-lf-blah-blah-blah"}'`|
 | `AIRFLOW_CONN_TIND_DEFAULT` | (Optional override) Airflow connection json string for TIND access.<br>Note: This will create a `tind_default` conn_id, will not store the connection in the Airflow metastore, and will override any other connection settings.  | `AIRFLOW_CONN_TIND_DEFAULT='{"conn_type": "http","password": "your-tind-key-here","host": "https://digicoll.lib.berkeley.edu/api/v1","schema": "https"}'` |
 | `OIDC_CLIENT_SECRET` | Client secret for OIDC authentication.  Used by the Airflow webserver to authenticate OIDC token requests.  In development, also used by `keycloak-config-cli` to configure the client secret.  This should match Keycloak configuration in development and testing, and CalNet in production. | `OIDC_CLIENT_SECRET="some32charactersecret"` |
 | `OIDC_NAME` | Name appended to the OIDC login button | `OIDC_NAME="keycloak"` |
@@ -98,9 +99,6 @@ Important environment variables for our build/environment:
 | `TIND_API_URL` | URL for TIND access | `TIND_API_URL="https://digicoll.lib.berkeley.edu/api/v1"` |
 | `TIND_IIIF_MANIFEST_URL_PATTERN` | URL pattern for TIND IIIF manifests | `TIND_IIIF_MANIFEST_URL_PATTERN="https://digicoll.lib.berkeley.edu/record/{tind_id}/export/iiif_manifest"` |
 | `MOKELUMNE_TIND_DOWNLOAD_DIR` | Path for downloaded image cache | `MOKELUMNE_TIND_DOWNLOAD_DIR="/some/path/to/download/to"` |
-|`LANGFUSE_HOST`|Host for Langfuse|`LANGFUSE_HOST="https://us.cloud.langfuse.com"`|
-|`LANGFUSE_SECRET_KEY`|sets langfuse secret key|`LANGFUSE_SECRET_KEY="sk-lf-blah-blah-blah"`|
-|`LANGFUSE_PUBLIC_KEY`|sets langfuse public key|`LANGFUSE_PUBLIC_KEY="pk-lf-blah-blah-blah"`|
 |`AWS_ENDPOINT_URL`|AWS endpoint (don't forget the `https://`!)|`AWS_ENDPOINT_URL="https://bedrock-runtime.us-west-1.amazonaws.com"`|
 |`AWS_DEFAULT_REGION`|The AWS region to use; you probably want `us-west-1`.|`AWS_DEFAULT_REGION=us-west-1`|
 |`AWS_BEARER_TOKEN_BEDROCK`|The IAM credential to use to access AWS. Use a short-term API key.<br>The key will expire after AWS console logout or 12 hours (whichever comes first).<br>Make sure that your region for the key matches the region above.|`AWS_BEARER_TOKEN_BEDROCK="bedrock-api-key-blah-blah-blah"`|
