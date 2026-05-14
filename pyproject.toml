@@ -76,7 +76,7 @@ skip-checking-raises = true
 style = "sphinx"
 
 [tool.pylint.messages_control]
-disable = ["expression-not-assigned"]
+disable = ["expression-not-assigned", "pointless-statement", "too-many-statements"]
 
 [tool.pytest]
 minversion = "9.0"

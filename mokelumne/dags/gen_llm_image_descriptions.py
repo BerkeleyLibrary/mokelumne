@@ -12,6 +12,7 @@ from os import environ as ENV
 from pathlib import Path
 from shutil import copyfile
 from typing import List
+import requests
 from airflow.exceptions import AirflowFailException
 from airflow.providers.smtp.operators.smtp import EmailOperator
 from airflow.sdk import dag, task, task_group, Param, get_current_context
@@ -109,6 +110,12 @@ keep this as **production** unless you are testing prompts."""
             section="Image fetcher configuration",
             description_md="The maximum height for the fetched image.  Must be less than 8000px."
         ),
+    },
+    default_args={
+        "retries": 3,
+        "retry_delay": 3,
+        "retry_exponential_backoff": True,
+        "max_retry_delay": 600,  # 10 minutes
     },
     tags=["batch-image", "csv", "generate-descriptions", "llm", "process",],
 )
@@ -217,6 +224,16 @@ def gen_llm_image_descriptions():
                     )
 
                 path = str(fetcher.fetch_one_image_for_record(tind_id, run_id))
+            except requests.HTTPError as ex:
+                if ex.response is not None and (
+                    ex.response.status_code == 429 or ex.response.status_code >= 500
+                ):
+                    logger.warning(
+                        "TIND API returned %s; marking record for retry",
+                        ex.response.status_code,
+                    )
+                    raise
+                return RunStatus(tind_id=tind_id, status="failed", description=str(ex), path="")
             except Exception as ex:  # pylint: disable=broad-exception-caught
                 logger.warning("Fetcher encountered exception", exc_info=ex)
                 return RunStatus(tind_id=tind_id, status="failed", description=str(ex), path="")
@@ -383,7 +400,7 @@ def gen_llm_image_descriptions():
             return timestamp
 
         @task
-        def generate_summary(output_dir_str: str, timestamp: str) -> str:
+        def generate_summary(output_dir_str: str, timestamp: str) -> str: # pylint: disable=too-many-locals
             """Generate a summary of the files in the collated path."""
             def count_success_fail_of_csv(csv_file: Path, success: str) -> tuple[int, int, int]:
                 """Count the success and failure rows for the given CSV."""

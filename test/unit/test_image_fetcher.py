@@ -4,6 +4,8 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import Mock, call
 
+import requests
+
 from mokelumne.util.image_fetcher import ImageFetcher, base64_size
 
 
@@ -66,6 +68,15 @@ class MockTindHookThatScales(MockTindHook):
     def download_image_from_record_sized(self, _record_id: str, _run_id: str, _width: int, _height: int) -> str:
         """Give a smaller version of the test image."""
         return str(FIXTURE_PATH / 'test3_scaled.jpg')
+
+
+class MockTindHookWith429(MockTindHook):
+    """A mock TindHook that simulates a 429 Too Many Requests response."""
+    def get_file_metadata(self, _record_id: str) -> list[dict[str, Any]]:
+        """Raise an HTTP 429 Too Many Requests error."""
+        response = requests.Response()
+        response.status_code = 429
+        raise requests.HTTPError(response=response)
 
 
 def fetch_factory(tind_mock: MockTindHook, **kwargs) -> ImageFetcher:
@@ -152,3 +163,14 @@ class TestImageFetcher:
         my_tind.download_image_from_record_sized.assert_has_calls([
             call('12345', 'test_run', 534, 400), call('12345', 'test_run', 264, 197)
         ])
+
+    def test_429_propagates(self):
+        """Ensure that a 429 from TIND propagates as HTTPError so Airflow task can retry."""
+        fetcher = fetch_factory(MockTindHookWith429())
+        raised = None
+        try:
+            fetcher.fetch_one_image_for_record('12345', 'test_run')
+        except requests.HTTPError as e:
+            raised = e
+        assert raised is not None
+        assert raised.response.status_code == 429
