@@ -127,7 +127,9 @@ def test_get_corpus_file_returns_response(monkeypatch):
     """Ensure that the file download is created appropriately."""
     session = MagicMock(spec=requests.Session)
     login_page = make_login_page_response()
-    download_response = make_download_response(200, {"Content-Disposition": "attachment; filename=example.zip"})
+    download_response = make_download_response(
+        200, {"Content-Disposition": "attachment; filename=example.zip"}
+    )
 
     session.get.side_effect = [login_page, download_response]
     session.prepare_request.return_value = MagicMock()
