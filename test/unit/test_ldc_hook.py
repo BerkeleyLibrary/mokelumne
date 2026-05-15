@@ -13,19 +13,23 @@ from mokelumne.providers.ldc.hooks.ldc import LDCHook
 
 
 class DummyConnection:
+    """Mock Airflow connection."""
     host = "https://catalog.ldc.upenn.edu"
     login = "user"
     password = "pass"
 
 
 def make_login_page_response(csrf_value: str = "abc") -> MagicMock:
+    """Generate a mocked response that contains the login page form element."""
     response = MagicMock(spec=requests.Response)
     response.status_code = 200
     response.text = f"<input name='authenticity_token' value='{csrf_value}'/>"
     return response
 
 
-def make_download_response(status_code: int = 200, headers: dict[str, str] | None = None) -> MagicMock:
+def make_download_response(status_code: int = 200, headers: dict[str, str] | 
+None = None) -> MagicMock:
+    """Create a mock download response."""
     response = MagicMock(spec=requests.Response)
     response.status_code = status_code
     response.headers = headers or {}
@@ -35,6 +39,7 @@ def make_download_response(status_code: int = 200, headers: dict[str, str] | Non
 
 
 def test_get_conn_authenticates_and_returns_session(monkeypatch):
+    """Ensure an authenticated connection returns as session."""
     session = MagicMock(spec=requests.Session)
     login_page = make_login_page_response()
     login_response = MagicMock(spec=requests.Response)
@@ -60,6 +65,7 @@ def test_get_conn_authenticates_and_returns_session(monkeypatch):
 
 
 def test_refresh_session_recreates_session(monkeypatch):
+    """Ensure an expired session gets recreated transparently."""
     session_one = MagicMock(spec=requests.Session)
     session_two = MagicMock(spec=requests.Session)
 
@@ -92,6 +98,7 @@ def test_refresh_session_recreates_session(monkeypatch):
 
 
 def test_get_corpora_response_returns_response(monkeypatch):
+    """Ensure the organization downloads page is fetched."""
     session = MagicMock(spec=requests.Session)
     login_page = make_login_page_response()
     corpora_response = MagicMock(spec=requests.Response)
@@ -117,6 +124,7 @@ def test_get_corpora_response_returns_response(monkeypatch):
 
 
 def test_get_corpus_file_returns_response(monkeypatch):
+    """Ensure that the file download is created appropriately."""
     session = MagicMock(spec=requests.Session)
     login_page = make_login_page_response()
     download_response = make_download_response(200, {"Content-Disposition": "attachment; filename=example.zip"})
@@ -140,6 +148,7 @@ def test_get_corpus_file_returns_response(monkeypatch):
 
 
 def test_get_corpus_file_refreshes_on_401(monkeypatch):
+    """Ensure an attempted download refreshes the connection if expired."""
     session_one = MagicMock(spec=requests.Session)
     session_two = MagicMock(spec=requests.Session)
 
@@ -174,12 +183,14 @@ def test_get_corpus_file_refreshes_on_401(monkeypatch):
 
 
 def test_get_corpus_file_raises_on_missing_link():
+    """If the download URL is missing, ensure an exception is raised."""
     hook = LDCHook()
     with pytest.raises(AirflowException, match="Download link is missing"):
         hook.get_corpus_file("")
 
 
 def test_test_connection_success(monkeypatch):
+    """Ensure the test_connection returns a success when appropriate."""
     session = MagicMock(spec=requests.Session)
     login_page = make_login_page_response()
 
@@ -201,6 +212,7 @@ def test_test_connection_success(monkeypatch):
 
 
 def test_test_connection_failure(monkeypatch):
+    """Ensure the test_connection returns a failure when appropriate."""
     monkeypatch.setattr(
         "mokelumne.providers.ldc.hooks.ldc.requests.Session",
         MagicMock(side_effect=requests.RequestException("Network error")),
