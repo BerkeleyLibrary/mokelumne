@@ -94,6 +94,7 @@ addopts = [
     "--cov=mokelumne",
 ]
 markers = [
+    "dags: test actual DAG / task code",
     "e2e: end-to-end browser tests (require playwright sidecar and running Airflow stack)",
     "unit: fast isolated unit tests with no external dependencies",
 ]
