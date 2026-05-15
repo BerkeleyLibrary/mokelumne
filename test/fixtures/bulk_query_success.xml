@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<collection xmlns="http://www.loc.gov/MARC21/slim">
+<record>
+  <controlfield tag="001">27320</controlfield>
+  <controlfield tag="005">20250429135007.0</controlfield>
+  <datafield tag="024" ind1="8" ind2="0">
+    <subfield code="a">BANC PIC 1996.003:Volume 24:42a--fALB</subfield>
+  </datafield>
+  <datafield tag="035" ind1=" " ind2=" ">
+    <subfield code="a">calher_cubanc_25_132_00180699</subfield>
+  </datafield>
+  <datafield tag="245" ind1=" " ind2=" ">
+    <subfield code="a">Old Emperor Norton in 1876</subfield>
+  </datafield>
+  <datafield tag="336" ind1=" " ind2=" ">
+    <subfield code="a">Image</subfield>
+  </datafield>
+  <datafield tag="540" ind1=" " ind2=" ">
+    <subfield code="a">Researchers may make free and open use of the UC Berkeley Library’s digitized public domain materials. However, some materials in our online collections may be protected by U.S. copyright law (Title 17, U.S.C.). Use or reproduction of materials protected by copyright beyond that allowed by fair use (Title 17, U.S.C. § 107) requires permission from the copyright owners. The use or reproduction of some materials may also be restricted by terms of University of California gift or purchase agreements, privacy and publicity rights, or trademark law. Responsibility for determining rights status and permissibility of any use or reproduction rests exclusively with the researcher. To learn more or make inquiries, please see our permissions policies (https://www.lib.berkeley.edu/about/permissions-policies).</subfield>
+  </datafield>
+  <datafield tag="852" ind1=" " ind2=" ">
+    <subfield code="c">The Bancroft Library</subfield>
+  </datafield>
+  <datafield tag="856" ind1="4" ind2="1">
+    <subfield code="u">http://www.oac.cdlib.org/findaid/ark:/13030/tf129005j4</subfield>
+    <subfield code="y">View collection guide</subfield>
+  </datafield>
+  <datafield tag="856" ind1="4" ind2=" ">
+    <subfield code="9">c6cf7b70-4acd-466f-ab1a-3ca53b4a2789</subfield>
+    <subfield code="s">196176</subfield>
+    <subfield code="u">https://digicoll.lib.berkeley.edu/record/27320/files/I0051200A.jpg</subfield>
+  </datafield>
+  <datafield tag="901" ind1=" " ind2=" ">
+    <subfield code="a">ark:/13030/tf9m3nb8s8</subfield>
+    <subfield code="f">ark:/13030/tf129005j4</subfield>
+    <subfield code="g">25:132</subfield>
+  </datafield>
+  <datafield tag="902" ind1=" " ind2=" ">
+    <subfield code="f">cubanc_25_132_00180699.xml</subfield>
+  </datafield>
+  <datafield tag="909" ind1="C" ind2="O">
+    <subfield code="o">oai:digicoll.lib.berkeley.edu:27320</subfield>
+    <subfield code="p">sfg</subfield>
+    <subfield code="p">calher:cookscrapbook</subfield>
+    <subfield code="q">mcleanCalisphere_oai</subfield>
+  </datafield>
+  <datafield tag="951" ind1=" " ind2=" ">
+    <subfield code="a">ark:/13030/m5s5429m</subfield>
+    <subfield code="b">Merritt</subfield>
+  </datafield>
+  <datafield tag="980" ind1=" " ind2=" ">
+    <subfield code="a">CalHer: Cook Scrapbook</subfield>
+  </datafield>
+  <datafield tag="982" ind1=" " ind2=" ">
+    <subfield code="a">Jesse Brown Cook Scrapbooks</subfield>
+    <subfield code="b">Jesse Brown Cook Scrapbooks Documenting San Francisco History and Law Enforcement</subfield>
+  </datafield>
+</record>
+    
+<record>
+  <controlfield tag="001">28819</controlfield>
+  <controlfield tag="005">20250429135229.0</controlfield>
+  <datafield tag="024" ind1="8" ind2="0">
+    <subfield code="a">BANC PIC 1996.003:Volume 24:41b--fALB</subfield>
+  </datafield>
+  <datafield tag="035" ind1=" " ind2=" ">
+    <subfield code="a">calher_cubanc_25_132_00180698</subfield>
+  </datafield>
+  <datafield tag="245" ind1=" " ind2=" ">
+    <subfield code="a">Old Emperor Norton in 1876</subfield>
+  </datafield>
+  <datafield tag="336" ind1=" " ind2=" ">
+    <subfield code="a">Image</subfield>
+  </datafield>
+  <datafield tag="540" ind1=" " ind2=" ">
+    <subfield code="a">Researchers may make free and open use of the UC Berkeley Library’s digitized public domain materials. However, some materials in our online collections may be protected by U.S. copyright law (Title 17, U.S.C.). Use or reproduction of materials protected by copyright beyond that allowed by fair use (Title 17, U.S.C. § 107) requires permission from the copyright owners. The use or reproduction of some materials may also be restricted by terms of University of California gift or purchase agreements, privacy and publicity rights, or trademark law. Responsibility for determining rights status and permissibility of any use or reproduction rests exclusively with the researcher. To learn more or make inquiries, please see our permissions policies (https://www.lib.berkeley.edu/about/permissions-policies).</subfield>
+  </datafield>
+  <datafield tag="852" ind1=" " ind2=" ">
+    <subfield code="c">The Bancroft Library</subfield>
+  </datafield>
+  <datafield tag="856" ind1="4" ind2="1">
+    <subfield code="u">http://www.oac.cdlib.org/findaid/ark:/13030/tf129005j4</subfield>
+    <subfield code="y">View collection guide</subfield>
+  </datafield>
+  <datafield tag="856" ind1="4" ind2=" ">
+    <subfield code="9">5e1f7508-117f-4120-9acf-88f09c2c20d8</subfield>
+    <subfield code="s">170081</subfield>
+    <subfield code="u">https://digicoll.lib.berkeley.edu/record/28819/files/I0051199A.jpg</subfield>
+  </datafield>
+  <datafield tag="901" ind1=" " ind2=" ">
+    <subfield code="a">ark:/13030/tf496nb4j6</subfield>
+    <subfield code="f">ark:/13030/tf129005j4</subfield>
+    <subfield code="g">25:132</subfield>
+  </datafield>
+  <datafield tag="902" ind1=" " ind2=" ">
+    <subfield code="f">cubanc_25_132_00180698.xml</subfield>
+  </datafield>
+  <datafield tag="909" ind1="C" ind2="O">
+    <subfield code="o">oai:digicoll.lib.berkeley.edu:28819</subfield>
+    <subfield code="p">sfg</subfield>
+    <subfield code="p">calher:cookscrapbook</subfield>
+    <subfield code="q">mcleanCalisphere_oai</subfield>
+  </datafield>
+  <datafield tag="951" ind1=" " ind2=" ">
+    <subfield code="a">ark:/13030/m57159jp</subfield>
+    <subfield code="b">Merritt</subfield>
+  </datafield>
+  <datafield tag="980" ind1=" " ind2=" ">
+    <subfield code="a">CalHer: Cook Scrapbook</subfield>
+  </datafield>
+  <datafield tag="982" ind1=" " ind2=" ">
+    <subfield code="a">Jesse Brown Cook Scrapbooks</subfield>
+    <subfield code="b">Jesse Brown Cook Scrapbooks Documenting San Francisco History and Law Enforcement</subfield>
+  </datafield>
+</record>
+    
+<record>
+  <controlfield tag="001">29563</controlfield>
+  <controlfield tag="005">20250429135339.0</controlfield>
+  <datafield tag="024" ind1="8" ind2="0">
+    <subfield code="a">BANC PIC 1996.003:Volume 24:41a--fALB</subfield>
+  </datafield>
+  <datafield tag="035" ind1=" " ind2=" ">
+    <subfield code="a">calher_cubanc_25_132_00180697</subfield>
+  </datafield>
+  <datafield tag="245" ind1=" " ind2=" ">
+    <subfield code="a">Old Emperor Norton in 1876</subfield>
+  </datafield>
+  <datafield tag="336" ind1=" " ind2=" ">
+    <subfield code="a">Image</subfield>
+  </datafield>
+  <datafield tag="540" ind1=" " ind2=" ">
+    <subfield code="a">Researchers may make free and open use of the UC Berkeley Library’s digitized public domain materials. However, some materials in our online collections may be protected by U.S. copyright law (Title 17, U.S.C.). Use or reproduction of materials protected by copyright beyond that allowed by fair use (Title 17, U.S.C. § 107) requires permission from the copyright owners. The use or reproduction of some materials may also be restricted by terms of University of California gift or purchase agreements, privacy and publicity rights, or trademark law. Responsibility for determining rights status and permissibility of any use or reproduction rests exclusively with the researcher. To learn more or make inquiries, please see our permissions policies (https://www.lib.berkeley.edu/about/permissions-policies).</subfield>
+  </datafield>
+  <datafield tag="852" ind1=" " ind2=" ">
+    <subfield code="c">The Bancroft Library</subfield>
+  </datafield>
+  <datafield tag="856" ind1="4" ind2="1">
+    <subfield code="u">http://www.oac.cdlib.org/findaid/ark:/13030/tf129005j4</subfield>
+    <subfield code="y">View collection guide</subfield>
+  </datafield>
+  <datafield tag="856" ind1="4" ind2=" ">
+    <subfield code="9">7f7df611-bbe6-4855-8725-2fbd8f9e3d90</subfield>
+    <subfield code="s">199139</subfield>
+    <subfield code="u">https://digicoll.lib.berkeley.edu/record/29563/files/I0051198A.jpg</subfield>
+  </datafield>
+  <datafield tag="901" ind1=" " ind2=" ">
+    <subfield code="a">ark:/13030/tf7g5010k5</subfield>
+    <subfield code="f">ark:/13030/tf129005j4</subfield>
+    <subfield code="g">25:132</subfield>
+  </datafield>
+  <datafield tag="902" ind1=" " ind2=" ">
+    <subfield code="f">cubanc_25_132_00180697.xml</subfield>
+  </datafield>
+  <datafield tag="909" ind1="C" ind2="O">
+    <subfield code="o">oai:digicoll.lib.berkeley.edu:29563</subfield>
+    <subfield code="p">sfg</subfield>
+    <subfield code="p">calher:cookscrapbook</subfield>
+    <subfield code="q">mcleanCalisphere_oai</subfield>
+  </datafield>
+  <datafield tag="951" ind1=" " ind2=" ">
+    <subfield code="a">ark:/13030/m5bp7bwt</subfield>
+    <subfield code="b">Merritt</subfield>
+  </datafield>
+  <datafield tag="980" ind1=" " ind2=" ">
+    <subfield code="a">CalHer: Cook Scrapbook</subfield>
+  </datafield>
+  <datafield tag="982" ind1=" " ind2=" ">
+    <subfield code="a">Jesse Brown Cook Scrapbooks</subfield>
+    <subfield code="b">Jesse Brown Cook Scrapbooks Documenting San Francisco History and Law Enforcement</subfield>
+  </datafield>
+</record>
+  
+</collection>
