@@ -349,7 +349,8 @@ def gen_llm_image_descriptions():
         processed_dicts = transform_results.partial(prompt=prompt).expand(
             batch_results=batch_results
         )
-        write_output_csv(processed_dicts)  # pyright: ignore[reportArgumentType]
+        output = write_output_csv(processed_dicts)
+        return [batches, output]  # pyright: ignore[reportArgumentType]
 
     @task_group()
     def summarise_job():
@@ -462,7 +463,8 @@ def gen_llm_image_descriptions():
     filtered >> collate  # pyright: ignore[reportUnusedExpression]
     fetched = filtered >> fetch_images()
     fetched >> collate  # pyright: ignore[reportUnusedExpression]
-    fetched >> generate_descriptions() >> collate >> directory >> notify_user(directory)
+    read_batch_csv, output = generate_descriptions()
+    fetched >> read_batch_csv >> output >> collate >> directory >> notify_user(directory)
 
 
 gen_llm_image_descriptions()
