@@ -1,0 +1,20 @@
+package-name: mokelumne
+name: LDC
+description: LDC Airflow provider.
+connection-types:
+  - connection-type: ldc
+    hook-class-name: mokelumne.providers.ldc.hooks.ldc.LDCHook
+    hook-name: Linguistic Data Consortium
+    ui-field-behaviour:
+      hidden-fields:
+        - port
+        - schema
+        - extra
+      relabeling:
+        host: LDC Catalog URL
+        login: LDC Login Username
+        password: LDC Password
+      placeholders:
+        host: "https://catalog.ldc.upenn.edu"
+        login: "your-ldc-username"
+        password: "your-ldc-password"

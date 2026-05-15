@@ -1,0 +1,164 @@
+[
+  {
+    "catalog_id": "LDC99T42",
+    "corpus_name": "Treebank-3",
+    "download_link": "/download/4c0512a1451377eb2790d557fc76a690fa11693ad846df02f3ee59d12788",
+    "invoice_date": "2020-08-22",
+    "file": "treebank_3_LDC99T42",
+    "filesize": "51.6 MB",
+    "checksum": "98c74f99f6ca17dc88efb4077fcd9539"
+  },
+  {
+    "catalog_id": "LDC99T42",
+    "corpus_name": "Treebank-3",
+    "download_link": "/download/bc0c8fb5b09cd7c61abba1804fc977e84a8c8e1476f5c19c3c9f93471094",
+    "invoice_date": "2020-08-22",
+    "file": "pennTB_tipster_wsj_map.tar",
+    "filesize": "15.3 KB",
+    "checksum": "2c4203f3873c73dfac26982bcb6672b8"
+  },
+  {
+    "catalog_id": "LDC99T42",
+    "corpus_name": "Treebank-3",
+    "download_link": "/download/e081089b0eb6340da3bb56ee8fd5bca92ec2cb2268f83e483c6087323166",
+    "invoice_date": "2020-08-22",
+    "file": "penn_coordination_anno_LDC2015T08.tgz",
+    "filesize": "3.46 MB",
+    "checksum": "35c13542a61491b44b9bbcafcad3e568"
+  },
+  {
+    "catalog_id": "LDC99T42",
+    "corpus_name": "Treebank-3",
+    "download_link": "/download/126fa5d595cfe5ae05010bb94fa62e57e0256e4ebf27b19782a1e015a32c",
+    "invoice_date": "2019-07-10",
+    "file": "treebank_3_LDC99T42",
+    "filesize": "51.6 MB",
+    "checksum": "98c74f99f6ca17dc88efb4077fcd9539"
+  },
+  {
+    "catalog_id": "LDC99T42",
+    "corpus_name": "Treebank-3",
+    "download_link": "/download/cbf8a95f16cbce4b63f01e83a03681f3177e24625242b33c002a38f08be9",
+    "invoice_date": "2019-07-10",
+    "file": "penn_coordination_anno_LDC2015T08.tgz",
+    "filesize": "3.46 MB",
+    "checksum": "35c13542a61491b44b9bbcafcad3e568"
+  },
+  {
+    "catalog_id": "LDC99T42",
+    "corpus_name": "Treebank-3",
+    "download_link": "/download/e9c80889216dd46290b1e7296defb9f64dfc603a9c49f18943456a2f0a25",
+    "invoice_date": "2019-07-10",
+    "file": "pennTB_tipster_wsj_map.tar",
+    "filesize": "15.3 KB",
+    "checksum": "2c4203f3873c73dfac26982bcb6672b8"
+  },
+  {
+    "catalog_id": "LDC99T42",
+    "corpus_name": "Treebank-3",
+    "download_link": "/download/2f9ac2c5246b26c486a9df689cf7f223e58a95cb435544a047858182a09a",
+    "invoice_date": "2019-01-29",
+    "file": "treebank_3_LDC99T42",
+    "filesize": "51.6 MB",
+    "checksum": "98c74f99f6ca17dc88efb4077fcd9539"
+  },
+  {
+    "catalog_id": "LDC99T42",
+    "corpus_name": "Treebank-3",
+    "download_link": "/download/38cb1b7d1d47a374a0874e0f9c4eeff73c37d8bb35ee7fc58df71b131616",
+    "invoice_date": "2019-01-29",
+    "file": "penn_coordination_anno_LDC2015T08.tgz",
+    "filesize": "3.46 MB",
+    "checksum": "35c13542a61491b44b9bbcafcad3e568"
+  },
+  {
+    "catalog_id": "LDC99T42",
+    "corpus_name": "Treebank-3",
+    "download_link": "/download/d9f822b9fe06cc025d92fbc51b22ac99c960cd2ebb284579a24d34aaa197",
+    "invoice_date": "2019-01-29",
+    "file": "pennTB_tipster_wsj_map.tar",
+    "filesize": "15.3 KB",
+    "checksum": "2c4203f3873c73dfac26982bcb6672b8"
+  },
+  {
+    "catalog_id": "LDC99T42",
+    "corpus_name": "Treebank-3",
+    "download_link": "/download/656da48ab4693d02ceb535ae84099dcc74af3029d3c4fcb9dd21c2e80cde",
+    "invoice_date": "2019-01-27",
+    "file": "treebank_3_LDC99T42",
+    "filesize": "51.6 MB",
+    "checksum": "98c74f99f6ca17dc88efb4077fcd9539"
+  },
+  {
+    "catalog_id": "LDC99T42",
+    "corpus_name": "Treebank-3",
+    "download_link": "/download/c751de74b5271d6505b4b71a69a9448c14f9b600b45b88308f267e857302",
+    "invoice_date": "2019-01-27",
+    "file": "penn_coordination_anno_LDC2015T08.tgz",
+    "filesize": "3.46 MB",
+    "checksum": "35c13542a61491b44b9bbcafcad3e568"
+  },
+  {
+    "catalog_id": "LDC99T42",
+    "corpus_name": "Treebank-3",
+    "download_link": "/download/e7cebf83d04c15ef66b51b95d06485149a8166ebf5a9a00af0c95a865a54",
+    "invoice_date": "2019-01-27",
+    "file": "pennTB_tipster_wsj_map.tar",
+    "filesize": "15.3 KB",
+    "checksum": "2c4203f3873c73dfac26982bcb6672b8"
+  },
+  {
+    "catalog_id": "LDC99T42",
+    "corpus_name": "Treebank-3",
+    "download_link": "/download/15bd9fd079f41763e73b1e66f9cfbad7de7cbb161e07dfca38c678ca9966",
+    "invoice_date": "2018-09-10",
+    "file": "penn_coordination_anno_LDC2015T08.tgz",
+    "filesize": "3.46 MB",
+    "checksum": "35c13542a61491b44b9bbcafcad3e568"
+  },
+  {
+    "catalog_id": "LDC99T42",
+    "corpus_name": "Treebank-3",
+    "download_link": "/download/cd63e7c6427be181045291be65d56d9219db6e8a6400ccfb9d649a5389a9",
+    "invoice_date": "2018-09-10",
+    "file": "treebank_3_LDC99T42",
+    "filesize": "51.6 MB",
+    "checksum": "98c74f99f6ca17dc88efb4077fcd9539"
+  },
+  {
+    "catalog_id": "LDC99T42",
+    "corpus_name": "Treebank-3",
+    "download_link": "/download/db5f2dce2a8b39e30d157b8e8b6cb9b9faa54c987332c8d8d3dbbbc375d5",
+    "invoice_date": "2018-09-10",
+    "file": "pennTB_tipster_wsj_map.tar",
+    "filesize": "15.3 KB",
+    "checksum": "2c4203f3873c73dfac26982bcb6672b8"
+  },
+  {
+    "catalog_id": "LDC99T42",
+    "corpus_name": "Treebank-3",
+    "download_link": "/download/1902948cac729e5ff7f2d473c2a98a948923b11575c7af487bfe05caae29",
+    "invoice_date": "2017-05-26",
+    "file": "pennTB_tipster_wsj_map.tar",
+    "filesize": "15.3 KB",
+    "checksum": "2c4203f3873c73dfac26982bcb6672b8"
+  },
+  {
+    "catalog_id": "LDC99T42",
+    "corpus_name": "Treebank-3",
+    "download_link": "/download/683c41e30c26526cd679afc5af9d552dd75500127b0d65b91e4bf52460bf",
+    "invoice_date": "2017-05-26",
+    "file": "treebank_3_LDC99T42",
+    "filesize": "51.6 MB",
+    "checksum": "98c74f99f6ca17dc88efb4077fcd9539"
+  },
+  {
+    "catalog_id": "LDC99T42",
+    "corpus_name": "Treebank-3",
+    "download_link": "/download/e29703aa251ca7ecb2ac0931a2f477ab8425adc19cdc70a956e3de5113b6",
+    "invoice_date": "2017-05-26",
+    "file": "penn_coordination_anno_LDC2015T08.tgz",
+    "filesize": "3.46 MB",
+    "checksum": "35c13542a61491b44b9bbcafcad3e568"
+  }
+]

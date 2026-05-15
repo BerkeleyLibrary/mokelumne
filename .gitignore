@@ -15,4 +15,5 @@ airflow.cfg
 *.egg-info
 .coverage
 build/
+public/
 uv.lock

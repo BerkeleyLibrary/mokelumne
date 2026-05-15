@@ -52,6 +52,7 @@ Issues = "https://github.com/BerkeleyLibrary/mokelumne/issues"
 
 [project.entry-points."apache_airflow_provider"]
 tind = "mokelumne.providers.tind.get_provider_info:get_provider_info"
+ldc = "mokelumne.providers.ldc.get_provider_info:get_provider_info"
 
 [project.entry-points."airflow.plugins"]
 static_files = "mokelumne.plugins.static_files:StaticFilesPlugin"
@@ -67,6 +68,7 @@ include = ['mokelumne*']
 
 [tool.setuptools.package-data]
 "mokelumne.providers.tind" = ["provider.yaml"]
+"mokelumne.providers.ldc" = ["provider.yaml"]
 "mokelumne.plugins.static_files" = ["templates/*.html"]
 "mokelumne.batch_image.templates" = ["*.html"]
 
