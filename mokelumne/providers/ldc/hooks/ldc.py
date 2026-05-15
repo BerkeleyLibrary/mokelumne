@@ -21,7 +21,7 @@ class LDCHook(BaseHook):
     conn_type = "ldc"
     conn_name_attr = "conn_id"
     default_conn_name = "ldc_default"
-    hook_name = "LDC"
+    hook_name = "Linguistic Data Consortium"
 
     def __init__(self, conn_id: str = "ldc_default") -> None:
         super().__init__()
