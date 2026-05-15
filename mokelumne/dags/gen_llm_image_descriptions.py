@@ -12,9 +12,10 @@ from os import environ as ENV
 from pathlib import Path
 from shutil import copyfile
 from typing import List
-from airflow.exceptions import AirflowFailException
+
 from airflow.providers.smtp.operators.smtp import EmailOperator
 from airflow.sdk import dag, task, task_group, Param, get_current_context
+from airflow.sdk.exceptions import AirflowFailException
 from pymarc.marcxml import map_xml
 
 from langchain_aws import ChatBedrock
