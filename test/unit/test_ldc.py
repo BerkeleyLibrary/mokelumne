@@ -19,45 +19,48 @@ class TestLDC:
         importlib.resources.path(fixtures, "ldc-treebank-3.json") as test_json,
         open(test_json, encoding="utf-8") as fh
     ):
-        duplicate_invoice_data = json.loads(fh.read())
-        single_item = [duplicate_invoice_data[0]]
+        duplicate_items = json.loads(fh.read())
+        single_item = [duplicate_items[0]]
 
     @pytest.mark.parametrize(
-        "markup,param_name,expected", [
-        pytest.param(
-            '<form><input name="authenticity_token" value="foo"/></form>',
-            "authenticity_token",
-            {"authenticity_token": "foo"},
-            id="with_default_param_name"
-        ),
-        pytest.param(
-            '<form><input name="something_else" value="bar"/><input name="authenticity_token" value="baz"/></form>',
-            "something_else",
-            {"something_else": "bar"},
-            id="with_param_name"
-        ),
-        pytest.param(
-            '<form><input name="csrf-token" value="quux"/></form',
-            "doesnt_exist",
-            {},
-            id="without_matching_tag"
-        )
-    ])
+        "markup,param_name,expected",
+        [
+            pytest.param(
+                '<form><input name="authenticity_token" value="foo"/></form>',
+                "authenticity_token",
+                {"authenticity_token": "foo"},
+                id="with_default_param_name"
+            ),
+            pytest.param(
+                '<form><input name="something_else" value="bar"/><input name="authenticity_token" value="baz"/></form>',
+                "something_else",
+                {"something_else": "bar"},
+                id="with_param_name"
+            ),
+            pytest.param(
+                '<form><input name="csrf-token" value="quux"/></form',
+                "doesnt_exist",
+                {},
+                id="without_matching_tag"
+            )
+        ]
+    )
     def test_get_csrf_token(self, markup, param_name, expected) -> None:
         """Ensure we can gather the CSRF token from the LDC login form."""
         assert get_csrf_token(markup=markup, param_name=param_name) == expected
 
 
     @pytest.mark.parametrize(
-        "corpora,corpus_id,expected", [
-        pytest.param(
-            [{ "catalog_id": "LDC99T42", "corpus_name": "Treebank-3", "download_link": "/download/4c0512a1451377eb2790d557fc76a690fa11693ad846df02f3ee59d12788", "invoice_date": "2025-01-01", "file": "treebank_3_LDC99T42", "filesize": "51.6 MB", "checksum": "98c74f99f6ca17dc88efb4077fcd9539" }],
-            "LDC99T42",
-            "2025-01-01",
-            id="with_single_item_list"
-        ),
-        pytest.param(duplicate_invoice_data, "LDC99T42", "2020-08-22", id="with_dupes"),
-        pytest.param([], "bogus", None, id="with_empty_corpora_list")
+        "corpora,corpus_id,expected",
+        [
+            pytest.param(
+                [{ "catalog_id": "LDC99T42", "corpus_name": "Treebank-3", "download_link": "/download/4c0512a1451377eb2790d557fc76a690fa11693ad846df02f3ee59d12788", "invoice_date": "2025-01-01", "file": "treebank_3_LDC99T42", "filesize": "51.6 MB", "checksum": "98c74f99f6ca17dc88efb4077fcd9539" }],
+                "LDC99T42",
+                "2025-01-01",
+                id="with_single_item_list"
+            ),
+            pytest.param(duplicate_items, "LDC99T42", "2020-08-22", id="with_dupes"),
+            pytest.param([], "bogus", None, id="with_empty_corpora_list")
         ]
     )
     def test_get_latest_invoice_date(
@@ -68,7 +71,8 @@ class TestLDC:
 
 
     @pytest.mark.parametrize(
-        "tag,expected", [
+        "tag,expected",
+        [
             pytest.param(BeautifulSoup("""
                 <tr class="odd">
                 <td class="">LDC2026S04</td>
@@ -125,35 +129,18 @@ class TestLDC:
 
 
     @pytest.mark.parametrize(
-        "corpora,corpus_id,filename_regex,expected", [
-        pytest.param(
-            single_item,
-            "LDC99T42",
-            None,
-            single_item,
-            id="with_single_matching_item"
-        ),
-        pytest.param(
-            duplicate_invoice_data,
-            "LDC99T42",
-            ".*treebank.*",
-            single_item,
-            id="with_regex_filter"
-        ),
-        pytest.param(
-            duplicate_invoice_data,
-            "LDC99T42",
-            ".*nonexistent.*",
-            [],
-            id="with_no_matches"
-        ),
-        pytest.param(
-            [],
-            "bogus",
-            None,
-            [],
-            id="with_empty_corpora_list"
-        )
+        "corpora,corpus_id,filename_regex,expected",
+        [
+            pytest.param(
+                single_item, "LDC99T42", None, single_item, id="with_single_item"
+            ),
+            pytest.param(
+                duplicate_items, "LDC99T42", ".*treebank.*", single_item, id="with_regex_filter"
+            ),
+            pytest.param(
+                duplicate_items, "LDC99T42", ".*nonexistent.*", [], id="with_no_matches"
+            ),
+            pytest.param([], "bogus", None, [], id="with_empty_corpora_list")
         ]
     )
     def test_filter_corpora(
