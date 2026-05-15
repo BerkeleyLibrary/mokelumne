@@ -154,7 +154,7 @@ def fetch_ldc_corpus_files():
             dest = dest_dir / filedict["file"]
 
         with open(dest, "wb") as out:
-            for chunk in resp.iter_content(chunk_size=(8*1024)):
+            for chunk in resp.iter_content(chunk_size=8*1024):
                 if chunk:
                     out.write(chunk)
 
