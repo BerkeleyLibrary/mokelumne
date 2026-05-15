@@ -1,3 +1,5 @@
+# pylint: disable=line-too-long
+
 """Pytest testcases for mokelumne.util.ldc"""
 import importlib.resources
 import json
@@ -12,11 +14,13 @@ from .. import fixtures
 
 
 class TestLDC:
+    """Test class for mokelumne.util.ldc."""
     with (
         importlib.resources.path(fixtures, "ldc-treebank-3.json") as test_json,
         open(test_json) as fh
     ):
         duplicate_invoice_data = json.loads(fh.read())
+        single_item = [duplicate_invoice_data[0]]
 
     @pytest.mark.parametrize(
         "markup,param_name,expected", [
@@ -123,17 +127,17 @@ class TestLDC:
     @pytest.mark.parametrize(
         "corpora,corpus_id,filename_regex,expected", [
         pytest.param(
-            [{ "catalog_id": "LDC99T42", "corpus_name": "Treebank-3", "download_link": "/download/4c0512a1451377eb2790d557fc76a690fa11693ad846df02f3ee59d12788", "invoice_date": "2025-01-01", "file": "treebank_3_LDC99T42", "filesize": "51.6 MB", "checksum": "98c74f99f6ca17dc88efb4077fcd9539" }],
+            single_item,
             "LDC99T42",
             None,
-            [{ "catalog_id": "LDC99T42", "corpus_name": "Treebank-3", "download_link": "/download/4c0512a1451377eb2790d557fc76a690fa11693ad846df02f3ee59d12788", "invoice_date": "2025-01-01", "file": "treebank_3_LDC99T42", "filesize": "51.6 MB", "checksum": "98c74f99f6ca17dc88efb4077fcd9539" }],
+            single_item,
             id="with_single_matching_item"
         ),
         pytest.param(
             duplicate_invoice_data,
             "LDC99T42",
             ".*treebank.*",
-            [{"catalog_id": "LDC99T42", "corpus_name": "Treebank-3", "download_link": "/download/4c0512a1451377eb2790d557fc76a690fa11693ad846df02f3ee59d12788", "invoice_date": "2020-08-22", "file": "treebank_3_LDC99T42", "filesize": "51.6 MB", "checksum": "98c74f99f6ca17dc88efb4077fcd9539"}],
+            single_item,
             id="with_regex_filter"
         ),
         pytest.param(

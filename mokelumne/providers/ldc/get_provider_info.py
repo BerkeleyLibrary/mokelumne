@@ -1,3 +1,5 @@
+"""Airflow provider info for the LDC provider."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -29,6 +31,7 @@ _RUNTIME_FIELDS = {
 
 
 def get_provider_info() -> dict:
+    """Parse provider yaml to pass to Airflow."""
     data = (Path(__file__).parent / "provider.yaml").read_text()
     raw = yaml.safe_load(data)
     return {k: v for k, v in raw.items() if k in _RUNTIME_FIELDS}

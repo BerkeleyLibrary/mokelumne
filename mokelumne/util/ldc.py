@@ -50,7 +50,7 @@ def scrape_corpus_metadata(tag: Tag) -> dict[str, str]:
             download_link = cells[3].a["href"]   # pyright: ignore[reportOptionalSubscript]
 
             # the file-level metadata is not broken up into distinct cells, so
-            # we have to parse it more. the "file" metadata is also not 
+            # we have to parse it more. the "file" metadata is also not
             # the true filename as returned by LDC. 
             techmd = cells[4].get_text(strip=True, separator="\n").splitlines()
             file, filesize, checksum = [

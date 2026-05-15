@@ -57,7 +57,6 @@ def fetch_ldc_corpus_files():
     .. _ldcdl: https://github.com/jonmay/ldcdl
     """
 
-    hook = LDCHook()
 
     @task
     def get_available_ldc_corpora() -> str:
@@ -69,9 +68,10 @@ def fetch_ldc_corpus_files():
         :rtype: str
         """
         ctx = get_current_context()
+        hook = LDCHook()
         dest_dir = run_dir(ctx["run_id"])
         corpora_html_path = dest_dir / "corpora.html"
-        
+
         response = hook.get_corpora_response()
         with open(corpora_html_path, "wb") as f:
             for chunk in response.iter_content(chunk_size=8192):
@@ -98,9 +98,9 @@ def fetch_ldc_corpus_files():
 
         data = BeautifulSoup(corpora_html, "html.parser")
         rows = data.select("#user-corpora-download-table > tbody > tr")
-        corpora = [scrape_corpus_metadata(row) for row in rows]
+        corpora = [scrape_corpus_metadata(row) for row in rows if row]
 
-        with open(corpora_json, "w") as corpora_out:
+        with open(corpora_json, "w", encoding="utf-8") as corpora_out:
             corpora_out.write(json.dumps(corpora))
 
         return corpora
@@ -140,6 +140,7 @@ def fetch_ldc_corpus_files():
         """
         ctx = get_current_context()
         dest_dir = run_dir(ctx["run_id"])
+        hook = LDCHook()
         resp = hook.get_corpus_file(filedict["download_link"])
 
         match = re.match(
@@ -150,7 +151,7 @@ def fetch_ldc_corpus_files():
             dest = dest_dir / match.group(1)
         else:
             logger.warning("No Content-Disposition header; falling back to catalog filename")
-            dest = dest_dir / filedict["filename"]
+            dest = dest_dir / filedict["file"]
 
         with open(dest, "wb") as out:
             for chunk in resp.iter_content(chunk_size=(8*1024)):
@@ -165,7 +166,7 @@ def fetch_ldc_corpus_files():
 
         if dl_checksum != filedict["checksum"]:
             logger.warning(
-                "Downloaded file's checksum %s does not match LDC checksum %s" % (
+                "Checksum mismatch: downloaded file is %s but LDC declares %s" % (
                     dl_checksum, filedict["checksum"]
                 )
             )

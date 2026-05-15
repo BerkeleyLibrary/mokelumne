@@ -76,17 +76,21 @@ class LDCHook(BaseHook):
             del self.__dict__["conn"]
 
     def test_connection(self) -> tuple[bool, str]:
+        """Test the connection to confirm that it works."""
         try:
             self.get_conn()
             return True, "Connection successful"
-        except Exception as exc:
+        except Exception as exc:  # pylint: disable=broad-exception-caught
             return False, str(exc)
 
     def get_corpora_response(self) -> requests.Response:
         """Fetch the LDC corpora downloads page response."""
         connection = self.get_connection(self.conn_id)
         session = self.get_conn()
-        datasets_url = urljoin(connection.host, "organization/downloads")   # pyright: ignore[reportArgumentType]
+        datasets_url = urljoin(
+            connection.host,  # pyright: ignore[reportArgumentType]
+            "organization/downloads"
+        )
 
         response = session.get(datasets_url, stream=True)
         if response.status_code == 401:
