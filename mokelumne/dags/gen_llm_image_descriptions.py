@@ -19,13 +19,14 @@ from airflow.sdk.exceptions import AirflowFailException
 from pymarc.marcxml import map_xml
 
 from langchain_aws import ChatBedrock
+from langfuse import get_client, propagate_attributes
 from mokelumne.batch_image.templates import render_results_html
 from mokelumne.dags.fetch_tind_records import write_query_results_to_xml
 from mokelumne.providers.tind.hooks.tind import TindHook
 from mokelumne.util import langfuse
 from mokelumne.util.image_describer import ImageDescriber
 from mokelumne.util.image_fetcher import ImageFetcher, base64_size
-from mokelumne.plugins.static_files.helpers import static_files_run_dir
+from mokelumne.plugins.static_files.helpers import static_files_run_dir, static_path_to_url
 from mokelumne.util.storage import run_dir
 from mokelumne.util.tind_csv_writer import TindCsvWriter, is_single_image_record
 from tind_client.errors import TooManyRequestsError
@@ -307,9 +308,31 @@ def gen_llm_image_descriptions():
 
             model = ChatBedrock(model=ENV["AWS_MODEL_ID"], provider=ENV["AWS_MODEL_PROVIDER"])
             describer = ImageDescriber(model, prompt["prompt"])
+            context = get_current_context()
+            session_id = f"{context['dag'].dag_id}__{context['run_id']}"
+            user_id = f"{context['dag_run'].triggering_user_name or 'unknown'}"
+            summary_url = static_path_to_url(
+                static_files_run_dir(context["dag"].dag_id, context["run_id"]) / "index.html"
+            )
 
-            for record in batch:
-                results.append(describer.describe(record))
+            lf = get_client()
+            with lf.start_as_current_observation(
+                as_type="span",
+                name="invoke_llm_on_batch_with_prompt",
+                input={"prompt": prompt["prompt"], "query": context["params"]["tind_query"]},
+            ) as span:
+                with propagate_attributes(
+                    trace_name="invoke_llm_on_batch_with_prompt",
+                    session_id=session_id,
+                    user_id=user_id,
+                    metadata={
+                        "dag_id": context["dag"].dag_id,
+                        "run_id": context["run_id"],
+                    },
+                ):
+                    for record in batch:
+                        results.append(describer.describe(record))
+                span.update(output={"summary_url": summary_url})
 
             return results
 
