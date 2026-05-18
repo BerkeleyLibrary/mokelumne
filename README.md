@@ -2,7 +2,9 @@
 
 UC Berkeley Library's Airflow installation, libraries, and Dags.
 
-Consult [Running Airflow in Docker](https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html) for more information. The compose file in the initial commit reflects the composed file linked from those docs.
+![A black and white photo of the South Fork of the Mokelumne River at Sawyer's bridge.](test/fixtures/mokelumne.jpg)
+
+[South Fork of the Mokelumne at Sawyer's bridge](https://digicoll.lib.berkeley.edu/record/205041), from [_Construction photographs of Pardee Dam, California, 1929-1933_](https://oac.cdlib.org/findaid/ark:/13030/hb7489p4k1/), BANC PIC 1996.020 v.1:06
 
 ## Dependencies
 
