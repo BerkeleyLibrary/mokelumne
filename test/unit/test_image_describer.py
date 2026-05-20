@@ -57,32 +57,43 @@ class MockError(ClientError):
         }
 
 
+class MockLangfuse:
+    """A stand-in for the Langfuse module."""
+    @staticmethod
+    def get_langfuse_callback_handler(_conn_id: str):
+        """Return a pretend callback handler."""
+        return Mock()
+
+
 class TestImageDescriber:
     """Tests for the ImageDescriber class."""
-    def test_describe_record(self):
+    def test_describe_record(self, monkeypatch):
         """Test describing a record."""
         desc = "An image of a regal building with the text 'The University Library' inscribed."
         model = MockModel()
         result = MockResult(desc)
         model.invoke.return_value = result
+        monkeypatch.setattr(image_describer, 'langfuse', MockLangfuse)
         describer = image_describer.ImageDescriber(model, TEST_PROMPT)
         result = describer.describe(NORMAL_RECORD_FIXTURE)
         model.invoke.assert_called_once()
         assert result["Description"] == desc
 
-    def test_client_error(self):
+    def test_client_error(self, monkeypatch):
         """Test case where Invoke raises a ClientError."""
         err = "Bedrock is temporarily unavailable."
         model = MockModel()
         model.invoke.side_effect = MockError(err)
+        monkeypatch.setattr(image_describer, 'langfuse', MockLangfuse)
         describer = image_describer.ImageDescriber(model, TEST_PROMPT)
         result = describer.describe(NORMAL_RECORD_FIXTURE)
         assert "failure" in result["Status"]
         assert err in result["Status description"]
 
-    def test_size_error(self):
+    def test_size_error(self, monkeypatch):
         """Test case where the record's image is too large."""
         model = MockModel()
+        monkeypatch.setattr(image_describer, 'langfuse', MockLangfuse)
         describer = image_describer.ImageDescriber(model, TEST_PROMPT)
         result = describer.describe(LARGE_RECORD_FIXTURE)
         model.invoke.assert_not_called()
