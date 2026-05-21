@@ -46,14 +46,14 @@ class TestStorage:
         assert result == (test_dl_dir / test_id)
 
     def test_record_dir(self, test_dl_dir):
-        """Ensure that `record_dir` is a subdir of `run_dir`."""
+        """Ensure that `record_dir` is a subdir of `storage_dir`."""
         test_id = "TestID"
-        run = storage.run_dir(test_id)
-        result = storage.record_dir(test_id, "123456")
-        assert result.parts[:len(run.parts)] == run.parts
+        base_dir = storage.storage_dir()
+        result = storage.record_dir("123456")
+        assert result.parts[:len(base_dir.parts)] == base_dir.parts
 
     def test_record_dir_sharding(self, test_dl_dir):
         """Ensure that `record_dir` is sharded correctly."""
-        result = storage.record_dir("TestRun", "123456")
+        result = storage.record_dir("123456")
         assert result.parts[-2:] == ("12", "123456")
 

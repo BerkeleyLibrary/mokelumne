@@ -79,7 +79,7 @@ class TindHook(BaseHook):
         """Download the first file attachment for a given TIND ID."""
         metadata = self.get_first_file_metadata(tind_id)
         download_url = metadata["url"]
-        record_path = record_dir(run_id, tind_id)
+        record_path = record_dir(tind_id)
         return self.conn.fetch_file(download_url, str(record_path))
 
     def download_image_from_record_sized(
@@ -116,7 +116,7 @@ class TindHook(BaseHook):
         )
         data.raise_for_status()
 
-        output_path = record_dir(run_id, tind_id) / image.image_id
+        output_path = record_dir(tind_id) / image.image_id
         with output_path.open("wb") as out_f:
             for chunk in data.iter_content():
                 out_f.write(chunk)

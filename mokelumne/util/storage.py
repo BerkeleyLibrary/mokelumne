@@ -23,8 +23,8 @@ def run_dir(run_id: str) -> Path:
     return run_path
 
 
-def record_dir(run_id: str, record_id: str) -> Path:
+def record_dir(record_id: str) -> Path:
     """Retrieve the directory path to use for a given record during a given run."""
-    record_path = run_dir(run_id) / record_id[0:2] / record_id
+    record_path = storage_dir() / "tind_records" / record_id[0:2] / record_id
     record_path.mkdir(exist_ok=True, parents=True)
     return record_path
