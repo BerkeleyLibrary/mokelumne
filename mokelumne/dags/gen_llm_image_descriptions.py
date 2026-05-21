@@ -458,7 +458,7 @@ def gen_llm_image_descriptions():
         EmailOperator(
             task_id='send_email',
             to=ENV.get("MOKELUMNE_MAIL_RCPT",
-                       "group-spa-lib-mokelumne-alerts@calgroups.Berkeley.EDU"),
+                       "mokelumne-alerts@lists.berkeley.edu"),
             subject="Batch Image Description Results for Query",
             from_email="lib-noreply@berkeley.edu",
             html_content=render_email_template(pub_directory),
