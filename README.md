@@ -101,6 +101,7 @@ Important environment variables for our build/environment:
 | `TIND_API_URL` | URL for TIND access | `TIND_API_URL="https://digicoll.lib.berkeley.edu/api/v1"` |
 | `TIND_IIIF_MANIFEST_URL_PATTERN` | URL pattern for TIND IIIF manifests | `TIND_IIIF_MANIFEST_URL_PATTERN="https://digicoll.lib.berkeley.edu/record/{tind_id}/export/iiif_manifest"` |
 | `MOKELUMNE_TIND_DOWNLOAD_DIR` | Path for downloaded image cache | `MOKELUMNE_TIND_DOWNLOAD_DIR="/some/path/to/download/to"` |
+|`AIRFLOW_CONN_AWS_DEFAULT`|Airflow AWS connection used by AWS hook. Provide AWS key/secret in `login`/`password`; add `region_name` and optional `aws_session_token` in `extra`.|`AIRFLOW_CONN_AWS_DEFAULT='{"conn_type":"aws","login":"AKIA...","password":"...","extra":{"region_name":"us-west-1","endpoint_url":"..."}}'`|
 |`AWS_ENDPOINT_URL`|AWS endpoint (don't forget the `https://`!)|`AWS_ENDPOINT_URL="https://bedrock-runtime.us-west-1.amazonaws.com"`|
 |`AWS_DEFAULT_REGION`|The AWS region to use; you probably want `us-west-1`.|`AWS_DEFAULT_REGION=us-west-1`|
 |`AWS_BEARER_TOKEN_BEDROCK`|The IAM credential to use to access AWS. Use a short-term API key.<br>The key will expire after AWS console logout or 12 hours (whichever comes first).<br>Make sure that your region for the key matches the region above.|`AWS_BEARER_TOKEN_BEDROCK="bedrock-api-key-blah-blah-blah"`|
