@@ -18,12 +18,11 @@ from airflow.sdk import dag, task, task_group, Param, get_current_context
 from airflow.sdk.exceptions import AirflowFailException
 from pymarc.marcxml import map_xml
 
-from langchain_aws import ChatBedrock
 from mokelumne.batch_image.templates import render_results_html
 from mokelumne.dags.fetch_tind_records import write_query_results_to_xml
 from mokelumne.providers.tind.hooks.tind import TindHook
 from mokelumne.util import langfuse
-from mokelumne.util.image_describer import ImageDescriber
+from mokelumne.util.image_describer import ImageDescriber, BedrockModelAdapter
 from mokelumne.util.image_fetcher import ImageFetcher, base64_size
 from mokelumne.plugins.static_files.helpers import static_files_run_dir
 from mokelumne.util.storage import run_dir
@@ -287,9 +286,14 @@ def gen_llm_image_descriptions():
                 batch: list[dict[str, str]], prompt: dict[str, str]
         ) -> list[dict[str, str]]:
             """For each image in the batch, encode it and send to LLM for description generation."""
+            context = get_current_context()
             results = []
 
-            model = ChatBedrock(model=ENV["AWS_MODEL_ID"], provider=ENV["AWS_MODEL_PROVIDER"])
+            model = BedrockModelAdapter(
+                context=context,
+                model_id=ENV["AWS_MODEL_ID"],
+                aws_conn_id=ENV.get("AWS_BEDROCK_CONN_ID", "aws_default")
+            )
             describer = ImageDescriber(model, prompt["prompt"])
 
             for record in batch:
