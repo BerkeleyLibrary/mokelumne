@@ -8,6 +8,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
 import re
 
 from mmap import mmap, ACCESS_READ
@@ -57,6 +58,9 @@ def fetch_ldc_corpus_files():
     .. _ldcdl: https://github.com/jonmay/ldcdl
     """
 
+    base_dir = os.environ.get(
+        "MOKELUMNE_DATAVERSE_SCRATCH", "/opt/airflow/dvscratch"
+    )
 
     @task
     def get_available_ldc_corpora() -> str:
@@ -69,7 +73,7 @@ def fetch_ldc_corpus_files():
         """
         ctx = get_current_context()
         hook = LDCHook()
-        dest_dir = run_dir(ctx["run_id"])
+        dest_dir = run_dir(ctx["run_id"], base_dir=base_dir)
         corpora_html_path = dest_dir / "corpora.html"
 
         response = hook.get_corpora_response()
@@ -91,7 +95,7 @@ def fetch_ldc_corpus_files():
         :rtype: list[dict[str, str]]
         """
         ctx = get_current_context()
-        corpora_json = run_dir(ctx["run_id"]) / "corpora.json"
+        corpora_json = run_dir(ctx["run_id"], base_dir=base_dir) / "corpora.json"
 
         with open(corpora_file) as page:
             corpora_html = page.read()
@@ -139,7 +143,7 @@ def fetch_ldc_corpus_files():
         :rtype: str
         """
         ctx = get_current_context()
-        dest_dir = run_dir(ctx["run_id"])
+        dest_dir = run_dir(ctx["run_id"], base_dir=base_dir)
         hook = LDCHook()
         resp = hook.get_corpus_file(filedict["download_link"])
 
