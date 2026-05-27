@@ -4,6 +4,8 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import Mock, call
 
+from tind_client.errors import TooManyRequestsError
+
 from mokelumne.util.image_fetcher import ImageFetcher, base64_size
 
 
@@ -66,6 +68,13 @@ class MockTindHookThatScales(MockTindHook):
     def download_image_from_record_sized(self, _record_id: str, _run_id: str, _width: int, _height: int) -> str:
         """Give a smaller version of the test image."""
         return str(FIXTURE_PATH / 'test3_scaled.jpg')
+
+
+class MockTindHookWith429(MockTindHook):
+    """A mock TindHook that simulates a 429 Too Many Requests response."""
+    def get_file_metadata(self, _record_id: str) -> list[dict[str, Any]]:
+        """Raise a Too Many Requests error."""
+        raise TooManyRequestsError()
 
 
 def fetch_factory(tind_mock: MockTindHook, **kwargs) -> ImageFetcher:

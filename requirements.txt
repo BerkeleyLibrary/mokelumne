@@ -591,6 +591,7 @@ fastapi==0.135.3 \
     --hash=sha256:9b0f590c813acd13d0ab43dd8494138eb58e484bfac405db1f3187cfc5810d98 \
     --hash=sha256:bd6d7caf1a2bdd8d676843cdcd2287729572a1ef524fc4d65c17ae002a1be654
     # via
+    #   mokelumne (pyproject.toml)
     #   apache-airflow-core
     #   cadwyn
 fastapi-cli==0.0.24 \
@@ -850,6 +851,7 @@ httpx==0.28.1 \
     --hash=sha256:75e98c5f16b0f35b567856f597f06ff2270a374470a5c2392242528e3e3e42fc \
     --hash=sha256:d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad
     # via
+    #   mokelumne (pyproject.toml)
     #   apache-airflow-core
     #   apache-airflow-task-sdk
     #   fastapi
@@ -1998,9 +2000,9 @@ python-slugify==8.0.4 \
     # via
     #   apache-airflow-core
     #   pytest-playwright
-python-tind-client==0.2.3 \
-    --hash=sha256:8d5286b1af0df3a87ffc4c80a7199663fb02983dbe2b576601ae76cf50e0e915 \
-    --hash=sha256:dfeb0590267c6af5f60832eedb4a7fa4794844cc44bb75066febe9d9698599cc
+python-tind-client==0.2.4 \
+    --hash=sha256:52b4a44c33963f682f66d107940766a76c8cd4e3c829d65dd609ccf5f6641b5f \
+    --hash=sha256:c9699c47223491bcb492d457542c9abfa8cabd1a585fffd23b2e3b55639d8166
     # via mokelumne (pyproject.toml)
 pytz==2026.1.post1 \
     --hash=sha256:3378dde6a0c3d26719182142c56e60c7f9af7e968076f31aae569d72a0358ee1 \

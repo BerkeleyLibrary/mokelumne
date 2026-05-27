@@ -28,6 +28,7 @@ from mokelumne.util.image_fetcher import ImageFetcher, base64_size
 from mokelumne.plugins.static_files.helpers import static_files_run_dir
 from mokelumne.util.storage import run_dir
 from mokelumne.util.tind_csv_writer import TindCsvWriter, is_single_image_record
+from tind_client.errors import TooManyRequestsError
 
 
 logger = logging.getLogger(__name__)
@@ -200,7 +201,12 @@ def gen_llm_image_descriptions():
             """Load the records from the to_process job."""
             return processed["records"]
 
-        @task
+        @task(
+            retries=3,
+            retry_delay=3,
+            retry_exponential_backoff=True,
+            max_retry_delay=600,  # 10 minutes
+        )
         def fetch_image_to_record_directory(run_id: str, fetcher: ImageFetcher,
                                             tind_id: str) -> RunStatus:
             """Fetch an image from TIND to the target record's storage directory."""
@@ -218,8 +224,18 @@ def gen_llm_image_descriptions():
                     )
 
                 path = str(fetcher.fetch_one_image_for_record(tind_id, run_id))
+            except TooManyRequestsError:
+                ti = context["ti"]
+                if ti.try_number <= ti.max_tries:
+                    raise
+                logger.warning("TIND API returned 429 on final attempt; marking record as failed")
+                return RunStatus(
+                    tind_id=tind_id,
+                    status="failed",
+                    description="TIND API too busy, try again later",
+                    path="",
+                )
             except Exception as ex:  # pylint: disable=broad-exception-caught
-                logger.warning("Fetcher encountered exception", exc_info=ex)
                 return RunStatus(tind_id=tind_id, status="failed", description=str(ex), path="")
 
             return RunStatus(tind_id=tind_id, status="fetched", description="", path=path)
@@ -385,7 +401,9 @@ def gen_llm_image_descriptions():
             return timestamp
 
         @task
-        def generate_summary(output_dir_str: str, timestamp: str) -> str:
+        def generate_summary(
+            output_dir_str: str, timestamp: str
+        ) -> str:  # pylint: disable=too-many-locals
             """Generate a summary of the files in the collated path."""
             def count_success_fail_of_csv(csv_file: Path, success: str) -> tuple[int, int, int]:
                 """Count the success and failure rows for the given CSV."""
