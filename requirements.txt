@@ -2000,9 +2000,9 @@ python-slugify==8.0.4 \
     # via
     #   apache-airflow-core
     #   pytest-playwright
-python-tind-client==0.2.4 \
-    --hash=sha256:52b4a44c33963f682f66d107940766a76c8cd4e3c829d65dd609ccf5f6641b5f \
-    --hash=sha256:c9699c47223491bcb492d457542c9abfa8cabd1a585fffd23b2e3b55639d8166
+python-tind-client==0.2.5 \
+    --hash=sha256:9d68d5fc2c914529739ec113977312863cc61ead131ff6529349e795cdadbdaf \
+    --hash=sha256:d9a125d36eff3f3b9e5a1c533ec5daa8522661efe3c1919bface304b735cb4a3
     # via mokelumne (pyproject.toml)
 pytz==2026.1.post1 \
     --hash=sha256:3378dde6a0c3d26719182142c56e60c7f9af7e968076f31aae569d72a0358ee1 \

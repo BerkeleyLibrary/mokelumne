@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 import logging
 from functools import cached_property
 from os import environ as ENV
@@ -80,7 +81,15 @@ class TindHook(BaseHook):
         metadata = self.get_first_file_metadata(tind_id)
         download_url = metadata["url"]
         record_path = record_dir(tind_id)
-        return self.conn.fetch_file(download_url, str(record_path))
+
+        fetch_kwargs = dict()
+        modified = metadata.get("modified")
+        if modified:
+            fetch_kwargs["meta_mtime"] = datetime.strptime(
+                modified, "%Y-%m-%d %H:%M:%S"
+            ).replace(tzinfo=timezone.utc)
+
+        return self.conn.fetch_file(download_url, str(record_path), **fetch_kwargs)
 
     def download_image_from_record_sized(
         self, tind_id: str, run_id: str, width: int, height: int
