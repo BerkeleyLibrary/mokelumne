@@ -28,9 +28,9 @@ docker run --rm --entrypoint python apache/airflow:<version> -m pip freeze
 Spin up the application using Docker Compose. There are a number of dependencies (Postgres, Keycloak, and Redis) as well as Airflow components (api/web, processor, scheduler, triggerer), so it's hardly lightweight. For now you'll need to sequence startup so that core services are setup before the ones that depend on them:
 
 ```sh
-# Mint a short term API key for AWS Bedrock. You'll add it to
-# AWS_BEARER_TOKEN_BEDROCK in the .env file created in the next step.
-# (This will probably change in the future.)
+# Configure AWS credentials in AIRFLOW_CONN_AWS_DEFAULT in the .env file
+# The image description DAG resolves this to
+# Airflow conn_id aws_default.
 
 # Generate `.env` with unique secrets specific to your local machine
 docker compose run \
@@ -90,6 +90,7 @@ Important environment variables for our build/environment:
 | `AIRFLOW__API_AUTH__JWT_SECRET` | Secret key used to sign JWT tokens for Airflow's API authentication. The default value used in development and testing should be replaced in production. | `AIRFLOW__API_AUTH__JWT_SECRET="some32bytesecret"` |
 | `AIRFLOW_CONN_LANGFUSE_DEFAULT` | Airflow connection string for Langfuse access.<br>Note: This will create a `langfuse_default` conn_id, will not store the connection in the Airflow metastore, and will override any other connection settings.  | `AIRFLOW_CONN_LANGFUSE_DEFAULT='{"conn_type":"langfuse","host":"us.cloud.langfuse.com","schema":"https","login":"pk-lf-blah-blah-blah","password":"ssk-lf-blah-blah-blah"}'`|
 | `AIRFLOW_CONN_TIND_DEFAULT` | (Optional override) Airflow connection json string for TIND access.<br>Note: This will create a `tind_default` conn_id, will not store the connection in the Airflow metastore, and will override any other connection settings.  | `AIRFLOW_CONN_TIND_DEFAULT='{"conn_type": "http","password": "your-tind-key-here","host": "https://digicoll.lib.berkeley.edu/api/v1","schema": "https"}'` |
+| `AIRFLOW_CONN_AWS_DEFAULT` | Airflow connection string for AWS Bedrock access used by image description DAGs (`conn_id=aws_default`).<br>Expected fields are `login` (AWS access key), `password` (AWS secret), and `extra.region_name`; `extra.endpoint_url` and `extra.aws_session_token` are optional. | `AIRFLOW_CONN_AWS_DEFAULT='{"conn_type":"aws","login":"AKIA...","password":"secret...","extra":{"region_name":"us-west-1","endpoint_url":"https://bedrock-runtime.us-west-1.amazonaws.com"}}'` |
 | `OIDC_CLIENT_SECRET` | Client secret for OIDC authentication.  Used by the Airflow webserver to authenticate OIDC token requests.  In development, also used by `keycloak-config-cli` to configure the client secret.  This should match Keycloak configuration in development and testing, and CalNet in production. | `OIDC_CLIENT_SECRET="some32charactersecret"` |
 | `OIDC_NAME` | Name appended to the OIDC login button | `OIDC_NAME="keycloak"` |
 | `OIDC_CLIENT_ID` | Client ID specified in the OIDC provider. | `OIDC_CLIENT_ID="mokelumne"` |
