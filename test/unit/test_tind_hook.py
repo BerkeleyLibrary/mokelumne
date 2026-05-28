@@ -25,9 +25,9 @@ def test_download_image_file_passes_meta_mtime_when_modified_present(monkeypatch
     conn.fetch_file.return_value = "/tmp/12345/image_file.jpg"
     record_dir_mock = MagicMock(return_value="/tmp/12345")
 
-    # bypass cached conn
-    hook.__dict__["conn"] = conn
-
+    # # bypass cached conn
+    # hook.__dict__["conn"] = conn
+    monkeypatch.setattr(hook, "get_conn", lambda: conn)
     monkeypatch.setattr(hook, "get_first_file_metadata", metadata_mock)
     monkeypatch.setattr(
         "mokelumne.providers.tind.hooks.tind.record_dir",
@@ -60,8 +60,9 @@ def test_download_image_file_omits_meta_mtime_when_modified_missing(monkeypatch)
     record_dir_mock = MagicMock(return_value="/tmp/12345")
 
     # bypass cached conn
-    hook.__dict__["conn"] = conn
+    # hook.__dict__["conn"] = conn
 
+    monkeypatch.setattr(hook, "get_conn", lambda: conn)
     monkeypatch.setattr(hook, "get_first_file_metadata", metadata_mock)
     monkeypatch.setattr(
         "mokelumne.providers.tind.hooks.tind.record_dir",
