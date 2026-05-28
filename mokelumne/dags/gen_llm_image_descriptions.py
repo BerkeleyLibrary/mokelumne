@@ -322,12 +322,10 @@ def gen_llm_image_descriptions():
                 "region_name": aws_settings.get("region_name"),
                 "aws_access_key_id": aws_settings.get("aws_access_key_id"),
                 "aws_secret_access_key": aws_settings.get("aws_secret_access_key"),
-                "endpoint_url": aws_settings.get("endpoint_url")
+                "endpoint_url": aws_settings.get("endpoint_url"),
+                "provider": ENV.get("AWS_MODEL_PROVIDER")
             }
-            provider = ENV.get("AWS_MODEL_PROVIDER")
-            if provider:
-                model_kwargs["provider"] = provider
-
+           
             model = ChatBedrock(**model_kwargs)
             describer = ImageDescriber(model, prompt["prompt"])
             context = get_current_context()
