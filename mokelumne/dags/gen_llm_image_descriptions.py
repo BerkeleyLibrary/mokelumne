@@ -23,6 +23,7 @@ from langfuse import get_client, propagate_attributes
 from mokelumne.batch_image.templates import render_results_html
 from mokelumne.dags.fetch_tind_records import write_query_results_to_xml
 from mokelumne.providers.tind.hooks.tind import TindHook
+from mokelumne.util import aws_connection
 from mokelumne.util import langfuse
 from mokelumne.util.image_describer import ImageDescriber
 from mokelumne.util.image_fetcher import ImageFetcher, base64_size
@@ -275,6 +276,11 @@ def gen_llm_image_descriptions():
         """Generates descriptions for images listed in a CSV file, writing results to a new CSV."""
 
         @task
+        def resolve_aws_settings() -> dict[str, str]:
+            """Resolve AWS settings once per DAG run from the configured Airflow connection."""
+            return aws_connection.get_aws_connection_settings("aws_default")
+
+        @task
         def get_prompt() -> dict[str, str]:
             """Fetch a prompt from Langfuse to use for generating image descriptions."""
             context = get_current_context()
@@ -301,12 +307,26 @@ def gen_llm_image_descriptions():
 
         @task(max_active_tis_per_dagrun=10)
         def invoke_llm_on_batch_with_prompt(
-                batch: list[dict[str, str]], prompt: dict[str, str]
+                batch: list[dict[str, str]], prompt: dict[str, str], aws_settings: dict[str, str]
         ) -> list[dict[str, str]]:
             """For each image in the batch, encode it and send to LLM for description generation."""
             results = []
+            model_id = ENV.get("AWS_MODEL_ID")
+            if not model_id:
+                raise AirflowFailException(
+                    "Missing AWS_MODEL_ID environment variable for Bedrock model selection"
+                )
 
-            model = ChatBedrock(model=ENV["AWS_MODEL_ID"], provider=ENV["AWS_MODEL_PROVIDER"])
+            model_kwargs = {
+                "model": model_id,
+                "region_name": aws_settings.get("region_name"),
+                "aws_access_key_id": aws_settings.get("aws_access_key_id"),
+                "aws_secret_access_key": aws_settings.get("aws_secret_access_key"),
+                "endpoint_url": aws_settings.get("endpoint_url"),
+                "provider": ENV.get("AWS_MODEL_PROVIDER")
+            }
+           
+            model = ChatBedrock(**model_kwargs)
             describer = ImageDescriber(model, prompt["prompt"])
             context = get_current_context()
             session_id = f"{context['dag'].dag_id}__{context['run_id']}"
@@ -382,7 +402,11 @@ def gen_llm_image_descriptions():
 
         batches = read_and_batch_csv()
         prompt = get_prompt()
-        batch_results = invoke_llm_on_batch_with_prompt.partial(prompt=prompt).expand(
+        aws_settings = resolve_aws_settings()
+        batch_results = invoke_llm_on_batch_with_prompt.partial(
+            prompt=prompt,
+            aws_settings=aws_settings,
+        ).expand(
             batch=batches
         )
         processed_dicts = transform_results.partial(prompt=prompt).expand(

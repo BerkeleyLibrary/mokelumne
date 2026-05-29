@@ -28,9 +28,9 @@ docker run --rm --entrypoint python apache/airflow:<version> -m pip freeze
 Spin up the application using Docker Compose. There are a number of dependencies (Postgres, Keycloak, and Redis) as well as Airflow components (api/web, processor, scheduler, triggerer), so it's hardly lightweight. For now you'll need to sequence startup so that core services are setup before the ones that depend on them:
 
 ```sh
-# Mint a short term API key for AWS Bedrock. You'll add it to
-# AWS_BEARER_TOKEN_BEDROCK in the .env file created in the next step.
-# (This will probably change in the future.)
+# Configure AWS credentials in AIRFLOW_CONN_AWS_DEFAULT in the .env file
+# The image description DAG resolves this to
+# Airflow conn_id aws_default.
 
 # Generate `.env` with unique secrets specific to your local machine
 docker compose run \
@@ -90,6 +90,10 @@ Important environment variables for our build/environment:
 | `AIRFLOW__API_AUTH__JWT_SECRET` | Secret key used to sign JWT tokens for Airflow's API authentication. The default value used in development and testing should be replaced in production. | `AIRFLOW__API_AUTH__JWT_SECRET="some32bytesecret"` |
 | `AIRFLOW_CONN_LANGFUSE_DEFAULT` | Airflow connection string for Langfuse access.<br>Note: This will create a `langfuse_default` conn_id, will not store the connection in the Airflow metastore, and will override any other connection settings.  | `AIRFLOW_CONN_LANGFUSE_DEFAULT='{"conn_type":"langfuse","host":"us.cloud.langfuse.com","schema":"https","login":"pk-lf-blah-blah-blah","password":"ssk-lf-blah-blah-blah"}'`|
 | `AIRFLOW_CONN_TIND_DEFAULT` | (Optional override) Airflow connection json string for TIND access.<br>Note: This will create a `tind_default` conn_id, will not store the connection in the Airflow metastore, and will override any other connection settings.  | `AIRFLOW_CONN_TIND_DEFAULT='{"conn_type": "http","password": "your-tind-key-here","host": "https://digicoll.lib.berkeley.edu/api/v1","schema": "https"}'` |
+| `AIRFLOW_CONN_AWS_DEFAULT` | Airflow connection string for AWS Bedrock access used by image description DAGs (`conn_id=aws_default`).<br>Expected fields are `login` (AWS access key), `password` (AWS secret), `extra.region_name` and `extra.endpoint_url`  | `AIRFLOW_CONN_AWS_DEFAULT='{"conn_type":"aws","login":"AKIAblah-blah-blah","password":"blah-blah-blah","extra":{"region_name":"us-west-1","endpoint_url":"https://bedrock-runtime.us-west-1.amazonaws.com"}}'` |
+|`AWS_MODEL_ID`|The model to use. Make sure it's supported on the ARN.|`AWS_MODEL_ID="us.anthropic.claude-haiku-4-5-20251001-v1:0"`|
+|`AWS_MODEL_LABEL`|A human friendly label for the model. Will eventually be displayed in the Tind record.|`AWS_MODEL_LABEL="Claude Haiku 4.5"`|
+|`AWS_MODEL_PROVIDER`|The provider for the model. |`AWS_MODEL_PROVIDER=anthropic`|
 | `OIDC_CLIENT_SECRET` | Client secret for OIDC authentication.  Used by the Airflow webserver to authenticate OIDC token requests.  In development, also used by `keycloak-config-cli` to configure the client secret.  This should match Keycloak configuration in development and testing, and CalNet in production. | `OIDC_CLIENT_SECRET="some32charactersecret"` |
 | `OIDC_NAME` | Name appended to the OIDC login button | `OIDC_NAME="keycloak"` |
 | `OIDC_CLIENT_ID` | Client ID specified in the OIDC provider. | `OIDC_CLIENT_ID="mokelumne"` |
@@ -100,14 +104,8 @@ Important environment variables for our build/environment:
 | `TIND_API_KEY` | API key for TIND access | `TIND_API_KEY="..."` |
 | `TIND_API_URL` | URL for TIND access | `TIND_API_URL="https://digicoll.lib.berkeley.edu/api/v1"` |
 | `TIND_IIIF_MANIFEST_URL_PATTERN` | URL pattern for TIND IIIF manifests | `TIND_IIIF_MANIFEST_URL_PATTERN="https://digicoll.lib.berkeley.edu/record/{tind_id}/export/iiif_manifest"` |
+| `MOKELUMNE_PUBLIC_URL`|URL to access public assets - must end in `/`|`MOKELUMNE_PUBLIC_URL=https://mokelumne-assets.ucblib.org/`|
 | `MOKELUMNE_TIND_DOWNLOAD_DIR` | Path for downloaded image cache | `MOKELUMNE_TIND_DOWNLOAD_DIR="/some/path/to/download/to"` |
-|`AWS_ENDPOINT_URL`|AWS endpoint (don't forget the `https://`!)|`AWS_ENDPOINT_URL="https://bedrock-runtime.us-west-1.amazonaws.com"`|
-|`AWS_DEFAULT_REGION`|The AWS region to use; you probably want `us-west-1`.|`AWS_DEFAULT_REGION=us-west-1`|
-|`AWS_BEARER_TOKEN_BEDROCK`|The IAM credential to use to access AWS. Use a short-term API key.<br>The key will expire after AWS console logout or 12 hours (whichever comes first).<br>Make sure that your region for the key matches the region above.|`AWS_BEARER_TOKEN_BEDROCK="bedrock-api-key-blah-blah-blah"`|
-|`AWS_MODEL_ID`|The model to use. Make sure it's supported on the ARN.|`AWS_MODEL_ID="us.anthropic.claude-haiku-4-5-20251001-v1:0"`|
-|`AWS_MODEL_LABEL`|A human friendly label for the model. Will eventually be displayed in the Tind record.|`AWS_MODEL_LABEL="Claude Haiku 4.5"`|
-|`AWS_MODEL_PROVIDER`|The provider for the model. |`AWS_MODEL_PROVIDER=anthropic`|
-|`MOKELUMNE_PUBLIC_URL`|URL to access public assets - must end in `/`|`MOKELUMNE_PUBLIC_URL=https://mokelumne-assets.ucblib.org/`|
 
 Note: The `AIRFLOW_UID` example in `example.env` maps to the reserved `uid` for the `airflow` user in [lap/workflow](https://git.lib.berkeley.edu/lap/workflow/-/wikis/UIDs).
 

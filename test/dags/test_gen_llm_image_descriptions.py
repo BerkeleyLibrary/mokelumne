@@ -94,6 +94,9 @@ class TestGenLLMImageDescriptionsDAG:
                                                          "summarise_job.collate_csvs"},
             "generate_descriptions.read_and_batch_csv": {"generate_descriptions.invoke_llm_on_batch_with_prompt",
                                                          "generate_descriptions.write_output_csv"},
+            "generate_descriptions.resolve_aws_settings": {
+                "generate_descriptions.invoke_llm_on_batch_with_prompt"
+            },
             "generate_descriptions.get_prompt": {"generate_descriptions.invoke_llm_on_batch_with_prompt",
                                                  "generate_descriptions.transform_results"},
             "generate_descriptions.invoke_llm_on_batch_with_prompt": {"generate_descriptions.transform_results"},
