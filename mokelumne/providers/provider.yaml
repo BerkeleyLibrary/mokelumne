@@ -1,7 +1,22 @@
 package-name: mokelumne
-name: LDC
-description: LDC Airflow provider.
+name: Mokelumne
+description: Mokelumne Airflow provider.
 connection-types:
+  - connection-type: tind
+    hook-class-name: mokelumne.providers.tind.hooks.tind.TindHook
+    hook-name: TIND
+    ui-field-behaviour:
+      hidden-fields:
+        - port
+        - schema
+        - login
+        - extra
+      relabeling:
+        host: TIND API URL
+        password: TIND API Key
+      placeholders:
+        host: "e.g. https://digicoll.lib.berkeley.edu/api/v1"
+        password: Your-Tind-API-key
   - connection-type: ldc
     hook-class-name: mokelumne.providers.ldc.hooks.ldc.LDCHook
     hook-name: Linguistic Data Consortium

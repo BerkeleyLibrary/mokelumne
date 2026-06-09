@@ -81,7 +81,7 @@ This is equivalent to the _p_ (pattern) parameter in the Tind query syntax.""",
             "image-description",
             title="Prompt name",
             type="string",
-            section="Prompt configuration",
+            section="LLM configuration",
             description_md="""The name of the
 [Langfuse prompt](https://langfuse.com/docs/prompt-management/overview) used
 to generate image descriptions."""
@@ -90,12 +90,21 @@ to generate image descriptions."""
             "production",
             title="Version or label",
             type=["string", "integer"],
-            section="Prompt configuration",
+            section="LLM configuration",
             examples=["production", "staging", "latest", 1, 2, 3],
             description_md="""
 The [version or label](https://langfuse.com/docs/prompt-management/features/prompt-version-control)
 for the Langfuse prompt used to generate image descriptions. You likely want to
 keep this as **production** unless you are testing prompts."""
+        ),
+        "temperature": Param(
+            None,
+            maximum=1.0,
+            minimum=0.0,
+            title="Model temperature",
+            type=["null", "number"],
+            section="LLM configuration",
+            description_md="The model temperature [0.0 - 1.0]. Higher is more creative. Lower is more deterministic."
         ),
         "max_width": Param(
             8000,
@@ -310,12 +319,15 @@ def gen_llm_image_descriptions():
                 batch: list[dict[str, str]], prompt: dict[str, str], aws_settings: dict[str, str]
         ) -> list[dict[str, str]]:
             """For each image in the batch, encode it and send to LLM for description generation."""
+
             results = []
             model_id = ENV.get("AWS_MODEL_ID")
             if not model_id:
                 raise AirflowFailException(
                     "Missing AWS_MODEL_ID environment variable for Bedrock model selection"
                 )
+
+            context = get_current_context()
 
             model_kwargs = {
                 "model": model_id,
@@ -325,10 +337,14 @@ def gen_llm_image_descriptions():
                 "endpoint_url": aws_settings.get("endpoint_url"),
                 "provider": ENV.get("AWS_MODEL_PROVIDER")
             }
-           
+
+            # The default model temperature varies by model, so to avoid having to
+            # guess that value, only pass temperature if it's not None.
+            if temperature := context['params']['temperature'] is not None:
+                model_kwargs["temperature"] = temperature
+
             model = ChatBedrock(**model_kwargs)
             describer = ImageDescriber(model, prompt["prompt"])
-            context = get_current_context()
             session_id = f"{context['dag'].dag_id}__{context['run_id']}"
             user_id = f"{context['dag_run'].triggering_user_name or 'unknown'}"
             summary_url = static_path_to_url(

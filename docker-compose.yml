@@ -62,6 +62,7 @@ x-airflow-common: &airflow-common
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
     AIRFLOW__CORE__EXECUTION_API_SERVER_URL: 'http://airflow-apiserver:8080/execution/'
+    AIRFLOW__CORE__TEST_CONNECTION: Enabled
     AIRFLOW__LOGGING__LOGGING_LEVEL: DEBUG
     AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
     AIRFLOW_CONN_SMTP_DEFAULT: 'smtp://mailpit:1025?disable_ssl=true&disable_tls=true'

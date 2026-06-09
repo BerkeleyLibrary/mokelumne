@@ -1,4 +1,10 @@
-# src/your_package/get_provider_info.py
+"""Airflow provider info for the Mokelumne provider.
+
+A single distribution can only register one Airflow provider (Airflow keys
+providers by distribution name), so both the TIND and LDC connection types are
+declared together in this provider's ``provider.yaml``.
+"""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -33,6 +39,7 @@ _RUNTIME_FIELDS = {
 
 
 def get_provider_info() -> dict:
+    """Parse provider yaml to pass to Airflow."""
     data = (Path(__file__).parent / "provider.yaml").read_text()
     raw = yaml.safe_load(data)
     return {k: v for k, v in raw.items() if k in _RUNTIME_FIELDS}
