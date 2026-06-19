@@ -17,3 +17,5 @@ airflow.cfg
 build/
 public/
 uv.lock
+.bash_history
+.python_history

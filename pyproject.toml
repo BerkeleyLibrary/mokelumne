@@ -4,13 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mokelumne"
-version = "0.6.1"
+version = "0.7.0"
 dependencies = [
     "apache-airflow-providers-fab>=3.6.1",
-    "apache-airflow-task-sdk == 1.2.1",
+    "apache-airflow-task-sdk == 1.2.2",
     "flask-appbuilder",
     "langchain[aws]",
     "langfuse",
+    "mokelumne-providers-ldc >= 1.0.6",
+    "mokelumne-providers-tind >= 1.0.4",
     "piffle",  # IIIF API used in batch image description DAG
     "pymarc",
     "python-tind-client",
@@ -50,10 +52,6 @@ lint = [
 Repository = "https://github.com/BerkeleyLibrary/mokelumne"
 Issues = "https://github.com/BerkeleyLibrary/mokelumne/issues"
 
-[project.entry-points."apache_airflow_provider"]
-tind = "mokelumne.providers.tind.get_provider_info:get_provider_info"
-ldc = "mokelumne.providers.ldc.get_provider_info:get_provider_info"
-
 [project.entry-points."airflow.plugins"]
 static_files = "mokelumne.plugins.static_files:StaticFilesPlugin"
 
@@ -67,8 +65,6 @@ warn_return_any = true
 include = ['mokelumne*']
 
 [tool.setuptools.package-data]
-"mokelumne.providers.tind" = ["provider.yaml"]
-"mokelumne.providers.ldc" = ["provider.yaml"]
 "mokelumne.plugins.static_files" = ["templates/*.html"]
 "mokelumne.batch_image.templates" = ["*.html"]
 

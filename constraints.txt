@@ -2,6 +2,9 @@
 # Regenerate when bumping AIRFLOW_VERSION:
 #   docker run --rm --entrypoint python apache/airflow:<version> -m pip freeze
 # then update bounds here to match.
-fsspec == 2026.3.0
+botocore == 1.43.0
+cryptography < 49
+fsspec == 2026.4.0
 rich < 14
-flask-appbuilder == 5.2.0
+flask-appbuilder == 5.2.1
+starlette >= 1.0.1

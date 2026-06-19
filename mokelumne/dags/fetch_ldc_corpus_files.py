@@ -17,7 +17,7 @@ from airflow.sdk import Param, chain, dag, get_current_context, task
 from bs4 import BeautifulSoup
 
 from mokelumne.providers.ldc.hooks.ldc import LDCHook
-from mokelumne.util.ldc import filter_corpora, scrape_corpus_metadata
+from mokelumne.providers.ldc.util.ldc import filter_corpora, scrape_corpus_metadata
 from mokelumne.util.storage import run_dir
 
 logger = logging.getLogger(__name__)
