@@ -1,5 +1,12 @@
 """
 File copy DAG to transfer files from one location to another
+Change this to use a manifest rather than just copying from one dir to another....
+
+1. validate_source
+2. prepare_destination
+3. build_manifest     <--- need to create the manifest from the source
+4. copy_from_manifest <--- need to refactor
+5. verify_manifest
 """
 
 from __future__ import annotations
@@ -97,31 +104,65 @@ def copy_files():
         return destination
 
     @task
-    def copy_source_files(source: str, destination: str) -> list[str]:
+    def build_manifest(source: str) -> list[dict[str, int | str]]:
         """
-        Copy all files and subdirectories from source directory to destination directory
+        Build a manifest of all files under the source directory.
         """
-        logger.info("COPY_SOURCE_FILES - VERSION 3")
+        logger.info("BUILD_MANIFEST - VERSION 4")
+
+        source_path = Path(source)
+        manifest = []
+
+        for item in source_path.rglob("*"):
+            if item.is_file():
+                relative_path = item.relative_to(source_path)
+
+                manifest.append(
+                    {
+                        "path": str(relative_path),
+                        "size": item.stat().st_size,
+                    }
+                )
+        
+        if not manifest:
+            raise AirflowFailException(f"No files found in source: {source_path}")
+        
+        logger.info("Manifest contains %s file(s)", len(manifest))
+
+        return manifest
+
+
+    @task
+    def copy_manifest_files(source: str, destination: str, manifest: list[dict[str, int | str]]) -> list[str]:
+        """
+        Copy all files in manifest to destination directory
+        """
+        logger.info("COPY_SOURCE_FILES - VERSION 4")
 
         source_path = Path(source)
         destination_path = Path(destination)
 
         copied_files = []
 
-        for item in source_path.rglob("*"):
-            relative_path = item.relative_to(source_path)
-            destination_item = destination_path / relative_path
+        for entry in manifest:
+            relative_path = Path(str(entry["path"]))
+            source_file = source_path / relative_path
+            destination_file = destination_path / relative_path
 
-            if item.is_dir():
-                logger.info("Creating destination subdirectory: %s", destination_item)
-                destination_item.mkdir(parents=True, exist_ok=True)
-            elif item.is_file():
-                destination_item.parent.mkdir(parents=True, exist_ok=True)
+            if not source_file.exists():
+                raise AirflowFailException(f"Manifest file missing from source: {source_file}")
+
+            if not source_file.is_file():
+                raise AirflowFailException(f"Manifest path is not a file: {source_file}")
+            
+
+            destination_file.parent.mkdir(parents=True, exist_ok=True)
                 
-                logger.info("Copying %s to %s", item,  destination_item)
-                shutil.copy2(item, destination_item)
+            logger.info("Copying %s to %s", source_file,  destination_file)
+            shutil.copy2(source_file, destination_file)
 
-                copied_files.append(str(relative_path))
+            copied_files.append(str(relative_path))
+
 
         if not copied_files:
             raise AirflowFailException(f"No files found to copy in source: {source_path}")
@@ -161,9 +202,10 @@ def copy_files():
 
     validated_source = validate_source()
     prepared_destination = prepare_destination()
-    copied_files = copy_source_files(validated_source, prepared_destination)
+    manifest = build_manifest(validated_source)
+    copied_files = copy_manifest_files(validated_source, prepared_destination, manifest)
     verified_copy = verify_copy(prepared_destination, copied_files)
 
-    validated_source >> prepared_destination >> copied_files >> verified_copy
+    validated_source >> prepared_destination >> manifest >> copied_files >> verified_copy
 
 copy_files() # pyright: ignore[reportUnusedExpression]
