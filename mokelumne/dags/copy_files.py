@@ -11,6 +11,7 @@ Change this to use a manifest rather than just copying from one dir to another..
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import shutil
 
@@ -21,6 +22,17 @@ from airflow.sdk.exceptions import AirflowFailException
 
 logger = logging.getLogger(__name__)
 
+def sha256_for_file(path: Path) -> str:
+    """
+    Calculate the checksum
+    """
+    sha256 = hashlib.sha256()
+
+    with open(path, "rb") as file:
+        for chunk in iter(lambda: file.read(8192), b""):
+            sha256.update(chunk)
+    
+    return sha256.hexdigest()
 
 @dag(
     description="Transfers files from one location to another",
@@ -108,7 +120,7 @@ def copy_files():
         """
         Build a manifest of all files under the source directory.
         """
-        logger.info("BUILD_MANIFEST - VERSION 4")
+        logger.info("BUILD_MANIFEST - VERSION 5")
 
         source_path = Path(source)
         manifest = []
@@ -121,6 +133,7 @@ def copy_files():
                     {
                         "path": str(relative_path),
                         "size": item.stat().st_size,
+                        "sha256": sha256_for_file(item),
                     }
                 )
         
@@ -137,7 +150,7 @@ def copy_files():
         """
         Copy all files in manifest to destination directory
         """
-        logger.info("COPY_SOURCE_FILES - VERSION 4")
+        logger.info("COPY_SOURCE_FILES - VERSION 5")
 
         source_path = Path(source)
         destination_path = Path(destination)
@@ -173,38 +186,50 @@ def copy_files():
         
 
     @task
-    def verify_copy(destination: str, copied_files: list[str]) -> None:
+    def verify_copy(
+            destination: str,
+            manifest: list[dict[str, int | str]]
+            ) -> None:
         """
         Verify all copied files exist at the destination.
         """
-        logger.info("VERIFY_COPY - VERSION 1")
+        logger.info("VERIFY_COPY - VERSION 4")
 
         destination_path = Path(destination)
 
-        for copied_file in copied_files:
-            destination_file = destination_path / copied_file
+        for entry in manifest:
+            relative_path = Path(str(entry["path"]))
+            expected_size = entry["size"]
+            expected_sha256 = entry['sha256']
+
+            destination_file = destination_path / relative_path
 
             if not destination_file.exists():
-                raise AirflowFailException(
-                    f"Copied file missing from destination: {destination_file}"
-                )
+                raise AirflowFailException(f"Copied file missing from destination: {destination_file}")
 
             if not destination_file.is_file():
-                raise AirflowFailException(
-                    f"Copied path exists but is not a file: {destination_file}"
-                )
-
-            logger.info("Verified copied file exists: %s", destination_file)
-
-        logger.info("Verified %s copied file(s)", len(copied_files))
+                raise AirflowFailException(f"Copied path exists but is not a file: {destination_file}")
             
+            actual_size = destination_file.stat().st_size
+
+            if actual_size != expected_size:
+                raise AirflowFailException(f"Copied file size does not match original")
+            
+            actual_sha256 = sha256_for_file(destination_file)
+
+            if actual_sha256 != expected_sha256:
+                raise AirflowFailException(f"Copied file checksum does not match original: {destination_file}")
+
+            logger.info("Verified copied file exists, size matches, and checksum matches: %s", destination_file)
+
+        logger.info("Verified %s copied file(s)", len(manifest))
 
 
     validated_source = validate_source()
     prepared_destination = prepare_destination()
     manifest = build_manifest(validated_source)
     copied_files = copy_manifest_files(validated_source, prepared_destination, manifest)
-    verified_copy = verify_copy(prepared_destination, copied_files)
+    verified_copy = verify_copy(prepared_destination, manifest)
 
     validated_source >> prepared_destination >> manifest >> copied_files >> verified_copy
 
