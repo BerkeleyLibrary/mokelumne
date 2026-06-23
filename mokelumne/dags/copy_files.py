@@ -1,11 +1,10 @@
 """
 File copy DAG to transfer files from one location to another
-Change this to use a manifest rather than just copying from one dir to another....
 
 1. validate_source
 2. prepare_destination
-3. build_manifest     <--- need to create the manifest from the source
-4. copy_from_manifest <--- need to refactor
+3. build_manifest
+4. copy_from_manifest
 5. verify_manifest
 """
 
@@ -24,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 def sha256_for_file(path: Path) -> str:
     """
-    Calculate the checksum
+    Calculate the SHA256 checksum for a file.
     """
     sha256 = hashlib.sha256()
 
@@ -146,16 +145,14 @@ def copy_files():
 
 
     @task
-    def copy_manifest_files(source: str, destination: str, manifest: list[dict[str, int | str]]) -> list[str]:
+    def copy_manifest_files(source: str, destination: str, manifest: list[dict[str, int | str]]) -> None:
         """
         Copy all files in manifest to destination directory
         """
-        logger.info("COPY_SOURCE_FILES - VERSION 5")
+        logger.info("COPY_MANIFEST_FILES - VERSION 1")
 
         source_path = Path(source)
         destination_path = Path(destination)
-
-        copied_files = []
 
         for entry in manifest:
             relative_path = Path(str(entry["path"]))
@@ -174,26 +171,18 @@ def copy_files():
             logger.info("Copying %s to %s", source_file,  destination_file)
             shutil.copy2(source_file, destination_file)
 
-            copied_files.append(str(relative_path))
+        logger.info("Copied %s file(s)", len(manifest))
 
-
-        if not copied_files:
-            raise AirflowFailException(f"No files found to copy in source: {source_path}")
-        
-        logger.info("Copied %s file(s)", len(copied_files))
-
-        return copied_files
-        
 
     @task
-    def verify_copy(
+    def verify_manifest(
             destination: str,
             manifest: list[dict[str, int | str]]
             ) -> None:
         """
         Verify all copied files exist at the destination.
         """
-        logger.info("VERIFY_COPY - VERSION 4")
+        logger.info("VERIFY_MANIFEST - VERSION 1")
 
         destination_path = Path(destination)
 
@@ -213,12 +202,15 @@ def copy_files():
             actual_size = destination_file.stat().st_size
 
             if actual_size != expected_size:
-                raise AirflowFailException(f"Copied file size does not match original")
+                raise AirflowFailException(f"Size mismatch for {destination_file}: expected {expected_size}, got {actual_size}")
             
             actual_sha256 = sha256_for_file(destination_file)
 
             if actual_sha256 != expected_sha256:
-                raise AirflowFailException(f"Copied file checksum does not match original: {destination_file}")
+                raise AirflowFailException(
+                    f"Checksum mismatch for {destination_file}: "
+                    f"expected {expected_sha256}, got {actual_sha256}"
+                )
 
             logger.info("Verified copied file exists, size matches, and checksum matches: %s", destination_file)
 
@@ -228,9 +220,9 @@ def copy_files():
     validated_source = validate_source()
     prepared_destination = prepare_destination()
     manifest = build_manifest(validated_source)
-    copied_files = copy_manifest_files(validated_source, prepared_destination, manifest)
-    verified_copy = verify_copy(prepared_destination, manifest)
+    copied_manifest_files = copy_manifest_files(validated_source, prepared_destination, manifest)
+    verified_manifest = verify_manifest(prepared_destination, manifest)
 
-    validated_source >> prepared_destination >> manifest >> copied_files >> verified_copy
+    validated_source >> prepared_destination >> manifest >> copied_manifest_files >> verified_manifest
 
 copy_files() # pyright: ignore[reportUnusedExpression]
