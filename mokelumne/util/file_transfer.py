@@ -6,6 +6,7 @@ import shutil
 
 from pathlib import Path
 
+
 def sha256_for_file(path: Path) -> str:
     """Calculate the SHA256 checksum for a file."""
     sha256 = hashlib.sha256()
@@ -34,20 +35,21 @@ def build_manifest(source_path: Path) -> list[dict[str, int | str]]:
     return manifest
 
 
-def write_manifest(manifest: list[dict[str, int | str]], manifest_path: Path) -> None:
-    with open(manifest_path, "w", encoding="utf-8") as manifest_file:
-        json.dump(manifest, manifest_file, indent=2)
+def save_json(data: list[dict[str, int | str]], path: Path) -> None:
+    with open(path, "w", encoding="utf-8") as json_file:
+        json.dump(data, json_file, indent=2)
 
 
-def read_manifest(manifest_path: Path) -> list[dict[str, int | str]]:
-    with open(manifest_path, "r", encoding="utf-8") as manifest_file:
-        return json.load(manifest_file)
+def load_json(path: Path) -> list[dict[str, int | str]]:
+    with open(path, "r", encoding="utf-8") as json_file:
+        return json.load(json_file)
 
 
-def verify_manifest(destination_path: Path, manifest_path: Path) -> None:
+def verify_manifest(destination_path: Path, manifest_path: Path) -> list[dict[str, int | str]]:
     """Verify all copied files exist at the destination."""
 
-    manifest = read_manifest(manifest_path)
+    verification_report: list[dict[str, int | str]] = []
+    manifest = load_json(manifest_path)
 
     for entry in manifest:
         relative_path = Path(str(entry["path"]))
@@ -77,12 +79,23 @@ def verify_manifest(destination_path: Path, manifest_path: Path) -> None:
                 f"Checksum mismatch for {destination_file}: "
                 f"expected {expected_sha256}, got {actual_sha256}"
             )
+        
+        verification_report.append(
+            {
+                "path": str(relative_path),
+                "status": "verified",
+                "size": expected_size,
+                "sha256": expected_sha256,
+            }
+        )
+    
+    return verification_report
 
 
 def copy_manifest_files(source_path: Path, destination_path: Path, manifest_path: Path) -> None:
-    """Copy all files in manifest to destination directory"""
+    """Copy all files in manifest to destination directory."""
 
-    manifest = read_manifest(manifest_path)
+    manifest = load_json(manifest_path)
 
     for entry in manifest:
         relative_path = Path(str(entry["path"]))
@@ -95,9 +108,6 @@ def copy_manifest_files(source_path: Path, destination_path: Path, manifest_path
         if not source_file.is_file():
             raise ValueError(f"Manifest path is not a file: {source_file}")
         
-
         destination_file.parent.mkdir(parents=True, exist_ok=True)
             
-        # logger.info("Copying %s to %s", source_file,  destination_file)
         shutil.copy2(source_file, destination_file)
-

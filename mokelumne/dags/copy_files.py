@@ -13,9 +13,9 @@ from mokelumne.util.storage import run_dir
 from mokelumne.util.file_transfer import (
     build_manifest as build_file_manifest,
     copy_manifest_files as copy_files_from_manifest,
-    read_manifest,
+    load_json,
+    save_json,
     verify_manifest as verify_file_manifest,
-    write_manifest,
 )
 
 logger = logging.getLogger(__name__)
@@ -106,7 +106,7 @@ def copy_files():
         ctx = get_current_context()
         manifest_path = run_dir(ctx["run_id"]) / "manifest.json"
 
-        write_manifest(manifest, manifest_path)
+        save_json(manifest, manifest_path)
 
         logger.info("Manifest written to: %s", manifest_path)
 
@@ -127,7 +127,7 @@ def copy_files():
                 f"Manifest copy failed: {ex}"
             ) from ex
 
-        manifest = read_manifest(Path(manifest_path))
+        manifest = load_json(Path(manifest_path))
         logger.info("Copied %s file(s)", len(manifest))
 
     @task
@@ -135,14 +135,24 @@ def copy_files():
         """Verify all copied files exist at the destination."""
 
         try:
-            verify_file_manifest(Path(destination), Path(manifest_path))
+            verification_report = verify_file_manifest(
+                Path(destination),
+                Path(manifest_path),
+            )
         except Exception as ex:
             raise AirflowFailException(
                 f"Manifest verification failed: {ex}"
             ) from ex
 
-        manifest = read_manifest(Path(manifest_path))
-        logger.info("Verified %s copied file(s)", len(manifest))
+        ctx = get_current_context()
+        run_path = run_dir(ctx["run_id"])
+
+        verification_report_path = run_path / "verification_report.json"
+        
+        save_json(verification_report, verification_report_path)
+
+        logger.info("Verification report written to: %s", verification_report_path)
+        logger.info("Verified %s copied file(s)", len(verification_report))
 
     validated_source = validate_source()
     prepared_destination = prepare_destination()
@@ -154,6 +164,12 @@ def copy_files():
     )
     verified_manifest = verify_manifest(prepared_destination, manifest)
 
-    validated_source >> prepared_destination >> manifest >> copied_manifest_files >> verified_manifest
+    (
+        validated_source
+        >> prepared_destination
+        >> manifest
+        >> copied_manifest_files
+        >> verified_manifest
+    )
 
 copy_files()  # pyright: ignore[reportUnusedExpression]
