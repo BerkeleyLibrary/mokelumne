@@ -84,7 +84,7 @@ def copy_files():
         if not destination_path.is_dir():
             raise AirflowFailException(f"Destination is not a directory: {destination_path}")
 
-        if any(destination_path.iterdir()):
+        if next(os.scandir(destination_path), None) is not None:
             raise AirflowFailException(f"Destination directory contains files: {destination_path}")
 
         logger.info("DESTINATION IS: %s", destination)
