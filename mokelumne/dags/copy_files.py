@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 
 from pathlib import Path
 
@@ -11,11 +12,11 @@ from airflow.sdk.exceptions import AirflowFailException
 
 from mokelumne.util.storage import run_dir
 from mokelumne.util.file_transfer import (
-    build_manifest as build_file_manifest,
-    copy_manifest_files as copy_files_from_manifest,
+    build_file_manifest,
+    copy_files_from_manifest,
     load_json,
     save_json,
-    verify_manifest as verify_file_manifest,
+    verify_file_manifest,
 )
 
 logger = logging.getLogger(__name__)
@@ -51,9 +52,6 @@ def copy_files():
         ctx = get_current_context()
         source = ctx["params"]["source"]
 
-        if not source.strip():
-            raise AirflowFailException("Source directory is required")
-
         source_path = Path(source)
         if not source_path.exists():
             raise AirflowFailException(f"Source directory does not exist: {source_path}")
@@ -61,19 +59,22 @@ def copy_files():
         if not source_path.is_dir():
             raise AirflowFailException(f"Source is not a directory: {source_path}")
 
-        logger.info("SOURCE IS: %s", source)
-
         return source
 
     @task
     def prepare_destination() -> str:
-        """Prepare the destination directory."""
+        """
+        Prepare the destination directory.
+        TODO: one of the requirements that we got from Lynne is that the destination 
+        should be an incoming subdirectory of any directory on PA or DA, 
+        e.g. /srv/pa/aerial/ucb/incoming. i don't have a good answer for how to 
+        approach this, but i'm curious about how you think we should confirm that 1) 
+        we're actually writing to the appropriate incoming subdirectory, and if the 
+        incoming directory exists and has files in it, we should fail the job.
+        """
 
         ctx = get_current_context()
         destination = ctx["params"]["destination"]
-
-        if not destination.strip():
-            raise AirflowFailException("Destination directory is required")
 
         destination_path = Path(destination)
 
@@ -86,8 +87,6 @@ def copy_files():
 
         if next(os.scandir(destination_path), None) is not None:
             raise AirflowFailException(f"Destination directory contains files: {destination_path}")
-
-        logger.info("DESTINATION IS: %s", destination)
 
         return destination
 

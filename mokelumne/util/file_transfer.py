@@ -18,9 +18,11 @@ def sha256_for_file(path: Path) -> str:
     return sha256.hexdigest()
 
 
-def build_manifest(source_path: Path) -> list[dict[str, int | str]]:
+def build_file_manifest(source_path: Path) -> list[dict[str, int | str]]:
     manifest = []
 
+    # TODO: Decide if we want to change relative_path to absolute_path
+    # or save the root path once
     for item in source_path.rglob("*"):
         if item.is_file():
             relative_path = item.relative_to(source_path)
@@ -45,7 +47,7 @@ def load_json(path: Path) -> list[dict[str, int | str]]:
         return json.load(json_file)
 
 
-def verify_manifest(destination_path: Path, manifest_path: Path) -> list[dict[str, int | str]]:
+def verify_file_manifest(destination_path: Path, manifest_path: Path) -> list[dict[str, int | str]]:
     """Verify all copied files exist at the destination."""
 
     verification_report: list[dict[str, int | str]] = []
@@ -92,7 +94,7 @@ def verify_manifest(destination_path: Path, manifest_path: Path) -> list[dict[st
     return verification_report
 
 
-def copy_manifest_files(source_path: Path, destination_path: Path, manifest_path: Path) -> None:
+def copy_files_from_manifest(source_path: Path, destination_path: Path, manifest_path: Path) -> None:
     """Copy all files in manifest to destination directory."""
 
     manifest = load_json(manifest_path)

@@ -41,7 +41,7 @@ class TestFileTransfer:
 
     def test_build_manifest_empty_directory(self, tmp_path: Path):
         """Ensure that build_manifest returns an empty list for an empty directory."""
-        result = file_transfer.build_manifest(tmp_path)
+        result = file_transfer.build_file_manifest(tmp_path)
 
         assert result == []
 
@@ -56,7 +56,7 @@ class TestFileTransfer:
         file_two = subdir / "file_two.txt"
         file_two.write_text("goodbye", encoding="utf-8")
 
-        result = file_transfer.build_manifest(tmp_path)
+        result = file_transfer.build_file_manifest(tmp_path)
 
         paths = {entry["path"] for entry in result}
 
@@ -72,12 +72,12 @@ class TestFileTransfer:
         test_file = tmp_path / "test.txt"
         test_file.write_text("hello", encoding="utf-8")
 
-        manifest = file_transfer.build_manifest(tmp_path)
+        manifest = file_transfer.build_file_manifest(tmp_path)
 
         manifest_path = tmp_path / "manifest.json"
         file_transfer.save_json(manifest, manifest_path)
 
-        result = file_transfer.verify_manifest(tmp_path, manifest_path)
+        result = file_transfer.verify_file_manifest(tmp_path, manifest_path)
 
         assert result == [
             {
@@ -94,7 +94,7 @@ class TestFileTransfer:
         test_file = tmp_path / "test.txt"
         test_file.write_text("hello", encoding="utf-8")
 
-        manifest = file_transfer.build_manifest(tmp_path)
+        manifest = file_transfer.build_file_manifest(tmp_path)
 
         manifest_path = tmp_path / "manifest.json"
         file_transfer.save_json(manifest, manifest_path)
@@ -102,7 +102,7 @@ class TestFileTransfer:
         test_file.unlink()
 
         with pytest.raises(FileNotFoundError):
-            file_transfer.verify_manifest(tmp_path, manifest_path)
+            file_transfer.verify_file_manifest(tmp_path, manifest_path)
 
     def test_copy_manifest_files(self, tmp_path: Path):
         """Ensure copy_manifest_files copies files from source to destination."""
@@ -115,12 +115,12 @@ class TestFileTransfer:
         source_file = source / "test.txt"
         source_file.write_text("hello", encoding="utf-8")
 
-        manifest = file_transfer.build_manifest(source)
+        manifest = file_transfer.build_file_manifest(source)
 
         manifest_path = tmp_path / "manifest.json"
         file_transfer.save_json(manifest, manifest_path)
 
-        file_transfer.copy_manifest_files(source, destination, manifest_path)
+        file_transfer.copy_files_from_manifest(source, destination, manifest_path)
 
         destination_file = destination / "test.txt"
 
@@ -138,7 +138,7 @@ class TestFileTransfer:
         source_file = source / "test.txt"
         source_file.write_text("hello", encoding="utf-8")
 
-        manifest = file_transfer.build_manifest(source)
+        manifest = file_transfer.build_file_manifest(source)
 
         manifest_path = tmp_path / "manifest.json"
         file_transfer.save_json(manifest, manifest_path)
@@ -146,4 +146,4 @@ class TestFileTransfer:
         source_file.unlink()
 
         with pytest.raises(FileNotFoundError):
-            file_transfer.copy_manifest_files(source, destination, manifest_path)
+            file_transfer.copy_files_from_manifest(source, destination, manifest_path)
