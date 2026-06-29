@@ -6,6 +6,8 @@ import shutil
 
 from pathlib import Path
 
+ManifestEntry = dict[str, int | str]
+Manifest = dict[str, str | list[ManifestEntry]]
 
 def sha256_for_file(path: Path) -> str:
     """Calculate the SHA256 checksum for a file."""
@@ -18,15 +20,13 @@ def sha256_for_file(path: Path) -> str:
     return sha256.hexdigest()
 
 
-def build_file_manifest(source_path: Path) -> list[dict[str, int | str]]:
-    manifest = []
+def build_file_manifest(source_path: Path) -> Manifest:
+    files = []
 
-    # TODO: Decide if we want to change relative_path to absolute_path
-    # or save the root path once
     for item in source_path.rglob("*"):
         if item.is_file():
             relative_path = item.relative_to(source_path)
-            manifest.append(
+            files.append(
                 {
                     "path": str(relative_path),
                     "size": item.stat().st_size,
@@ -34,26 +34,29 @@ def build_file_manifest(source_path: Path) -> list[dict[str, int | str]]:
                 }
             )
     
-    return manifest
+    return {
+        "source_root": str(source_path),
+        "files": files,
+    }
 
 
-def save_json(data: list[dict[str, int | str]], path: Path) -> None:
+def save_json(data: Manifest, path: Path) -> None:
     with open(path, "w", encoding="utf-8") as json_file:
         json.dump(data, json_file, indent=2)
 
 
-def load_json(path: Path) -> list[dict[str, int | str]]:
+def load_json(path: Path) -> Manifest:
     with open(path, "r", encoding="utf-8") as json_file:
         return json.load(json_file)
 
 
-def verify_file_manifest(destination_path: Path, manifest_path: Path) -> list[dict[str, int | str]]:
+def verify_file_manifest(destination_path: Path, manifest_path: Path) -> list[ManifestEntry]:
     """Verify all copied files exist at the destination."""
 
-    verification_report: list[dict[str, int | str]] = []
+    verification_report: ManifestEntry = []
     manifest = load_json(manifest_path)
 
-    for entry in manifest:
+    for entry in manifest["files"]:
         relative_path = Path(str(entry["path"]))
         expected_size = entry["size"]
         expected_sha256 = entry["sha256"]
@@ -99,7 +102,7 @@ def copy_files_from_manifest(source_path: Path, destination_path: Path, manifest
 
     manifest = load_json(manifest_path)
 
-    for entry in manifest:
+    for entry in manifest["files"]:
         relative_path = Path(str(entry["path"]))
         source_file = source_path / relative_path
         destination_file = destination_path / relative_path

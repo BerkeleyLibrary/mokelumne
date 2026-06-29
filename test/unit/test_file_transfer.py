@@ -43,7 +43,10 @@ class TestFileTransfer:
         """Ensure that build_manifest returns an empty list for an empty directory."""
         result = file_transfer.build_file_manifest(tmp_path)
 
-        assert result == []
+        assert result == {
+            "source_root": str(tmp_path),
+            "files": [],
+        }
 
     def test_build_manifest_includes_nested_files(self, tmp_path: Path):
         """Ensure that build_manifest includes files recursively."""
@@ -58,7 +61,7 @@ class TestFileTransfer:
 
         result = file_transfer.build_file_manifest(tmp_path)
 
-        paths = {entry["path"] for entry in result}
+        paths = {entry["path"] for entry in result["files"]}
 
         assert paths == {
             "file_one.txt",
