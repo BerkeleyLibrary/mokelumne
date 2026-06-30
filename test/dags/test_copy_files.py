@@ -38,14 +38,11 @@ class TestCopyFilesDAGStructure:
     def test_confirm_copy_configuration(self):
         """Test that ApprovalOperator is configured correctly."""
         confirm_copy_task = DAG.get_task("confirm_copy")
-
-        # Check subject template contains params
-        assert "{{ params.source }}" in confirm_copy_task.subject
-        assert "{{ params.destination }}" in confirm_copy_task.subject
-
-        # Check body is set
+        # Check subject and body templates
+        assert "review" in confirm_copy_task.subject.lower() or "approve" in confirm_copy_task.subject.lower()
         assert confirm_copy_task.body is not None
-        assert len(confirm_copy_task.body) > 0
+        assert "{{ params.source }}" in confirm_copy_task.body
+        assert "{{ params.destination }}" in confirm_copy_task.body
 
     def test_dag_task_order(self):
         """Test that tasks execute in correct order."""
@@ -120,8 +117,8 @@ class TestApprovalOperatorMocked:
         }
 
         # The templates should have params placeholders
-        assert "{{ params.source }}" in confirm_copy_task.subject
-        assert "{{ params.destination }}" in confirm_copy_task.subject
+        assert "{{ params.source }}" in confirm_copy_task.body
+        assert "{{ params.destination }}" in confirm_copy_task.body
 
     @patch("airflow.providers.standard.operators.hitl.ApprovalOperator.execute")
     def test_confirm_copy_blocks_downstream_tasks(self, mock_execute):
@@ -141,10 +138,10 @@ class TestApprovalOperatorMocked:
         confirm_copy_task = DAG.get_task("confirm_copy")
 
         # Subject should mention approval and file copy
-        assert "Approve" in confirm_copy_task.subject
-        assert "file copy" in confirm_copy_task.subject.lower()
-        assert "{{ params.source }}" in confirm_copy_task.subject
-        assert "{{ params.destination }}" in confirm_copy_task.subject
+        assert "review" in confirm_copy_task.subject.lower() or "approve" in confirm_copy_task.subject.lower()
+        # Body should contain the path params
+        assert "{{ params.source }}" in confirm_copy_task.body
+        assert "{{ params.destination }}" in confirm_copy_task.body
 
     def test_approval_body_content(self):
         """Test that approval body provides clear instructions."""
@@ -153,6 +150,8 @@ class TestApprovalOperatorMocked:
         # Body should be readable and provide context
         assert len(confirm_copy_task.body) > 0
         assert "approve" in confirm_copy_task.body.lower()
+        assert "{{ params.source }}" in confirm_copy_task.body
+        assert "{{ params.destination }}" in confirm_copy_task.body
 
 
 class TestConfirmCopyIntegration:
@@ -176,5 +175,5 @@ class TestConfirmCopyIntegration:
 
         # ApprovalOperator should reference these params
         confirm_copy_task = DAG.get_task("confirm_copy")
-        assert "{{ params.source }}" in confirm_copy_task.subject
-        assert "{{ params.destination }}" in confirm_copy_task.subject
+        assert "{{ params.source }}" in confirm_copy_task.body
+        assert "{{ params.destination }}" in confirm_copy_task.body

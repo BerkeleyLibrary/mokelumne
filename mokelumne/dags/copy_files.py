@@ -157,8 +157,8 @@ def copy_files():
     """The user needs to confirm the file copy paths before proceeding"""
     confirm_copy = ApprovalOperator(
         task_id="confirm_copy",
-        subject="Approve file copy from {{ params.source }} to {{ params.destination }}",
-        body="Review the copy operation and approve it to continue.",
+        subject="Review the copy operation and approve it to continue.",
+        body="Approve file copy from {{ params.source }} to {{ params.destination }}",
     )
     validated_source = validate_source()
     prepared_destination = prepare_destination()
