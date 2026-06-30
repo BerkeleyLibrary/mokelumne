@@ -158,7 +158,7 @@ def copy_files():
     confirm_copy = ApprovalOperator(
         task_id="confirm_copy",
         subject="Review the copy operation and approve it to continue.",
-        body="Approve file copy from {{ params.source }} to {{ params.destination }}",
+        body="Approve file copy from **{{ params.source }}** to **{{ params.destination }}**",
     )
     validated_source = validate_source()
     prepared_destination = prepare_destination()
