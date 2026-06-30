@@ -7,6 +7,7 @@ import os
 
 from pathlib import Path
 
+from airflow.providers.standard.operators.hitl import ApprovalOperator
 from airflow.sdk import Param, dag, get_current_context, task
 from airflow.sdk.exceptions import AirflowFailException
 
@@ -153,6 +154,12 @@ def copy_files():
         logger.info("Verification report written to: %s", verification_report_path)
         logger.info("Verified %s copied file(s)", len(verification_report))
 
+    """The user needs to confirm the file copy paths before proceeding"""
+    confirm_copy = ApprovalOperator(
+        task_id="confirm_copy",
+        subject="Approve file copy from {{ params.source }} to {{ params.destination }}",
+        body="Review the copy operation and approve it to continue.",
+    )
     validated_source = validate_source()
     prepared_destination = prepare_destination()
     manifest = build_manifest(validated_source)
@@ -164,7 +171,8 @@ def copy_files():
     verified_manifest = verify_manifest(prepared_destination, manifest)
 
     (
-        validated_source
+        confirm_copy
+        >> validated_source
         >> prepared_destination
         >> manifest
         >> copied_manifest_files
