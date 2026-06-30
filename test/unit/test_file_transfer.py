@@ -69,6 +69,32 @@ class TestFileTransfer:
         }
         assert len(result) == 2
 
+    def test_build_manifest_excludes_hidden_and_excluded_files(self, tmp_path: Path):
+        """Ensure that build_manifest skips hidden and system junk files."""
+        visible_file = tmp_path / "visible.tif"
+        visible_file.write_text("hello", encoding="utf-8")
+
+        hidden_file = tmp_path / ".hidden.txt"
+        hidden_file.write_text("secret", encoding="utf-8")
+
+        hidden_dir = tmp_path / ".hidden"
+        hidden_dir.mkdir()
+        hidden_dir_file = hidden_dir / "nested.txt"
+        hidden_dir_file.write_text("nested", encoding="utf-8")
+
+        ds_store = tmp_path / ".DS_Store"
+        ds_store.write_text("folder metadata", encoding="utf-8")
+
+        thumbs_db = tmp_path / "Thumbs.db"
+        thumbs_db.write_text("thumbnail images db", encoding="utf-8")
+
+        result = file_transfer.build_file_manifest(tmp_path)
+
+        paths = {entry["path"] for entry in result["files"]}
+
+        assert paths == {"visible.tif"}
+        assert len(result["files"]) == 1
+
     def test_verify_manifest_success(self, tmp_path: Path):
         """Ensure verify_manifest succeeds for valid files."""
 
