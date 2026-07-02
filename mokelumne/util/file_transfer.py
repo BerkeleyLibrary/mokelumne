@@ -21,16 +21,6 @@ def sha256_for_file(path: Path) -> str:
     return sha256.hexdigest()
 
 
-def _should_include_manifest_entry(relative_path: Path, item: Path) -> bool:
-    """Return True when a path should be added to the manifest."""
-    if any(part.startswith(".") for part in relative_path.parts):
-        return False
-
-    if item.name.casefold() in {"thumbs.db"}:
-        return False
-
-    return True
-
 def build_file_manifest(
         source_path: Path,
         exclude_regex: str | None = None
