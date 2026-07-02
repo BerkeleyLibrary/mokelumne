@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import re
 import shutil
 
 from pathlib import Path
@@ -30,24 +31,20 @@ def _should_include_manifest_entry(relative_path: Path, item: Path) -> bool:
 
     return True
 
-def build_file_manifest(source_path: Path) -> Manifest:
-    files = []
+def build_file_manifest(
+        source_path: Path,
+        exclude_regex: str | None = None
+    ) -> Manifest:
+    exregex = re.compile(exclude_regex or r"^(\.(.*)|(?i:Thumbs\.db))$")
 
-    for item in source_path.rglob("*"):
-        if not item.is_file():
-            continue
-
-        relative_path = item.relative_to(source_path)
-        if not _should_include_manifest_entry(relative_path, item):
-            continue
-
-        files.append(
-            {
-                "path": str(relative_path),
-                "size": item.stat().st_size,
-                "sha256": sha256_for_file(item),
-            }
+    files = [
+        { "path": str(f.relative_to(source_path)), "size": f.stat().st_size, "sha256": sha256_for_file(f) }
+        for f in source_path.rglob("*")
+        if (
+            f.is_file()
+            and not any(re.search(exregex, p) for p in f.relative_to(source_path).parts)
         )
+    ]
     
     return {
         "source_root": str(source_path),
@@ -68,11 +65,11 @@ def load_json(path: Path) -> Manifest:
 def verify_file_manifest(destination_path: Path, manifest_path: Path) -> list[ManifestEntry]:
     """Verify all copied files exist at the destination."""
 
-    verification_report: ManifestEntry = []
+    verification_report: list[ManifestEntry] = []
     manifest = load_json(manifest_path)
 
     for entry in manifest["files"]:
-        relative_path = Path(str(entry["path"]))
+        relative_path = Path(str(entry.get("path")))
         expected_size = entry["size"]
         expected_sha256 = entry["sha256"]
 
