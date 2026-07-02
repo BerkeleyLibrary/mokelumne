@@ -10,6 +10,7 @@ from pathlib import Path
 ManifestEntry = dict[str, int | str]
 Manifest = dict[str, str | list[ManifestEntry]]
 
+
 def sha256_for_file(path: Path) -> str:
     """Calculate the SHA256 checksum for a file."""
     sha256 = hashlib.sha256()
@@ -17,13 +18,13 @@ def sha256_for_file(path: Path) -> str:
     with open(path, "rb") as file:
         for chunk in iter(lambda: file.read(8192), b""):
             sha256.update(chunk)
-    
+
     return sha256.hexdigest()
 
 
 def build_file_manifest(
         source_path: Path,
-        exclude_regex: str | None = None
+        exclude_regex: str | None = None,
     ) -> Manifest:
     exregex = re.compile(exclude_regex or r"^(\.(.*)|(?i:Thumbs\.db))$")
 
@@ -42,7 +43,7 @@ def build_file_manifest(
     }
 
 
-def save_json(data: Manifest, path: Path) -> None:
+def save_json(data: Manifest | list[ManifestEntry], path: Path) -> None:
     with open(path, "w", encoding="utf-8") as json_file:
         json.dump(data, json_file, indent=2)
 
@@ -51,6 +52,7 @@ def load_json(path: Path) -> Manifest:
     with open(path, "r", encoding="utf-8") as json_file:
         return json.load(json_file)
 
+
 def clean_destination_path(destination_path: Path) -> Path:
     """Normalize a destination path to end with /incoming."""
     if destination_path.name.casefold() == "incoming":
@@ -58,7 +60,11 @@ def clean_destination_path(destination_path: Path) -> Path:
 
     return Path(destination_path / "incoming")
 
-def verify_file_manifest(destination_path: Path, manifest_path: Path) -> list[ManifestEntry]:
+
+def verify_file_manifest(
+        destination_path: Path,
+        manifest_path: Path
+) -> list[ManifestEntry]:
     """Verify all copied files exist at the destination."""
 
     verification_report: list[ManifestEntry] = []
@@ -73,10 +79,10 @@ def verify_file_manifest(destination_path: Path, manifest_path: Path) -> list[Ma
 
         if not destination_file.exists():
             raise FileNotFoundError(f"File not found: {destination_file}")
-        
+
         if not destination_file.is_file():
             raise ValueError(f"Path exists but is not a file: {destination_file}")
-        
+
         actual_size = destination_file.stat().st_size
 
         if actual_size != expected_size:
@@ -84,15 +90,15 @@ def verify_file_manifest(destination_path: Path, manifest_path: Path) -> list[Ma
                 f"Size mismatch for {destination_file}: "
                 f"expected {expected_size}, got {actual_size}"
             )
-        
+
         actual_sha256 = sha256_for_file(destination_file)
-        
+
         if actual_sha256 != expected_sha256:
             raise ValueError(
                 f"Checksum mismatch for {destination_file}: "
                 f"expected {expected_sha256}, got {actual_sha256}"
             )
-        
+
         verification_report.append(
             {
                 "path": str(relative_path),
@@ -101,11 +107,15 @@ def verify_file_manifest(destination_path: Path, manifest_path: Path) -> list[Ma
                 "sha256": expected_sha256,
             }
         )
-    
+
     return verification_report
 
 
-def copy_files_from_manifest(source_path: Path, destination_path: Path, manifest_path: Path) -> None:
+def copy_files_from_manifest(
+    source_path: Path,
+    destination_path: Path,
+    manifest_path: Path,
+) -> None:
     """Copy all files in manifest to destination directory."""
 
     manifest = load_json(manifest_path)
@@ -120,7 +130,7 @@ def copy_files_from_manifest(source_path: Path, destination_path: Path, manifest
 
         if not source_file.is_file():
             raise ValueError(f"Manifest path is not a file: {source_file}")
-        
+
         destination_file.parent.mkdir(parents=True, exist_ok=True)
-            
+
         shutil.copy2(source_file, destination_file)
