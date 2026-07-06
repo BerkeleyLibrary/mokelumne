@@ -14,6 +14,7 @@ from airflow.sdk.exceptions import AirflowFailException
 from mokelumne.util.storage import run_dir
 from mokelumne.util.file_transfer import (
     build_file_manifest,
+    clean_destination_path,
     copy_files_from_manifest,
     load_json,
     save_json,
@@ -76,7 +77,7 @@ def copy_files():
 
         ctx = get_current_context()
         destination = ctx["params"]["destination"]
-
+        destination = clean_destination_path(destination)
         destination_path = Path(destination)
 
         if not destination_path.exists():
