@@ -1,5 +1,7 @@
 """File copy DAG to transfer files from one location to another."""
 
+# pyright: reportTypedDictNotRequiredAccess=false
+
 from __future__ import annotations
 
 import logging
@@ -40,6 +42,14 @@ logger = logging.getLogger(__name__)
             title="Destination Directory",
             description="Directory where source files will be copied to",
             type="string",
+        ),
+        "exclude_regex": Param(
+            default="",
+            title="Filename exclusion pattern",
+            description_md="""Regular expression to exclude files from the copy process. Defaults to excluding Thumbs.db and file or path name that starts with a period: `^(\.(.*)|(?i:Thumbs\.db))$`""", # pyright: ignore[reportInvalidStringEscapeSequence]
+            type=["string", "null"],
+            format="regex",
+            section="Exclude Files"
         ),
     },
     tags=["file-transfer"],
@@ -88,7 +98,9 @@ def copy_files():
         """Build a manifest of all files under the source directory."""
 
         source_path = Path(source)
-        manifest = build_file_manifest(source_path)
+        ctx = get_current_context()
+        exclude_regex = ctx["params"].get("exclude_regex")
+        manifest = build_file_manifest(source_path, exclude_regex=exclude_regex)
 
         if not manifest:
             raise AirflowFailException(f"No files found in source: {source_path}")
