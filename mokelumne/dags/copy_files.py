@@ -65,20 +65,11 @@ def copy_files():
 
     @task
     def prepare_destination() -> str:
-        """
-        Prepare the destination directory.
-        TODO: one of the requirements that we got from Lynne is that the destination 
-        should be an incoming subdirectory of any directory on PA or DA, 
-        e.g. /srv/pa/aerial/ucb/incoming. i don't have a good answer for how to 
-        approach this, but i'm curious about how you think we should confirm that 1) 
-        we're actually writing to the appropriate incoming subdirectory, and if the 
-        incoming directory exists and has files in it, we should fail the job.
-        """
+        """Prepare the destination directory."""
 
         ctx = get_current_context()
         destination = ctx["params"]["destination"]
-        destination = clean_destination_path(destination)
-        destination_path = Path(destination)
+        destination_path = clean_destination_path(Path(destination))
 
         if not destination_path.exists():
             logger.info("Creating destination directory: %s", destination_path)
@@ -90,7 +81,7 @@ def copy_files():
         if next(os.scandir(destination_path), None) is not None:
             raise AirflowFailException(f"Destination directory contains files: {destination_path}")
 
-        return destination
+        return str(destination_path)
 
     @task
     def build_manifest(source: str) -> str:

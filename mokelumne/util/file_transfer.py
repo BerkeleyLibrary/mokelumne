@@ -2,7 +2,6 @@
 
 import hashlib
 import json
-import re
 import shutil
 
 from pathlib import Path
@@ -65,11 +64,12 @@ def load_json(path: Path) -> Manifest:
     with open(path, "r", encoding="utf-8") as json_file:
         return json.load(json_file)
 
-def clean_destination_path(destination_path: str) -> str:
-    clean_path = re.sub(r'/incoming$|/incoming/$|/$', '', destination_path)
-    clean_path = clean_path + '/incoming'
+def clean_destination_path(destination_path: Path) -> Path:
+    """Normalize a destination path to end with /incoming."""
+    if destination_path.name.casefold() == "incoming":
+        destination_path = destination_path.parent
 
-    return clean_path
+    return Path(destination_path / "incoming")
 
 def verify_file_manifest(destination_path: Path, manifest_path: Path) -> list[ManifestEntry]:
     """Verify all copied files exist at the destination."""
