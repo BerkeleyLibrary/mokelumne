@@ -95,6 +95,32 @@ class TestFileTransfer:
         assert paths == {"visible.tif"}
         assert len(result["files"]) == 1
 
+    @pytest.mark.parametrize(
+        ("input_path", "expected_path"),
+        [
+            (
+                Path("/srv/pa/aerial/ucb"),
+                Path("/srv/pa/aerial/ucb/incoming"),
+            ),
+            (
+                Path("/srv/pa/aerial/ucb/"),
+                Path("/srv/pa/aerial/ucb/incoming"),
+            ),
+            (
+                Path("/srv/pa/aerial/ucb/incoming"),
+                Path("/srv/pa/aerial/ucb/incoming"),
+            ),
+            (
+                Path("/srv/pa/aerial/ucb/incoming/"),
+                Path("/srv/pa/aerial/ucb/incoming"),
+            ),
+        ],
+    )
+    def test_clean_destination_path(self, input_path: Path, expected_path: Path):
+        """Ensure clean_destination_path normalizes the incoming directory suffix."""
+
+        assert file_transfer.clean_destination_path(input_path) == expected_path
+
     def test_verify_manifest_success(self, tmp_path: Path):
         """Ensure verify_manifest succeeds for valid files."""
 
