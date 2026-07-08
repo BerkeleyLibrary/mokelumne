@@ -15,7 +15,10 @@ from airflow.sdk.exceptions import AirflowFailException
 
 from mokelumne.util.storage import run_dir
 from mokelumne.util.file_transfer import (
+    DESTINATION_VOLUMES,
+    SOURCE_VOLUMES,
     build_file_manifest,
+    build_volume_path,
     clean_destination_path,
     copy_files_from_manifest,
     load_json,
@@ -24,40 +27,6 @@ from mokelumne.util.file_transfer import (
 )
 
 logger = logging.getLogger(__name__)
-
-SOURCE_VOLUMES = [
-    "/srv/da",
-    "/srv/pa",
-    "/srv/lpsdata4",
-]
-
-DESTINATION_VOLUMES = [
-    "/srv/pa",
-    "/srv/da",
-]
-
-
-def build_volume_path(
-    volume: str,
-    subdirectory: str,
-    label: str,
-) -> Path:
-    """Build a path from a volume and relative subdirectory."""
-
-    if subdirectory == "":
-        raise AirflowFailException(
-            f"{label} subdirectory is required"
-        )
-
-    subdirectory_path = Path(subdirectory)
-
-    if subdirectory_path.is_absolute():
-        raise AirflowFailException(
-            f"{label} subdirectory must be relative: {subdirectory}"
-        )
-
-    return Path(volume) / subdirectory_path
-
 
 @dag(
     description="Transfers files from one location to another",
@@ -88,7 +57,7 @@ def build_volume_path(
             default="",
             type="string",
             title="Destination subdirectory",
-            description="Relative path within the destination volume. Do not include leading '/'.",
+            description="Relative path within the destination volume. Do not include leading '/' or the final '/incoming' to the path.",
         ),
         "exclude_regex": Param(
             default="",
@@ -105,18 +74,39 @@ def copy_files():
     """Copy files from a source directory to an empty destination directory."""
 
     @task
-    def validate_source() -> str:
-        """Checks that the source is a valid directory."""
+    def build_copy_paths() -> dict[str, str]:
+        """Build the resolved source and destination paths."""
 
         ctx = get_current_context()
-        source_volume = ctx["params"]["source_volume"]
-        source_subdirectory = ctx["params"]["source_subdirectory"]
 
-        source_path = build_volume_path(
-            source_volume,
-            source_subdirectory,
-            "Source",
-        )
+        try:
+            source_path = build_volume_path(
+                ctx["params"]["source_volume"],
+                ctx["params"]["source_subdirectory"],
+                "Source",
+            )
+
+            destination_path = build_volume_path(
+                ctx["params"]["destination_volume"],
+                ctx["params"]["destination_subdirectory"],
+                "Destination",
+            )
+
+            destination_path = clean_destination_path(destination_path)
+        except ValueError as ex:
+            raise AirflowFailException(str(ex)) from ex
+
+        return {
+            "source": str(source_path),
+            "destination": str(destination_path)
+        }
+
+
+    @task
+    def validate_source(copy_paths: dict[str, str]) -> str:
+        """Checks that the source is a valid directory."""
+
+        source_path = Path(copy_paths["source"])
 
         if not source_path.exists():
             raise AirflowFailException(f"Source path does not exist: {source_path}")
@@ -127,19 +117,10 @@ def copy_files():
         return str(source_path)
 
     @task
-    def prepare_destination() -> str:
+    def prepare_destination(copy_paths: dict[str, str]) -> str:
         """Prepare the destination directory."""
 
-        ctx = get_current_context()
-        destination_volume = ctx["params"]["destination_volume"]
-        destination_subdirectory = ctx["params"]["destination_subdirectory"]
-
-        destination_path = build_volume_path(
-            destination_volume,
-            destination_subdirectory,
-            "Destination",
-        )
-        destination_path = clean_destination_path(destination_path)
+        destination_path = Path(copy_paths["destination"])
 
         if not destination_path.exists():
             logger.info("Creating destination directory: %s", destination_path)
@@ -152,6 +133,7 @@ def copy_files():
             raise AirflowFailException(f"Destination directory contains files: {destination_path}")
 
         return str(destination_path)
+
 
     @task
     def build_manifest(source: str) -> str:
@@ -218,19 +200,24 @@ def copy_files():
         logger.info("Verification report written to: %s", verification_report_path)
         logger.info("Verified %s copied file(s)", len(verification_report))
 
-    """The user needs to confirm the file copy paths before proceeding"""
+
+    # Need to run this before defining confirm_copy since we need the resolved paths:
+    copy_paths = build_copy_paths()
+
+    # The user needs to confirm the file copy paths before proceeding
     confirm_copy = ApprovalOperator(
         task_id="confirm_copy",
         subject="Review the copy operation and approve it to continue.",
         body=(
             "Approve file copy from "
-            "**{{ params.source_volume }}/{{ params.source_subdirectory }}** "
+            f"**{copy_paths['source']}** "
             "to "
-            "**{{ params.destination_volume }}/{{ params.destination_subdirectory }}**"
+            f"**{copy_paths['destination']}**"
         ),
     )
-    validated_source = validate_source()
-    prepared_destination = prepare_destination()
+
+    validated_source = validate_source(copy_paths)
+    prepared_destination = prepare_destination(copy_paths)
     manifest = build_manifest(validated_source)
     copied_manifest_files = copy_manifest_files(
         validated_source,
@@ -240,7 +227,8 @@ def copy_files():
     verified_manifest = verify_manifest(prepared_destination, manifest)
 
     (
-        validated_source
+        copy_paths
+        >> validated_source
         >> prepared_destination
         >> manifest
         >> confirm_copy

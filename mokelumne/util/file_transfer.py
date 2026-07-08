@@ -10,6 +10,37 @@ from pathlib import Path
 ManifestEntry = dict[str, int | str]
 Manifest = dict[str, str | list[ManifestEntry]]
 
+SOURCE_VOLUMES = [
+    "/srv/lpsdata4",
+    "/srv/dcushare",
+    "/srv/lpsdata2",
+    "/srv/ealdata",
+    "/srv/rohoshare",
+]
+
+DESTINATION_VOLUMES = [
+    "/srv/da",
+    "/srv/pa",
+]
+
+
+def build_volume_path(
+    volume: str,
+    subdirectory: str,
+    label: str,
+) -> Path:
+    """Build a path from a volume and relative subdirectory."""
+
+    if subdirectory == "":
+        raise ValueError(f"{label} subdirectory is required")
+
+    subdirectory_path = Path(subdirectory)
+
+    if subdirectory_path.is_absolute():
+        raise ValueError(f"{label} subdirectory must be relative: {subdirectory}")
+
+    return Path(volume) / subdirectory_path
+
 
 def sha256_for_file(path: Path) -> str:
     """Calculate the SHA256 checksum for a file."""
@@ -61,10 +92,7 @@ def clean_destination_path(destination_path: Path) -> Path:
     return Path(destination_path / "incoming")
 
 
-def verify_file_manifest(
-        destination_path: Path,
-        manifest_path: Path
-) -> list[ManifestEntry]:
+def verify_file_manifest(destination_path: Path, manifest_path: Path) -> list[ManifestEntry]:
     """Verify all copied files exist at the destination."""
 
     verification_report: list[ManifestEntry] = []
@@ -111,11 +139,7 @@ def verify_file_manifest(
     return verification_report
 
 
-def copy_files_from_manifest(
-    source_path: Path,
-    destination_path: Path,
-    manifest_path: Path,
-) -> None:
+def copy_files_from_manifest(source_path: Path, destination_path: Path, manifest_path: Path) -> None:
     """Copy all files in manifest to destination directory."""
 
     manifest = load_json(manifest_path)
