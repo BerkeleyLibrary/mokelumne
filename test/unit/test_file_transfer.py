@@ -64,19 +64,19 @@ class TestFileTransfer:
         """Ensure build_volume_path joins a volume and relative subdirectory."""
 
         result = file_transfer.build_volume_path(
-            "tmp/srv/pa",
+            "/srv/pa",
             "aerial/ucb",
             "Source",
         )
 
-        assert result == Path("tmp/srv/pa/aerial/ucb")
+        assert result == Path("/srv/pa/aerial/ucb")
 
     def test_build_volume_path_requires_subdirectory(self):
         """Ensure build_volume_path requires a subdirectory."""
 
         with pytest.raises(ValueError, match="Source subdirectory is required"):
             file_transfer.build_volume_path(
-                "tmp/srv/pa",
+                "/srv/lpsdata4",
                 "",
                 "Source",
             )
