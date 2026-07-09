@@ -143,7 +143,7 @@ def rename_temp_dir(temp_dir: Path):
 
     base_dir = temp_dir.parent.parent
 
-    incoming_dir = base_dir.joinpath("incoming") 
+    incoming_dir = base_dir / "incoming" 
     temp_dir.rename(incoming_dir)
 
 

@@ -125,8 +125,7 @@ def copy_files():
         run_id = ctx["run_id"]
         destination_path = Path(copy_paths["destination"])
 
-        temp_dir = destination_path.parent.joinpath(".airflow",run_id)
-
+        temp_dir = destination_path.parent / ".airflow" / run_id
         if not destination_path.exists():
             logger.info("Creating destination directory: %s", destination_path)
             destination_path.mkdir(parents=True)
@@ -209,16 +208,19 @@ def copy_files():
     def rename_temp(destination: str) -> None:
         """rename airflow temp dir to incoming."""
 
+        temp_dir_path = Path(destination)
+        incoming_path = temp_dir_path.parent / "incoming"
+
         try:
             rename_temp_dir(
-                Path(destination),
+                temp_dir_path,
             )
         except Exception as ex:
             raise AirflowFailException(
-                f"Renaming airflow temp_dir to incoming failed: {ex}"
+                f"Renaming airflow {temp_dir_path} to {incoming_path} failed: {ex}"
             ) from ex
 
-        logger.info("renamed %s to incoming", destination)
+        logger.info("renamed temp directory %s to destination %s", temp_dir_path, incoming_path)
 
 
     # Need to run this before defining confirm_copy since we need the resolved paths:
