@@ -209,10 +209,9 @@ def copy_files():
         """rename airflow temp dir to incoming."""
 
         temp_dir_path = Path(destination)
-        incoming_path = temp_dir_path.parent / "incoming"
 
         try:
-            rename_temp_dir(
+            incoming_path = rename_temp_dir(
                 temp_dir_path,
             )
         except Exception as ex:
