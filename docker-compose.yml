@@ -71,6 +71,7 @@ x-airflow-common: &airflow-common
     - ./artifacts:/home/airflow/artifacts
     - ./files:/opt/airflow/files
     - ./test:/opt/airflow/test
+    - ./tmp:/srv
   user: "${AIRFLOW_UID:-40093}:0"
 
 services:
