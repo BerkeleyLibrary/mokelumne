@@ -167,6 +167,24 @@ class TestFileTransfer:
 
         assert file_transfer.clean_destination_path(input_path) == expected_path
 
+    def test_rename_temp_dir_moves_directory_to_incoming(self, tmp_path: Path):
+        """Ensure rename_temp_dir moves the temp directory to incoming."""
+
+        temp_dir = tmp_path / ".airflow" / "run-123"
+        temp_dir.mkdir(parents=True)
+
+        # temp_file = temp_dir / "manifest.json"
+        temp_file = temp_dir / "some_file.tif"
+        temp_file.write_text("{}", encoding="utf-8")
+
+        file_transfer.rename_temp_dir(temp_dir)
+
+        incoming_dir = tmp_path / "incoming"
+
+        assert not temp_dir.exists()
+        assert incoming_dir.exists()
+        assert (incoming_dir / temp_file.name).exists()
+
     def test_verify_manifest_success(self, tmp_path: Path):
         """Ensure verify_manifest succeeds for valid files."""
 

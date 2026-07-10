@@ -22,6 +22,7 @@ from mokelumne.util.file_transfer import (
     clean_destination_path,
     copy_files_from_manifest,
     load_json,
+    rename_temp_dir,
     save_json,
     verify_file_manifest,
 )
@@ -120,8 +121,11 @@ def copy_files():
     def prepare_destination(copy_paths: dict[str, str]) -> str:
         """Prepare the destination directory."""
 
+        ctx = get_current_context()
+        run_id = ctx["run_id"]
         destination_path = Path(copy_paths["destination"])
 
+        temp_dir = destination_path.parent / ".airflow" / run_id
         if not destination_path.exists():
             logger.info("Creating destination directory: %s", destination_path)
             destination_path.mkdir(parents=True)
@@ -132,7 +136,7 @@ def copy_files():
         if next(os.scandir(destination_path), None) is not None:
             raise AirflowFailException(f"Destination directory contains files: {destination_path}")
 
-        return str(destination_path)
+        return str(temp_dir)
 
 
     @task
@@ -200,6 +204,23 @@ def copy_files():
         logger.info("Verification report written to: %s", verification_report_path)
         logger.info("Verified %s copied file(s)", len(verification_report))
 
+    @task
+    def rename_temp(destination: str) -> None:
+        """rename airflow temp dir to incoming."""
+
+        temp_dir_path = Path(destination)
+
+        try:
+            incoming_path = rename_temp_dir(
+                temp_dir_path,
+            )
+        except Exception as ex:
+            raise AirflowFailException(
+                f"Renaming airflow {temp_dir_path} to {incoming_path} failed: {ex}"
+            ) from ex
+
+        logger.info("renamed temp directory %s to destination %s", temp_dir_path, incoming_path)
+
 
     # Need to run this before defining confirm_copy since we need the resolved paths:
     copy_paths = build_copy_paths()
@@ -225,15 +246,17 @@ def copy_files():
         manifest,
     )
     verified_manifest = verify_manifest(prepared_destination, manifest)
+    renamed_temp_dir =  rename_temp(prepared_destination)
 
     (
         copy_paths
+        >> confirm_copy
         >> validated_source
         >> prepared_destination
         >> manifest
-        >> confirm_copy
         >> copied_manifest_files
         >> verified_manifest
+        >> renamed_temp_dir
     )
 
 copy_files()  # pyright: ignore[reportUnusedExpression]

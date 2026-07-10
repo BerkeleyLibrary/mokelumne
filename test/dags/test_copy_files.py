@@ -3,7 +3,7 @@
 import pytest
 
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from airflow.dag_processing.dagbag import DagBag
 from airflow.providers.standard.operators.hitl import ApprovalOperator
@@ -47,8 +47,8 @@ class TestCopyFilesDAGStructure:
     def test_confirm_copy_runs_before_copying_files(self):
         """Test that confirm_copy runs before files are copied."""
         confirm_copy_task = DAG.get_task("confirm_copy")
-        copy_manifest_files = DAG.get_task("copy_manifest_files")
-        assert confirm_copy_task in copy_manifest_files.upstream_list
+        validate_source = DAG.get_task("validate_source")
+        assert confirm_copy_task in validate_source.upstream_list
 
     def test_confirm_copy_is_approval_operator(self):
         """Test that confirm_copy is an ApprovalOperator."""
@@ -68,18 +68,20 @@ class TestCopyFilesDAGStructure:
 
     def test_dag_task_order(self):
         """Test that tasks execute in correct order."""
+        confirm_copy = DAG.get_task("confirm_copy")
         validate_source = DAG.get_task("validate_source")
         prepare_destination = DAG.get_task("prepare_destination")
         build_manifest = DAG.get_task("build_manifest")
-        confirm_copy = DAG.get_task("confirm_copy")
         copy_manifest_files = DAG.get_task("copy_manifest_files")
         verify_manifest = DAG.get_task("verify_manifest")
+        rename_temp = DAG.get_task("rename_temp")
 
+        assert confirm_copy in validate_source.upstream_list
         assert validate_source in prepare_destination.upstream_list
         assert prepare_destination in build_manifest.upstream_list
-        assert build_manifest in confirm_copy.upstream_list
-        assert confirm_copy in copy_manifest_files.upstream_list
+        assert build_manifest in copy_manifest_files.upstream_list
         assert copy_manifest_files in verify_manifest.upstream_list
+        assert verify_manifest in rename_temp.upstream_list
 
     def test_all_required_tasks_exist(self):
         """Test that all required tasks are present in the DAG."""
@@ -91,6 +93,7 @@ class TestCopyFilesDAGStructure:
             "build_manifest",
             "copy_manifest_files",
             "verify_manifest",
+            "rename_temp",
         ]
         task_ids = [t.task_id for t in DAG.tasks]
         for task_id in required_tasks:
@@ -141,12 +144,10 @@ class TestApprovalOperatorMocked:
     @patch("airflow.providers.standard.operators.hitl.ApprovalOperator.execute")
     def test_confirm_copy_blocks_downstream_tasks(self, mock_execute):
         """Test that downstream tasks depend on confirm_copy approval."""
-        build_manifest = DAG.get_task("build_manifest")
         confirm_copy = DAG.get_task("confirm_copy")
-        copy_manifest_files = DAG.get_task("copy_manifest_files")
+        validate_source = DAG.get_task("validate_source")
 
-        assert confirm_copy in build_manifest.downstream_list
-        assert copy_manifest_files in confirm_copy.downstream_list
+        assert validate_source in confirm_copy.downstream_list
 
     def test_approval_subject_content(self):
         """Test that approval subject informs user appropriately."""

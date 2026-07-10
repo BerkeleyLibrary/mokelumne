@@ -138,6 +138,15 @@ def verify_file_manifest(destination_path: Path, manifest_path: Path) -> list[Ma
 
     return verification_report
 
+def rename_temp_dir(temp_dir: Path) -> str:
+    """When copy is complete will rename tmp dir to incoming"""
+
+    base_dir = temp_dir.parent.parent
+
+    incoming_dir = base_dir / "incoming" 
+    temp_dir.rename(incoming_dir)
+
+    return incoming_dir
 
 def copy_files_from_manifest(source_path: Path, destination_path: Path, manifest_path: Path) -> None:
     """Copy all files in manifest to destination directory."""
