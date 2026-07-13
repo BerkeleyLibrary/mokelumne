@@ -70,15 +70,17 @@ class TestCopyFilesDAGStructure:
         """Test that tasks execute in correct order."""
         confirm_copy = DAG.get_task("confirm_copy")
         validate_source = DAG.get_task("validate_source")
-        prepare_destination = DAG.get_task("prepare_destination")
+        validate_destination = DAG.get_task("validate_destination")
+        build_temp_destination = DAG.get_task("build_temp_destination")
         build_manifest = DAG.get_task("build_manifest")
         copy_manifest_files = DAG.get_task("copy_manifest_files")
         verify_manifest = DAG.get_task("verify_manifest")
         rename_temp = DAG.get_task("rename_temp")
 
         assert confirm_copy in validate_source.upstream_list
-        assert validate_source in prepare_destination.upstream_list
-        assert prepare_destination in build_manifest.upstream_list
+        assert validate_source in validate_destination.upstream_list
+        assert validate_destination in build_temp_destination.upstream_list
+        assert build_temp_destination in build_manifest.upstream_list
         assert build_manifest in copy_manifest_files.upstream_list
         assert copy_manifest_files in verify_manifest.upstream_list
         assert verify_manifest in rename_temp.upstream_list
@@ -89,7 +91,8 @@ class TestCopyFilesDAGStructure:
             "build_copy_paths",
             "confirm_copy",
             "validate_source",
-            "prepare_destination",
+            "validate_destination",
+            "build_temp_destination",
             "build_manifest",
             "copy_manifest_files",
             "verify_manifest",

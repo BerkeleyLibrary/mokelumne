@@ -118,26 +118,41 @@ def copy_files():
         return str(source_path)
 
     @task
-    def prepare_destination(copy_paths: dict[str, str]) -> str:
-        """Prepare the destination directory."""
+    def validate_destination(copy_paths: dict[str, str]) -> str:
+        """Checks that the destination is valid."""
+        destination_path = Path(copy_paths["destination"])
+        parent_path = destination_path.parent
+
+        if not parent_path.exists():
+            raise AirflowFailException(
+                f"Destination parent directory does not exist: {parent_path}"
+            )
+
+        if not parent_path.is_dir():
+            raise AirflowFailException(
+                f"Destination parent path is not a directory: {parent_path}"
+            )
+
+        if destination_path.exists():
+            if not destination_path.is_dir():
+                raise AirflowFailException(f"Destination is not a directory: {destination_path}")
+
+            if next(os.scandir(destination_path), None) is not None:
+                raise AirflowFailException(f"Destination directory contains files: {destination_path}")
+        
+        return str(destination_path)
+
+    @task
+    def build_temp_destination(destination: str) -> str:
+        """Build the run-specific temporary staging path."""
 
         ctx = get_current_context()
         run_id = ctx["run_id"]
-        destination_path = Path(copy_paths["destination"])
 
+        destination_path = Path(destination)
         temp_dir = destination_path.parent / ".airflow" / run_id
-        if not destination_path.exists():
-            logger.info("Creating destination directory: %s", destination_path)
-            destination_path.mkdir(parents=True)
-
-        if not destination_path.is_dir():
-            raise AirflowFailException(f"Destination is not a directory: {destination_path}")
-
-        if next(os.scandir(destination_path), None) is not None:
-            raise AirflowFailException(f"Destination directory contains files: {destination_path}")
 
         return str(temp_dir)
-
 
     @task
     def build_manifest(source: str) -> str:
@@ -216,7 +231,7 @@ def copy_files():
             )
         except Exception as ex:
             raise AirflowFailException(
-                f"Renaming airflow {temp_dir_path} to {incoming_path} failed: {ex}"
+                f"Renaming temporary directory {temp_dir_path} failed: {ex}"
             ) from ex
 
         logger.info("renamed temp directory %s to destination %s", temp_dir_path, incoming_path)
@@ -238,21 +253,23 @@ def copy_files():
     )
 
     validated_source = validate_source(copy_paths)
-    prepared_destination = prepare_destination(copy_paths)
+    validated_destination = validate_destination(copy_paths)
+    temp_destination = build_temp_destination(validated_destination)
     manifest = build_manifest(validated_source)
     copied_manifest_files = copy_manifest_files(
         validated_source,
-        prepared_destination,
+        temp_destination,
         manifest,
     )
-    verified_manifest = verify_manifest(prepared_destination, manifest)
-    renamed_temp_dir =  rename_temp(prepared_destination)
+    verified_manifest = verify_manifest(temp_destination, manifest)
+    renamed_temp_dir =  rename_temp(temp_destination)
 
     (
         copy_paths
         >> confirm_copy
         >> validated_source
-        >> prepared_destination
+        >> validated_destination
+        >> temp_destination
         >> manifest
         >> copied_manifest_files
         >> verified_manifest

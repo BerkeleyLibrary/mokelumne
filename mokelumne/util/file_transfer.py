@@ -138,12 +138,23 @@ def verify_file_manifest(destination_path: Path, manifest_path: Path) -> list[Ma
 
     return verification_report
 
-def rename_temp_dir(temp_dir: Path) -> str:
-    """When copy is complete will rename tmp dir to incoming"""
+def rename_temp_dir(temp_dir: Path) -> Path:
+    """Rename the temporary staging directory to the final incoming directory."""
 
     base_dir = temp_dir.parent.parent
-
     incoming_dir = base_dir / "incoming" 
+
+    if incoming_dir.exists():
+        if not incoming_dir.is_dir():
+            raise ValueError(
+                f"Incoming path is not a directory: {incoming_dir}"
+            )
+        if next(incoming_dir.iterdir(), None) is not None:
+            raise ValueError(
+                f"Incoming directory contains files: {incoming_dir}"
+            )
+        incoming_dir.rmdir()
+
     temp_dir.rename(incoming_dir)
 
     return incoming_dir
@@ -158,6 +169,11 @@ def copy_files_from_manifest(source_path: Path, destination_path: Path, manifest
         source_file = source_path / relative_path
         destination_file = destination_path / relative_path
 
+        if manifest_entry_matches_file(destination_file, entry):
+            continue
+            
+
+
         if not source_file.exists():
             raise FileNotFoundError(f"Manifest file missing from source: {source_file}")
 
@@ -167,3 +183,23 @@ def copy_files_from_manifest(source_path: Path, destination_path: Path, manifest
         destination_file.parent.mkdir(parents=True, exist_ok=True)
 
         shutil.copy2(source_file, destination_file)
+
+def manifest_entry_matches_file(
+        file_path: Path,
+        entry: ManifestEntry,
+) -> bool:
+    """Return True if a file matches a manifest entry."""
+
+    if not file_path.exists():
+        return False
+    
+    if not file_path.is_file():
+        raise ValueError(f"Path exists but is not a file: {file_path}")
+    
+    expected_size = int(entry["size"])
+    expected_sha256 = str(entry["sha256"])
+    
+    if file_path.stat().st_size != expected_size:
+        return False
+    
+    return sha256_for_file(file_path) == expected_sha256
