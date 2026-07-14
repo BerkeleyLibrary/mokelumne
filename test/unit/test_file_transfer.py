@@ -119,7 +119,7 @@ class TestFileTransfer:
             "file_one.txt",
             "subdir/file_two.txt",
         }
-        assert len(result) == 2
+        assert len(result["files"]) == 2
 
     @pytest.mark.parametrize(
         "pattern,expected",
@@ -246,6 +246,80 @@ class TestFileTransfer:
         assert destination_file.exists()
         assert destination_file.read_text(encoding="utf-8") == "hello"
 
+    def test_copy_manifest_files_skips_matching_destination_file(
+        self,
+        tmp_path: Path,
+        monkeypatch,
+    ):
+        """Ensure matching destination files are not overwritten."""
+
+        source = tmp_path / "source"
+        source.mkdir()
+
+        destination = tmp_path / "destination"
+        destination.mkdir()
+
+        source_file = source / "test.txt"
+        source_file.write_text("hello", encoding="utf-8")
+
+        destination_file = destination / "test.txt"
+        destination_file.write_text("hello", encoding="utf-8")
+
+        manifest = file_transfer.build_file_manifest(source)
+
+        manifest_path = tmp_path / "manifest.json"
+        file_transfer.save_json(manifest, manifest_path)
+
+        def fail_if_called(*args, **kwargs):
+            raise AssertionError("shutil.copy2 should not be called")
+
+        monkeypatch.setattr(
+            file_transfer.shutil,
+            "copy2",
+            fail_if_called,
+        )
+
+        file_transfer.copy_files_from_manifest(
+            source,
+            destination,
+            manifest_path,
+        )
+
+        assert destination_file.read_text(encoding="utf-8") == "hello"
+
+    def test_copy_manifest_files_replaces_mismatched_destination_file(
+        self,
+        tmp_path: Path,
+    ):
+        """Ensure mismatched destination files are copied again."""
+
+        source = tmp_path / "source"
+        source.mkdir()
+
+        destination = tmp_path / "destination"
+        destination.mkdir()
+
+        source_file = source / "test.txt"
+        source_file.write_text("correct contents", encoding="utf-8")
+
+        destination_file = destination / "test.txt"
+        destination_file.write_text("partial", encoding="utf-8")
+
+        manifest = file_transfer.build_file_manifest(source)
+
+        manifest_path = tmp_path / "manifest.json"
+        file_transfer.save_json(manifest, manifest_path)
+
+        file_transfer.copy_files_from_manifest(
+            source,
+            destination,
+            manifest_path,
+        )
+
+        assert destination_file.read_text(
+            encoding="utf-8"
+        ) == "correct contents"
+
     def test_copy_manifest_files_missing_source_file(self, tmp_path: Path):
         """Ensure copy_manifest_files fails if a manifest file is missing from source."""
         source = tmp_path / "source"
@@ -266,3 +340,82 @@ class TestFileTransfer:
 
         with pytest.raises(FileNotFoundError):
             file_transfer.copy_files_from_manifest(source, destination, manifest_path)
+
+    def test_copy_manifest_files_resumes_after_partial_failure(
+        self,
+        tmp_path: Path,
+        monkeypatch,
+    ):
+        """Ensure a rerun skips completed files and copies the remaining files."""
+
+        source = tmp_path / "source"
+        source.mkdir()
+
+        destination = tmp_path / "destination"
+        destination.mkdir()
+
+        for filename in ["one.txt", "two.txt", "three.txt"]:
+            (source / filename).write_text(filename, encoding="utf-8")
+
+        manifest = file_transfer.build_file_manifest(source)
+
+        manifest_path = tmp_path / "manifest.json"
+        file_transfer.save_json(manifest, manifest_path)
+
+        real_copy2 = file_transfer.shutil.copy2
+        copy_count = 0
+
+        def fail_on_second_copy(source_file, destination_file):
+            nonlocal copy_count
+            copy_count += 1
+
+            if copy_count == 2:
+                raise OSError("Simulated network failure")
+
+            return real_copy2(source_file, destination_file)
+
+        monkeypatch.setattr(
+            file_transfer.shutil,
+            "copy2",
+            fail_on_second_copy,
+        )
+
+        with pytest.raises(OSError, match="Simulated network failure"):
+            file_transfer.copy_files_from_manifest(
+                source,
+                destination,
+                manifest_path,
+            )
+
+        copied_after_failure = {
+            path.name for path in destination.iterdir()
+        }
+
+        assert len(copied_after_failure) == 1
+
+        copied_on_resume = []
+
+        def track_resume_copy(source_file, destination_file):
+            copied_on_resume.append(Path(source_file).name)
+            return real_copy2(source_file, destination_file)
+
+        monkeypatch.setattr(
+            file_transfer.shutil,
+            "copy2",
+            track_resume_copy,
+        )
+
+        file_transfer.copy_files_from_manifest(
+            source,
+            destination,
+            manifest_path,
+        )
+
+        assert {path.name for path in destination.iterdir()} == {
+            "one.txt",
+            "two.txt",
+            "three.txt",
+        }
+
+        assert copied_after_failure.isdisjoint(copied_on_resume)
+        assert len(copied_on_resume) == 2
