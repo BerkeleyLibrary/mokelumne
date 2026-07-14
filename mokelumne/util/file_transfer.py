@@ -199,3 +199,68 @@ def manifest_entry_matches_file(
         return False
     
     return sha256_for_file(file_path) == expected_sha256
+
+def _all_subdirs(upload_dir: Path) -> list:
+    """get a list of all subdirectories for a given path"""
+    #all_subdirs = [x for x in upload_dir.rglob("*") if x.is_dir()]
+    all_subdirs = [x for x in upload_dir.iterdir() if x.is_dir()] 
+    return all_subdirs
+
+def _get_next_subdir_index(parent_dir: Path) -> int:
+    """Source directories on lpsdata* are prefixed by digits. Find the highest prefixed digits"""
+    
+    sub_dirs = _all_subdirs(parent_dir)
+    numbers = [int(s.name.split('_')[0]) for s in sub_dirs if s.name.split('_')[0].isdigit()]
+
+    if not numbers:
+        return None    
+
+    highest = max(numbers) + 1 
+
+    return highest 
+
+def _find_uploaded_dir(parent: Path) -> Path | None: 
+    """Find the Uploaded directory"""
+    return next(
+        (sub for sub in parent.iterdir() if sub.is_dir() and sub.name.lower().endswith("_uploaded")), 
+        None
+    )
+
+
+def _move_files(source_dir: Path | str, dest_dir: Path | str) -> int:
+    """Move files from one directory to another"""
+    source = Path(source_dir)
+    dest = Path(dest_dir)
+    
+    dest.mkdir(parents=True, exist_ok=True)
+
+    move_count = 0    
+    for item in source.iterdir():
+        if item.is_file():
+            dest_file_path = dest / item.name
+            shutil.move(str(item), str(dest_file_path))
+            move_count += 1
+
+    return move_count 
+
+def move_to_uploaded(source_dir: str) -> tuple[str, int]:
+    """On lpsdata we'll move sourced files into NN_Uploaded directory"""
+    parent_dir = Path(source_dir).parent
+    uploaded_dir = _find_uploaded_dir(parent_dir)
+   
+    # If there is no uploaded directory we need to create one.
+    # It needs to be prefixed with the next number in the queue.
+    # e.g. if there's a directory 03_Files_to_Review.
+    # It would be 04_Uploaded. If they are not preceded by
+    # by numbers it will create an Uploaded directory 
+    # as a subdirectory to source_dir 
+    if not uploaded_dir:
+        highest = _get_next_subdir_index(parent_dir)
+        if highest is None:
+            uploaded_dir = f"{source_dir}/Uploaded"
+        else:
+            uploaded_dir = f"{parent_dir}/{highest:02}_Uploaded"
+
+    move_count = _move_files(source_dir, uploaded_dir) 
+
+    return str(uploaded_dir), move_count

@@ -185,6 +185,63 @@ class TestFileTransfer:
         assert incoming_dir.exists()
         assert (incoming_dir / temp_file.name).exists()
 
+    def test_move_to_uploaded_uses_existing_uploaded_directory(self, tmp_path: Path):
+        """Ensure move_to_uploaded reuses an existing *_uploaded directory."""
+
+        source_dir = tmp_path / "source"
+        source_dir.mkdir()
+
+        uploaded_dir = tmp_path / "03_uploaded"
+        uploaded_dir.mkdir()
+
+        source_file = source_dir / "some_file.tif"
+        source_file.write_text("some contents", encoding="utf-8")
+
+        result_path, moved_count = file_transfer.move_to_uploaded(str(source_dir))
+
+        assert result_path == str(uploaded_dir)
+        assert moved_count == 1
+        assert not source_file.exists()
+        assert (uploaded_dir / source_file.name).exists()
+
+    @pytest.mark.parametrize(
+        "existing_dir_name, expected_uploaded_name",
+        [
+            ("03_Files_to_Review", "04_Uploaded"),  # Case 1: Digit prefix exists -> Increment
+            ("No_Digits_Here", "Uploaded"),           # Case 2: No digit prefix -> Use default fallback
+        ]
+    )
+
+    def test_move_to_uploaded_creates_new_uploaded_directory(
+        self, tmp_path: Path, existing_dir_name: str, expected_uploaded_name: str
+    ):
+        """Ensure move_to_uploaded creates the correct uploaded directory based on context."""
+        parent_dir = tmp_path / "review"
+        source_dir = parent_dir / "source"
+        source_dir.mkdir(parents=True)
+        
+        # Dynamically create the environment based on the parameter
+        review_dir = parent_dir / existing_dir_name
+        review_dir.mkdir()
+        
+        # Set up a dummy file to trace the movement
+        source_file = source_dir / "some_file.tif"
+        source_file.write_text("some contents", encoding="utf-8")
+        
+        # Execute the function under test
+        result_path, moved_count = file_transfer.move_to_uploaded(str(source_dir))
+        
+        # Verify outcomes using the parameterized target name
+        if existing_dir_name == "No_Digits_Here":
+            expected_uploaded_dir = source_dir / expected_uploaded_name
+        else:
+            expected_uploaded_dir = parent_dir / expected_uploaded_name
+
+        assert result_path == str(expected_uploaded_dir)
+        assert moved_count == 1
+        assert not source_file.exists()
+        assert (expected_uploaded_dir / source_file.name).exists()
+
     def test_verify_manifest_success(self, tmp_path: Path):
         """Ensure verify_manifest succeeds for valid files."""
 
