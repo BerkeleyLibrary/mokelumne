@@ -146,13 +146,11 @@ def rename_temp_dir(temp_dir: Path) -> Path:
 
     if incoming_dir.exists():
         if not incoming_dir.is_dir():
-            raise ValueError(
-                f"Incoming path is not a directory: {incoming_dir}"
-            )
+            raise ValueError(f"Incoming path is not a directory: {incoming_dir}")
+
         if next(incoming_dir.iterdir(), None) is not None:
-            raise ValueError(
-                f"Incoming directory contains files: {incoming_dir}"
-            )
+            raise ValueError(f"Incoming directory contains files: {incoming_dir}")
+
         incoming_dir.rmdir()
 
     temp_dir.rename(incoming_dir)
@@ -171,9 +169,7 @@ def copy_files_from_manifest(source_path: Path, destination_path: Path, manifest
 
         if manifest_entry_matches_file(destination_file, entry):
             continue
-            
-
-
+  
         if not source_file.exists():
             raise FileNotFoundError(f"Manifest file missing from source: {source_file}")
 

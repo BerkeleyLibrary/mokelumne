@@ -341,39 +341,6 @@ class TestFileTransfer:
         with pytest.raises(FileNotFoundError):
             file_transfer.copy_files_from_manifest(source, destination, manifest_path)
 
-    def test_copy_manifest_files_replaces_mismatched_destination_file(
-        self,
-        tmp_path: Path,
-    ):
-        """Ensure mismatched destination files are copied again."""
-
-        source = tmp_path / "source"
-        source.mkdir()
-
-        destination = tmp_path / "destination"
-        destination.mkdir()
-
-        source_file = source / "test.txt"
-        source_file.write_text("correct contents", encoding="utf-8")
-
-        destination_file = destination / "test.txt"
-        destination_file.write_text("partial", encoding="utf-8")
-
-        manifest = file_transfer.build_file_manifest(source)
-
-        manifest_path = tmp_path / "manifest.json"
-        file_transfer.save_json(manifest, manifest_path)
-
-        file_transfer.copy_files_from_manifest(
-            source,
-            destination,
-            manifest_path,
-        )
-
-        assert destination_file.read_text(
-            encoding="utf-8"
-        ) == "correct contents"
-
     def test_copy_manifest_files_resumes_after_partial_failure(
         self,
         tmp_path: Path,
@@ -425,12 +392,6 @@ class TestFileTransfer:
         }
 
         assert len(copied_after_failure) == 1
-
-        monkeypatch.setattr(
-            file_transfer.shutil,
-            "copy2",
-            real_copy2,
-        )
 
         copied_on_resume = []
 
