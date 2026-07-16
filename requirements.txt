@@ -1264,13 +1264,13 @@ methodtools==0.4.7 \
     #   apache-airflow-core
     #   apache-airflow-providers-common-sql
     #   apache-airflow-task-sdk
-mokelumne-providers-ldc==1.0.6 \
-    --hash=sha256:76849782b1dd21ea3a739365b0f385635c2ba83d475e8a5c34c36a5cc89e16aa \
-    --hash=sha256:e63b009084ad5d3eaa8cbd11a02b6bcc2ff802d58d7dc8683278cb5ff00cb1eb
+mokelumne-providers-ldc==1.1.0 \
+    --hash=sha256:2eb8da78ce9cffe01ba22716a92681cb7072061abf4be0fad66307bcb74bb44a \
+    --hash=sha256:3e3279bcbf03ee201d3447ae9968c966b6a39390b4240f5bdfa49ae82931e95a
     # via mokelumne (pyproject.toml)
-mokelumne-providers-tind==1.0.4 \
-    --hash=sha256:57dcd5b7cd472e56c39849f75632c9db80354bf7e4b325f66c686844b301f878 \
-    --hash=sha256:e5da892e8e514ded6e7c75fd5b16075b60fe8b79c5d894675a399b5f8361d827
+mokelumne-providers-tind==1.1.0 \
+    --hash=sha256:e3d0a01eadf14e8d4d4db3fef50f35c51af2cc07cc9eb72488da9b7cc294569d \
+    --hash=sha256:e6b985325d565dd6a0c882bcc75a8304bb1fdfaf89d280f989d0138079753f25
     # via mokelumne (pyproject.toml)
 more-itertools==11.1.0 \
     --hash=sha256:48e8f4d9e7e5878571ecf6f2b4e57634f93cd474cc8cfbd2376f2d11b396e30d \

@@ -11,8 +11,8 @@ dependencies = [
     "flask-appbuilder",
     "langchain[aws]",
     "langfuse",
-    "mokelumne-providers-ldc >= 1.0.6",
-    "mokelumne-providers-tind >= 1.0.4",
+    "mokelumne-providers-ldc >= 1.1.0",
+    "mokelumne-providers-tind >= 1.1.0",
     "pymarc",
 ]
 requires-python = ">= 3.13, < 3.15"
