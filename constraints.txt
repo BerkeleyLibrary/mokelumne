@@ -5,6 +5,5 @@
 botocore == 1.43.0
 cryptography < 49
 fsspec == 2026.4.0
-rich < 14
 flask-appbuilder == 5.2.1
 starlette >= 1.0.1
