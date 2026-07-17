@@ -10,7 +10,7 @@ from airflow.providers.standard.operators.hitl import ApprovalOperator
 from mokelumne.dags.copy_files import build_volume_path
 
 DAG_DIR = Path(__file__).resolve().parent.parent.parent / "mokelumne" / "dags"
-_DAG_BAG = DagBag(dag_folder=DAG_DIR.resolve(), include_examples=False)
+_DAG_BAG = DagBag(dag_folder=DAG_DIR.resolve())
 DAG = _DAG_BAG.get_dag("copy_files")
 
 

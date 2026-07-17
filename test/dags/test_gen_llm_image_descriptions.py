@@ -15,7 +15,7 @@ DAG_DIR: Path = Path(__file__).resolve().parent.parent.parent / "mokelumne" / "d
 """The location of the DAGs."""
 
 
-_DAG_BAG = DagBag(dag_folder=DAG_DIR.resolve(), include_examples=False)
+_DAG_BAG = DagBag(dag_folder=DAG_DIR.resolve())
 """The bag of DAGs from which we retrieve our DAG."""
 
 
