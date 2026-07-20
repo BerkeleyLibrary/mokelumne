@@ -10,7 +10,7 @@ _DAG_BAG = DagBag(
 )
 
 def get_dag(dag_id: str):
-    """Fetch a dag by name."""
+    """Fetch a Dag by name."""
     dag = _DAG_BAG.get_dag(dag_id)
 
     assert dag is not None, (
