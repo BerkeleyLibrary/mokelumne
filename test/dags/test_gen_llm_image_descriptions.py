@@ -5,23 +5,17 @@ from shutil import copyfile
 from typing import Callable, Optional
 
 from airflow.dag_processing.dagbag import DagBag
+from test.util.dag_helper import get_dag
 
 
 FIXTURE_PATH: Path = Path(__file__).parent.parent / "fixtures"
 """The directory that contains our fixtures."""
 
 
-DAG_DIR: Path = Path(__file__).resolve().parent.parent.parent / "mokelumne" / "dags"
-"""The location of the DAGs."""
-
-
-_DAG_BAG = DagBag(dag_folder=DAG_DIR.resolve())
-"""The bag of DAGs from which we retrieve our DAG."""
-
-
-DAG = _DAG_BAG.get_dag("gen_llm_image_descriptions")
+from test.util.dag_helper import get_dag
 """The DAG we are testing."""
 
+DAG = get_dag("gen_llm_image_descriptions")
 
 class MockTindHook:
     """Implements a TindHook that we can manipulate for test purposes."""
