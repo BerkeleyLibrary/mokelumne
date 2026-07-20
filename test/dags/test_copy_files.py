@@ -76,6 +76,8 @@ class TestCopyFilesDAGStructure:
         copy_manifest_files = DAG.get_task("copy_manifest_files")
         verify_manifest = DAG.get_task("verify_manifest")
         rename_temp = DAG.get_task("rename_temp")
+        sourcedir_is_lpsdata = DAG.get_task("sourcedir_is_lpsdata")
+        move_lpsdata_to_uploaded = DAG.get_task("move_lpsdata_to_uploaded")
 
         assert confirm_copy in validate_source.upstream_list
         assert validate_source in validate_destination.upstream_list
@@ -84,6 +86,8 @@ class TestCopyFilesDAGStructure:
         assert build_manifest in copy_manifest_files.upstream_list
         assert copy_manifest_files in verify_manifest.upstream_list
         assert verify_manifest in rename_temp.upstream_list
+        assert rename_temp in sourcedir_is_lpsdata.upstream_list
+        assert sourcedir_is_lpsdata in move_lpsdata_to_uploaded.upstream_list
 
     def test_all_required_tasks_exist(self):
         """Test that all required tasks are present in the DAG."""
@@ -97,6 +101,8 @@ class TestCopyFilesDAGStructure:
             "copy_manifest_files",
             "verify_manifest",
             "rename_temp",
+            "sourcedir_is_lpsdata",
+            "move_lpsdata_to_uploaded",
         ]
         task_ids = [t.task_id for t in DAG.tasks]
         for task_id in required_tasks:
@@ -175,6 +181,32 @@ class TestApprovalOperatorMocked:
         assert "task_ids='build_copy_paths'" in confirm_copy_task.body
         assert "key='source'" in confirm_copy_task.body
         assert "key='destination'" in confirm_copy_task.body
+
+
+class TestMoveLpsdataToUploaded:
+    """Test move_lpsdata_to_uploaded behavior."""
+
+    def test_move_lpsdata_to_uploaded_calls_helper(self):
+        """Ensure move_lpsdata_to_uploaded calls the helper for matching source paths."""
+        move_task = DAG.get_task("move_lpsdata_to_uploaded").python_callable
+        mock_move = MagicMock(return_value=("/srv/lpsdata4/04_Uploaded", 1))
+
+        with patch.dict(move_task.__globals__, {"move_to_uploaded": mock_move}):
+            move_task("/srv/lpsdata4/ready_to_upload")
+
+        mock_move.assert_called_once_with("/srv/lpsdata4/ready_to_upload")
+
+    def test_move_lpsdata_to_uploaded_wraps_helper_errors(self):
+        """Ensure move_lpsdata_to_uploaded wraps helper failures in AirflowFailException."""
+        move_task = DAG.get_task("move_lpsdata_to_uploaded").python_callable
+        mock_move = MagicMock(side_effect=RuntimeError("Failed!"))
+
+        with patch.dict(move_task.__globals__, {"move_to_uploaded": mock_move}):
+            with pytest.raises(
+                Exception,
+                match="Moving files from #/srv/lpsdata4/ready_to_upload to uploaded directory failed: Failed!",
+            ):
+                move_task("/srv/lpsdata4/ready_to_upload")
 
 
 class TestConfirmCopyIntegration:

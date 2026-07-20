@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 
 from airflow.providers.standard.operators.hitl import ApprovalOperator
-from airflow.sdk import Param, dag, get_current_context, task
+from airflow.sdk import Param, dag, chain, get_current_context, task
 from airflow.sdk.exceptions import AirflowFailException
 
 from mokelumne.util.storage import run_dir
@@ -22,6 +22,7 @@ from mokelumne.util.file_transfer import (
     clean_destination_path,
     copy_files_from_manifest,
     load_json,
+    move_to_uploaded,
     rename_temp_dir,
     save_json,
     verify_file_manifest,
@@ -236,7 +237,23 @@ def copy_files():
 
         logger.info("renamed temp directory %s to destination %s", temp_dir_path, incoming_path)
 
+    @task.short_circuit()
+    def sourcedir_is_lpsdata(source_dir: str) -> bool:
+        logger.info("Checking if %s volume is an lpsdata volume. If so will move files to Uploaded directory", source_dir)
+        return source_dir.lower().startswith("/srv/lpsdata")
 
+    @task
+    def move_lpsdata_to_uploaded(source_dir: str) -> None:
+        """Move lpsdata files from Ready_to_Upload to Uploaded"""
+        try:        
+            uploaded_dir, moved_count = move_to_uploaded(source_dir)
+        except Exception as ex:
+            raise AirflowFailException(
+                f"Moving files from #{source_dir} to uploaded directory failed: {ex}"
+            )
+
+        logger.info("Moved source_dir %s files to Uploaded %s. %s files moved", source_dir, uploaded_dir, moved_count)
+        
     # Need to run this before defining confirm_copy since we need the resolved paths:
     copy_paths = build_copy_paths()
 
@@ -263,6 +280,9 @@ def copy_files():
     )
     verified_manifest = verify_manifest(temp_destination, manifest)
     renamed_temp_dir =  rename_temp(temp_destination)
+    check_lpsdata = sourcedir_is_lpsdata(validated_source)
+    moved_lpsdata_to_uploaded = move_lpsdata_to_uploaded(validated_source) 
+
 
     (
         copy_paths
@@ -275,5 +295,8 @@ def copy_files():
         >> verified_manifest
         >> renamed_temp_dir
     )
+    
+    # This should be last in the chain    
+    chain(renamed_temp_dir, check_lpsdata, moved_lpsdata_to_uploaded)
 
 copy_files()  # pyright: ignore[reportUnusedExpression]
