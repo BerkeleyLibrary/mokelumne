@@ -8,10 +8,9 @@ from unittest.mock import MagicMock, patch
 from airflow.dag_processing.dagbag import DagBag
 from airflow.providers.standard.operators.hitl import ApprovalOperator
 from mokelumne.dags.copy_files import build_volume_path
+from test.util.dag_helper import get_dag
 
-DAG_DIR = Path(__file__).resolve().parent.parent.parent / "mokelumne" / "dags"
-_DAG_BAG = DagBag(dag_folder=DAG_DIR.resolve())
-DAG = _DAG_BAG.get_dag("copy_files")
+DAG = get_dag("copy_files")
 
 
 class TestBuildVolumePath:
