@@ -7,7 +7,6 @@ _DAG_DIR = Path(__file__).resolve().parent.parent.parent / "mokelumne" / "dags"
 
 _DAG_BAG = DagBag(
     dag_folder=_DAG_DIR.resolve(),
-    include_examples=False,
 )
 
 def get_dag(dag_id: str):
