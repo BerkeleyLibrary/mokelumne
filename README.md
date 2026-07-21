@@ -42,6 +42,9 @@ docker compose run \
 # Start the stack
 docker compose up --detach
 
+# If using localstack to mimic s3 bucket for local development
+docker compose --profile localstack --detach 
+
 # Open airflow in the browser (see below for test credentials)
 open http://localhost:8080/
 ```
@@ -91,9 +94,15 @@ Important environment variables for our build/environment:
 | `AIRFLOW_CONN_LANGFUSE_DEFAULT` | Airflow connection string for Langfuse access.<br>Note: This will create a `langfuse_default` conn_id, will not store the connection in the Airflow metastore, and will override any other connection settings.  | `AIRFLOW_CONN_LANGFUSE_DEFAULT='{"conn_type":"langfuse","host":"us.cloud.langfuse.com","schema":"https","login":"pk-lf-blah-blah-blah","password":"ssk-lf-blah-blah-blah"}'`|
 | `AIRFLOW_CONN_TIND_DEFAULT` | (Optional override) Airflow connection json string for TIND access.<br>Note: This will create a `tind_default` conn_id, will not store the connection in the Airflow metastore, and will override any other connection settings.  | `AIRFLOW_CONN_TIND_DEFAULT='{"conn_type": "http","password": "your-tind-key-here","host": "https://digicoll.lib.berkeley.edu/api/v1","schema": "https"}'` |
 | `AIRFLOW_CONN_AWS_DEFAULT` | Airflow connection string for AWS Bedrock access used by image description DAGs (`conn_id=aws_default`).<br>Expected fields are `login` (AWS access key), `password` (AWS secret), `extra.region_name` and `extra.endpoint_url`  | `AIRFLOW_CONN_AWS_DEFAULT='{"conn_type":"aws","login":"AKIAblah-blah-blah","password":"blah-blah-blah","extra":{"region_name":"us-west-1","endpoint_url":"https://bedrock-runtime.us-west-1.amazonaws.com"}}'` |
-|`AWS_MODEL_ID`|The model to use. Make sure it's supported on the ARN.|`AWS_MODEL_ID="us.anthropic.claude-haiku-4-5-20251001-v1:0"`|
-|`AWS_MODEL_LABEL`|A human friendly label for the model. Will eventually be displayed in the Tind record.|`AWS_MODEL_LABEL="Claude Haiku 4.5"`|
-|`AWS_MODEL_PROVIDER`|The provider for the model. |`AWS_MODEL_PROVIDER=anthropic`|
+| `AWS_MODEL_ID` | The model to use. Make sure it's supported on the ARN. | `AWS_MODEL_ID="us.anthropic.claude-haiku-4-5-20251001-v1:0"` |
+| `AWS_MODEL_LABEL` | A human friendly label for the model. Will eventually be displayed in the Tind record. | `AWS_MODEL_LABEL="Claude Haiku 4.5"` |
+|`AWS_MODEL_PROVIDER`|The provider for the model.|`AWS_MODEL_PROVIDER=anthropic` |
+| `AWS_BUCKET_NAME` | Bucket name for s3 bucket | `AWS_BUCKET_NAME`=City_Arts` |
+| `AWS_ACCESS_KEY_ID` | Access key ID for AWS s3 | `AWS_ACCESS_KEY_ID=user_id` |
+| `AWS_SECRET_ACCESS_KEY` | secret for s3 | `AWS_SECRET_ACCESS_KEY=jerierjw92923j23j` |
+| `AWS_DEFAULT_REGION` | AWS region | `AWS_DEFAULT_REGION=us-west-2` |
+| `AWS_SEED_DATA` | For seeding test files when using localstack locally to mimic AWS s3 | `AWS_SEED_DATA=./tmp/aws_seed_data` |
+| `AWS_ENDPOINT_URL` | endpoint for localstack url | `AWS_ENDPOINT_URL=http://localstack:4566` |
 | `OIDC_CLIENT_SECRET` | Client secret for OIDC authentication.  Used by the Airflow webserver to authenticate OIDC token requests.  In development, also used by `keycloak-config-cli` to configure the client secret.  This should match Keycloak configuration in development and testing, and CalNet in production. | `OIDC_CLIENT_SECRET="some32charactersecret"` |
 | `OIDC_NAME` | Name appended to the OIDC login button | `OIDC_NAME="keycloak"` |
 | `OIDC_CLIENT_ID` | Client ID specified in the OIDC provider. | `OIDC_CLIENT_ID="mokelumne"` |

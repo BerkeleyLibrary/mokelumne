@@ -295,5 +295,27 @@ services:
     ports:
       - 127.0.0.1:8025:8025
 
+  localstack:
+    profiles:
+      - localstack
+    container_name: "localstack-main"
+    image: localstack/localstack:4.12
+    restart: always
+    ports:
+      - 4566:4566
+    environment:
+      SERVICES: s3
+      BUCKET_NAME: "${AWS_BUCKET_NAME:-city-arts}"
+      AWS_SEED_DATA: "${AWS_SEED_DATA:-/tmp/seed_data}"
+      AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID:-test}"
+      AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY:-test}"
+      AWS_DEFAULT_REGION: "${AWS_DEFAULT_REGION:-us-west-2}"
+      AWS_ENDPOINT_URL: "${AWS_ENDPOINT_URL:-http://localstack:4566}"
+      DEBUG: ${DEBUG:-0}
+    volumes:
+      - "./bin/init-s3.sh:/etc/localstack/init/ready.d/init-s3.sh"
+      - "${AWS_SEED_DATA:-./tmp/seed_data}:/tmp/aws_seed_data"
+      - "./.data/localstack:/var/lib/localstack"
+ 
 volumes:
   postgres-db-volume:
