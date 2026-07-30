@@ -121,6 +121,10 @@ attrs==26.1.0 \
     #   outcome
     #   referencing
     #   svcs
+authlib==1.6.12 \
+    --hash=sha256:0656d8482f28fc8221929d5f35b2bde5d13e10555ebc06b4561b0d622e83b1bd \
+    --hash=sha256:e9229ad7fde610b139dd12f5edbe97eab9ee78bfb85691247e767727850b99ab
+    # via mokelumne (pyproject.toml)
 babel==2.18.0 \
     --hash=sha256:b80b99a14bd085fcacfa15c9165f651fbb3406e66cc603abf11c5750937c992d \
     --hash=sha256:e2b422b277c2b9a9630c1d7903c2a00d0830c409c59ac8cae9081c92f1aeba35
@@ -582,6 +586,7 @@ cryptography==48.0.1 \
     # via
     #   -c constraints.txt
     #   apache-airflow-core
+    #   authlib
 deprecated==1.3.1 \
     --hash=sha256:597bfef186b6f60181535a29fbe44865ce137a5079f295b479886c82729d5f3f \
     --hash=sha256:b1b50e0ff0c1fddaa5708a2c6b0a6588bb09b892825ab2b214ac9ea9d92a5223
