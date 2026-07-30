@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
             description="The S3 connection."
         ),
         "destination_directory": Param(
-            default="/srv/pa/city_arts/incoming", 
+            default="/srv/pa/cityarts/ucb/incoming",
             type="string", 
             description="The absolute directory path where files will be saved."
         ),
@@ -59,15 +59,15 @@ def retrieve_S3_bucket():
     @task
     def get_bucket_file_names(params: dict) -> list:
         """Get a list of files for a given bucket. Can be filtered by prefix and extension"""
-        bucket = params["s3_bucket"]
         s3_conn = params["s3_conn"]
+        bucket = params["s3_bucket"]
         file_prefix = params["file_prefix"]
         file_extension = params["file_extension"]
 
         prefix = file_prefix.strip() if file_prefix else None
         extension = file_extension.strip() if file_extension else None
         
-        file_names = list_bucket_files(bucket_name=bucket, conn_id = s3_conn, file_prefix=prefix, file_extension=extension)
+        file_names = list_bucket_files(conn_id = s3_conn, bucket_name=bucket, file_prefix=prefix, file_extension=extension)
         if file_names:
             for name in file_names:
                 logger.info("Found file: %s", name)
@@ -79,8 +79,8 @@ def retrieve_S3_bucket():
     @task(max_active_tis_per_dag=4)
     def retrieve_file_from_bucket(file_key: str, params: dict):
         """Download from S3"""
-        bucket = params["s3_bucket"]
         s3_conn = params["s3_conn"]
+        bucket = params["s3_bucket"]
         dest_dir = params["destination_directory"]
         
         try:

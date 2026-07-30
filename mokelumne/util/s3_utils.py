@@ -6,7 +6,7 @@ from airflow.sdk.exceptions import AirflowFailException
 
 logger = logging.getLogger(__name__)
 
-def list_bucket_files(bucket_name: str, conn_id: str, file_prefix: str | None = None,
+def list_bucket_files(conn_id: str, bucket_name: str, file_prefix: str | None = None,
                       file_extension: str | None = None) -> list:
     """Get a list of files for a given bucket"""
 
@@ -28,7 +28,7 @@ def list_bucket_files(bucket_name: str, conn_id: str, file_prefix: str | None = 
     return [key for key in keys if key.lower().endswith(extension.lower())]
 
 
-def download_single_s3_file(file_key: str, bucket_name: str, conn_id: str, dest_dir: str) -> str:
+def download_single_s3_file(file_key: str, conn_id: str, bucket_name: str, dest_dir: str) -> str:
     """
     Downloads a single file from S3 to a local directory.
     Returns the absolute path to the downloaded local file.
