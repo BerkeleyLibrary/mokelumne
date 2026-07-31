@@ -8,9 +8,9 @@ version = "1.0.2"
 dependencies = [
     "apache-airflow-providers-fab>=3.6.1",
     "apache-airflow-task-sdk == 1.3.0",
-    # Temporary workaround for https://github.com/authlib/authlib/issues/902.
-    "authlib < 1.7.0",
+    "authlib",
     "flask-appbuilder",
+    "joserfc",
     "langchain[aws]",
     "langfuse",
     "mokelumne-providers-ldc >= 1.1.0",
