@@ -196,13 +196,27 @@ class TestFileTransfer:
 
         source_file = source_dir / "some_file.tif"
         source_file.write_text("some contents", encoding="utf-8")
+        
+        sub_dir = source_dir / "mock_subdir"
+        sub_dir.mkdir()
+        sub_file1 = sub_dir / "test_file1.txt"
+        sub_file2 = sub_dir / "test_file2.txt"
+        sub_file1.write_text("content 1", encoding="utf-8")
+        sub_file2.write_text("content 2", encoding="utf-8")
 
         result_path, moved_count = file_transfer.move_to_uploaded(str(source_dir))
 
         assert result_path == str(uploaded_dir)
-        assert moved_count == 1
+        assert moved_count == 2
+ 
         assert not source_file.exists()
         assert (uploaded_dir / source_file.name).exists()
+
+        assert not sub_dir.exists()
+        dest_sub_dir = uploaded_dir / sub_dir.name
+        assert dest_sub_dir.exists()
+        assert (dest_sub_dir / sub_file1.name).exists()
+        assert (dest_sub_dir / sub_file2.name).exists()
 
     @pytest.mark.parametrize(
         "existing_dir_name, expected_uploaded_name",

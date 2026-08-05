@@ -228,7 +228,7 @@ def _find_uploaded_dir(parent: Path) -> Path | None:
 
 
 def _move_files(source_dir: Path | str, dest_dir: Path | str) -> int:
-    """Move files from one directory to another"""
+    """Move files/sub directories from one directory to another"""
     source = Path(source_dir)
     dest = Path(dest_dir)
     
@@ -236,10 +236,12 @@ def _move_files(source_dir: Path | str, dest_dir: Path | str) -> int:
 
     move_count = 0    
     for item in source.iterdir():
-        if item.is_file():
-            dest_file_path = dest / item.name
-            shutil.move(str(item), str(dest_file_path))
-            move_count += 1
+        if item.resolve() == dest.resolve():
+            continue
+
+        dest_file_path = dest / item.name
+        shutil.move(str(item), str(dest_file_path))
+        move_count += 1
 
     return move_count 
 
