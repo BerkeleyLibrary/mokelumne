@@ -252,7 +252,8 @@ def copy_files():
                 f"Moving files from #{source_dir} to uploaded directory failed: {ex}"
             )
 
-        logger.info("Moved source_dir %s files to Uploaded %s. %s files moved", source_dir, uploaded_dir, moved_count)
+        logger.info("Moved source_dir %s files/subdirectories to %s. %s files and/or subdirectories moved",
+                     source_dir, uploaded_dir, moved_count)
         
     # Need to run this before defining confirm_copy since we need the resolved paths:
     copy_paths = build_copy_paths()
