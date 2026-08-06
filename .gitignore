@@ -7,6 +7,9 @@ logs/*
 download/*
 files/*
 !files/.keep
+!files/gobi/
+!files/gobi/**/
+!files/gobi/**/.keep
 __pycache__/
 *.py[cod]
 *$py.class
