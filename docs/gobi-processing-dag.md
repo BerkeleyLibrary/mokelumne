@@ -52,6 +52,31 @@ Ruby processor's behavior and makes a retry safe if outputs were published but
 the task failed before archiving the input. The task also refuses to overwrite
 an existing archived source file.
 
+## Why per-file staging was chosen
+
+Writing directly to a final provider filename could expose an incomplete MARC
+file if parsing, writing, or the worker fails partway through an input. Because
+existing provider outputs are intentionally not overwritten, a retry could
+then mistake that partial file for a completed result. Writing to hidden
+temporary files ensures that malformed input leaves the source in place and
+publishes no partial provider output.
+
+Each temporary file is created beside its final destination and renamed only
+after the complete source file has parsed and all MARC writers have closed.
+The same-filesystem rename is atomic for each provider file, while keeping the
+failure boundary at one input `.ord` file: one bad input does not prevent other
+dynamically mapped inputs from completing. If outputs were published but
+source archival failed, a retry preserves those outputs and safely retries the
+archive step.
+
+A run-scoped `.airflow/<run_id>` directory would organize staging artifacts but
+would not improve publication atomicity because `gobi_processed` is a
+persistent, populated drop directory and each provider file would still need
+to be promoted individually. It would also require Airflow context-derived
+paths and run-level cleanup logic. Per-file temporary names provide the same
+correctness guarantees with less coordination and more closely match the
+existing processor's per-input behavior.
+
 ## Implementation and rollout
 
 1. Add isolated helpers in `mokelumne.util.gobi` and unit-test provider
