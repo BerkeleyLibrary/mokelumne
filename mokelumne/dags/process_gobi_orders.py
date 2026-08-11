@@ -1,3 +1,5 @@
+# pyright: reportTypedDictNotRequiredAccess=false
+
 """Process incoming GOBI MARC order files into provider-specific files.
 
 This Dag supersedes the `GOBI processor`_.
@@ -69,7 +71,8 @@ def process_gobi_orders():
     def discover_order_files() -> list[str]:
         """Find the pending order files at task runtime."""
 
-        params = get_current_context()["params"]
+        context = get_current_context()
+        params = context["params"]
         try:
             require_directory(params["output_directory"], "Output")
             require_directory(params["processed_directory"], "Processed")
@@ -83,8 +86,8 @@ def process_gobi_orders():
     @task(max_active_tis_per_dag=4)
     def process_one_order_file(order_file: str) -> dict[str, object]:
         """Process and archive one order file."""
-
-        params = get_current_context()["params"]
+        context = get_current_context()
+        params = context["params"]
         try:
             return process_order_file(
                 order_file,
