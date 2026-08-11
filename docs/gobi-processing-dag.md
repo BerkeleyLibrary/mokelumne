@@ -16,7 +16,7 @@ that preserves the current processing contract:
 
 ## Dag design
 
-`process_gobi_orders` runs every two minutes by default and does not catch up
+`process_gobi_orders` runs every thirty minutes by default and does not catch up
 missed intervals. The schedule can be changed with
 `MOKELUMNE_GOBI_SCHEDULE`. `max_active_runs=1` prevents scheduled or manual Dag
 runs from scanning the same shared directory concurrently.
@@ -37,8 +37,9 @@ run. Their deployment defaults come from:
 - `MOKELUMNE_GOBI_PROCESSED_DIR`
 
 All three directories must already exist and must be mounted at the same paths
-on every Airflow worker. The Compose defaults live below
-`/opt/airflow/files/gobi`.
+on every Airflow worker. The default input directory is
+`/srv/alma/gobi-ebook-eocr-input`; the default output and processed directories
+live below `/opt/airflow/files/gobi`.
 
 ## Failure and retry behavior
 

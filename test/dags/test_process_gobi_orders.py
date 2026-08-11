@@ -41,3 +41,8 @@ def test_gobi_dag_has_directory_parameters():
         "output_directory",
         "processed_directory",
     }
+    assert DAG.params["input_directory"] == "/srv/alma/gobi-ebook-eocr-input"
+
+
+def test_gobi_dag_runs_every_thirty_minutes_by_default():
+    assert DAG.schedule == "*/30 * * * *"

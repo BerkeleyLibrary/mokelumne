@@ -1,4 +1,9 @@
-"""Process incoming GOBI MARC order files into provider-specific files."""
+"""Process incoming GOBI MARC order files into provider-specific files.
+
+This Dag supersedes the `GOBI processor`_.
+
+.. _GOBI processor: https://github.com/BerkeleyLibrary/gobi
+"""
 
 from __future__ import annotations
 
@@ -14,7 +19,7 @@ from mokelumne.util.gobi import find_order_files, process_order_file, require_di
 logger = logging.getLogger(__name__)
 
 DEFAULT_INPUT_DIRECTORY = os.environ.get(
-    "MOKELUMNE_GOBI_INPUT_DIR", "/opt/airflow/files/gobi/incoming"
+    "MOKELUMNE_GOBI_INPUT_DIR", "/srv/alma/gobi-ebook-eocr-input"
 )
 DEFAULT_OUTPUT_DIRECTORY = os.environ.get(
     "MOKELUMNE_GOBI_OUTPUT_DIR", "/opt/airflow/files/gobi/gobi_processed"
@@ -22,7 +27,7 @@ DEFAULT_OUTPUT_DIRECTORY = os.environ.get(
 DEFAULT_PROCESSED_DIRECTORY = os.environ.get(
     "MOKELUMNE_GOBI_PROCESSED_DIR", "/opt/airflow/files/gobi/incoming/processed"
 )
-DEFAULT_SCHEDULE = os.environ.get("MOKELUMNE_GOBI_SCHEDULE", "*/2 * * * *")
+DEFAULT_SCHEDULE = os.environ.get("MOKELUMNE_GOBI_SCHEDULE", "*/30 * * * *")
 
 
 @dag(
