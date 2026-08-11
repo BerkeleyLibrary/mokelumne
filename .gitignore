@@ -6,9 +6,7 @@ artifacts/*
 logs/*
 download/*
 files/*
-!files/.keep
-!files/gobi/
-!files/gobi/**/
+!files/**/.keep
 !files/gobi/**/.keep
 __pycache__/
 *.py[cod]
