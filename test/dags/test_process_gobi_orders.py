@@ -46,3 +46,7 @@ def test_gobi_dag_has_directory_parameters():
 
 def test_gobi_dag_runs_every_thirty_minutes_by_default():
     assert DAG.schedule == "*/30 * * * *"
+
+
+def test_gobi_dag_is_tagged_as_recurring():
+    assert "recurring" in DAG.tags

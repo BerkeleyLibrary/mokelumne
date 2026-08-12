@@ -1,11 +1,6 @@
 # pyright: reportTypedDictNotRequiredAccess=false
 
-"""Process incoming GOBI MARC order files into provider-specific files.
-
-This Dag supersedes the `GOBI processor`_.
-
-.. _GOBI processor: https://github.com/BerkeleyLibrary/gobi
-"""
+"""Process incoming GOBI MARC order files into provider-specific files."""
 
 from __future__ import annotations
 
@@ -62,7 +57,7 @@ DEFAULT_SCHEDULE = os.environ.get("MOKELUMNE_GOBI_SCHEDULE", "*/30 * * * *")
             description="Shared directory where original .ord files are archived.",
         ),
     },
-    tags=["gobi", "marc"],
+    tags=["gobi", "marc", "recurring"],
 )
 def process_gobi_orders():
     """Discover and process each currently pending GOBI order file."""
@@ -103,4 +98,4 @@ def process_gobi_orders():
     process_one_order_file.expand(order_file=order_files)
 
 
-PROCESS_GOBI_ORDERS_DAG = process_gobi_orders()
+process_gobi_orders()  # pyright: ignore[reportUnusedExpression]

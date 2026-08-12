@@ -68,7 +68,6 @@ def build_output_path(
     input_file: Path | str,
     provider: str,
     output_directory: Path | str,
-    *,
     year: int,
 ) -> Path:
     """Build the provider filename used by the original GOBI processor."""
@@ -100,24 +99,21 @@ class _ProviderOutputStager:  # pylint: disable=too-many-instance-attributes
             self.records_skipped += 1
             return
 
-        writer = self.writers.get(provider)
-        if writer is None:
-            writer = self._open_writer(provider)
-        if writer is None:
+        writer = self.writers.get(provider) or self.open_writer(provider)
+        if writer is not None:
+            writer.write(record)
+            self.records_written += 1
+        else:
             self.records_skipped += 1
-            return
 
-        writer.write(record)
-        self.records_written += 1
-
-    def _open_writer(self, provider: str) -> MARCWriter | None:
+    def open_writer(self, provider: str) -> MARCWriter | None:
         """Open a new staging writer unless the final output already exists."""
 
         final_path = build_output_path(
             self.input_file,
             provider,
             self.output_directory,
-            year=self.year,
+            self.year,
         )
         self.output_paths[provider] = final_path
 

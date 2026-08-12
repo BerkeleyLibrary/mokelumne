@@ -60,7 +60,7 @@ def test_build_output_path_preserves_original_filename_convention(tmp_path):
         "ebook0223.ord",
         "EBS",
         tmp_path,
-        year=2026,
+        2026,
     )
 
     assert output == tmp_path / "ebookEBS20260223.ord"
