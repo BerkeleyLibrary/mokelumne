@@ -4,9 +4,13 @@ import os
 from flask import abort, flash
 from airflow.providers.fab.auth_manager.security_manager.override import FabAirflowSecurityManagerOverride
 
+from mokelumne.oidc.jose_registry import register_cas_client_id_header
 from mokelumne.oidc.views import OIDCAuthOAuthView
 
 log = logging.getLogger(__name__)
+
+register_cas_client_id_header()
+
 
 class OIDCSecurityManager(FabAirflowSecurityManagerOverride):
     """
