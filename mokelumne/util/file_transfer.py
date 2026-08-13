@@ -27,17 +27,16 @@ DESTINATION_VOLUMES = [
 def build_volume_path(
     volume: str,
     subdirectory: str,
-    label: str,
 ) -> Path:
     """Build a path from a volume and relative subdirectory."""
 
     if subdirectory == "":
-        raise ValueError(f"{label} subdirectory is required")
+        raise ValueError(f"Subdirectory is required")
 
     subdirectory_path = Path(subdirectory)
 
     if subdirectory_path.is_absolute():
-        raise ValueError(f"{label} subdirectory must be relative: {subdirectory}")
+        raise ValueError(f"Subdirectory must be relative: {subdirectory}")
 
     return Path(volume) / subdirectory_path
 
@@ -91,6 +90,11 @@ def clean_destination_path(destination_path: Path) -> Path:
 
     return Path(destination_path / "incoming")
 
+def list_files(dir_path: Path, extension: str = "*") -> list[str]:
+    """Retrieve a list of file names for a given directory. Use file extension to limit results"""
+    filenames = [file.name for file in dir_path.glob(f"*.{extension}")]
+
+    return filenames
 
 def verify_file_manifest(destination_path: Path, manifest_path: Path) -> list[ManifestEntry]:
     """Verify all copied files exist at the destination."""

@@ -85,13 +85,11 @@ def copy_files():
             source_path = build_volume_path(
                 ctx["params"]["source_volume"],
                 ctx["params"]["source_subdirectory"],
-                "Source",
             )
 
             destination_path = build_volume_path(
                 ctx["params"]["destination_volume"],
                 ctx["params"]["destination_subdirectory"],
-                "Destination",
             )
 
             destination_path = clean_destination_path(destination_path)

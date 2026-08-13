@@ -17,17 +17,17 @@ class TestBuildVolumePath:
     """Test path building from volume and subdirectory params."""
 
     def test_build_volume_path_combines_volume_and_subdirectory(self):
-        result = build_volume_path("/srv/pa", "aerial/ucb", "Source")
+        result = build_volume_path("/srv/pa", "aerial/ucb")
 
         assert result == Path("/srv/pa/aerial/ucb")
 
     def test_build_volume_path_requires_subdirectory(self):
-        with pytest.raises(ValueError, match="Source subdirectory is required"):
-            build_volume_path("/srv/pa", "", "Source")
+        with pytest.raises(ValueError, match="Subdirectory is required"):
+            build_volume_path("/srv/pa", "")
 
     def test_build_volume_path_rejects_absolute_subdirectory(self):
-        with pytest.raises(ValueError, match="Source subdirectory must be relative"):
-            build_volume_path("/srv/pa", "/aerial/ucb", "Source")
+        with pytest.raises(ValueError, match="Subdirectory must be relative"):
+            build_volume_path("/srv/pa", "/aerial/ucb")
 
 
 class TestCopyFilesDAGStructure:
