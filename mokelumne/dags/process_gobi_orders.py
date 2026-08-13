@@ -5,13 +5,17 @@
 from __future__ import annotations
 
 import logging
-import os
 from datetime import datetime, timezone
 
 from airflow.sdk import Param, dag, get_current_context, task
 from airflow.sdk.exceptions import AirflowFailException
 
-from mokelumne.util.gobi import find_order_files, process_order_file, require_directory
+from mokelumne.util.gobi import (
+    build_staging_directory,
+    find_order_files,
+    process_order_file,
+    require_directory,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -70,10 +74,17 @@ def process_gobi_orders():
         context = get_current_context()
         params = context["params"]
         try:
+            staging_directory = build_staging_directory(
+                order_file,
+                params["output_directory"],
+                context["dag"].dag_id,
+                context["run_id"],
+            )
             return process_order_file(
                 order_file,
                 params["output_directory"],
                 params["processed_directory"],
+                staging_directory,
             )
         except Exception as ex:
             raise AirflowFailException(

@@ -8,6 +8,7 @@ from pymarc import Field, Indicators, MARCReader, MARCWriter, Record, Subfield
 
 from mokelumne.util.gobi import (
     build_output_path,
+    build_staging_directory,
     find_order_files,
     get_provider_code,
     process_order_file,
@@ -66,6 +67,27 @@ def test_build_output_path_preserves_original_filename_convention(tmp_path):
     assert output == tmp_path / "ebookEBS20260223.ord"
 
 
+def test_build_staging_directory_uses_run_dir_beside_output(tmp_path):
+    output = tmp_path / "gobi_processed"
+    output.mkdir()
+
+    staging = build_staging_directory(
+        "incoming/ebook0223.ord",
+        output,
+        "process_gobi_orders",
+        "scheduled__2026-08-13T00:00:00+00:00",
+    )
+
+    assert staging == (
+        tmp_path
+        / ".airflow"
+        / "process_gobi_orders"
+        / "scheduled__2026-08-13T00:00:00+00:00"
+        / "ebook0223.ord"
+    )
+    assert staging.is_dir()
+
+
 def test_find_order_files_returns_only_sorted_regular_ord_files(tmp_path):
     (tmp_path / "b.ord").touch()
     (tmp_path / "a.ord").touch()
@@ -87,9 +109,11 @@ def test_process_order_file_splits_records_and_archives_source(tmp_path):
     incoming = tmp_path / "incoming"
     output = tmp_path / "output"
     processed = tmp_path / "processed"
+    staging = tmp_path / "staging" / "ebook0223.ord"
     incoming.mkdir()
     output.mkdir()
     processed.mkdir()
+    staging.mkdir(parents=True)
     order_file = incoming / "ebook0223.ord"
     write_records(
         order_file,
@@ -102,7 +126,7 @@ def test_process_order_file_splits_records_and_archives_source(tmp_path):
         ],
     )
 
-    result = process_order_file(order_file, output, processed, year=2026)
+    result = process_order_file(order_file, output, processed, staging, year=2026)
 
     assert not order_file.exists()
     assert (processed / order_file.name).is_file()
@@ -112,44 +136,52 @@ def test_process_order_file_splits_records_and_archives_source(tmp_path):
     assert result["records_read"] == 5
     assert result["records_written"] == 5
     assert result["records_skipped"] == 0
+    assert result["staging_directory"] == str(staging)
+    assert list(staging.iterdir()) == []
 
 
 def test_process_order_file_does_not_replace_existing_provider_output(tmp_path):
     incoming = tmp_path / "incoming"
     output = tmp_path / "output"
     processed = tmp_path / "processed"
+    staging = tmp_path / "staging" / "ebook0223.ord"
     incoming.mkdir()
     output.mkdir()
     processed.mkdir()
+    staging.mkdir(parents=True)
     order_file = incoming / "ebook0223.ord"
     existing_output = output / "ebookDEG20260223.ord"
     write_records(order_file, [make_record("DEG data", "new")])
     write_records(existing_output, [make_record("DEG data", "existing")])
 
-    result = process_order_file(order_file, output, processed, year=2026)
+    result = process_order_file(order_file, output, processed, staging, year=2026)
 
     assert read_control_numbers(existing_output) == ["existing"]
     assert (processed / order_file.name).is_file()
     assert result["records_written"] == 0
     assert result["records_skipped"] == 1
     assert result["skipped_providers"] == ["DEG"]
+    assert list(staging.iterdir()) == []
 
 
 def test_process_order_file_keeps_source_and_removes_staging_on_invalid_marc(tmp_path):
     incoming = tmp_path / "incoming"
     output = tmp_path / "output"
     processed = tmp_path / "processed"
+    staging = tmp_path / "staging" / "ebook0223.ord"
     incoming.mkdir()
     output.mkdir()
     processed.mkdir()
+    staging.mkdir(parents=True)
     order_file = incoming / "ebook0223.ord"
     write_records(order_file, [make_record("DEG data", "1")])
     with order_file.open("ab") as handle:
         handle.write(b"not a MARC record")
 
     with pytest.raises(ValueError, match="Invalid MARC record"):
-        process_order_file(order_file, output, processed, year=2026)
+        process_order_file(order_file, output, processed, staging, year=2026)
 
     assert order_file.is_file()
     assert list(output.iterdir()) == []
     assert list(processed.iterdir()) == []
+    assert list(staging.iterdir()) == []

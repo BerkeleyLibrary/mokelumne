@@ -11,6 +11,8 @@ from uuid import uuid4
 
 from pymarc import MARCReader, MARCWriter, Record
 
+from mokelumne.util.storage import run_dir
+
 logger = logging.getLogger(__name__)
 
 FALLBACK_PROVIDER: Final = "ZZZ"
@@ -77,12 +79,41 @@ def build_output_path(
     return Path(output_directory) / output_name
 
 
+def build_staging_directory(
+    input_file: Path | str,
+    output_directory: Path | str,
+    dag_id: str,
+    run_id: str,
+) -> Path:
+    """Create a run- and input-specific staging directory beside the output."""
+
+    output_path = require_directory(output_directory, "Output")
+    staging_base = output_path.parent / ".airflow" / dag_id
+    staging_path = run_dir(run_id, base_dir=str(staging_base)) / Path(input_file).name
+    staging_path.mkdir(exist_ok=True)
+
+    if staging_path.stat().st_dev != output_path.stat().st_dev:
+        raise OSError(
+            "Staging and output directories must be on the same filesystem: "
+            f"{staging_path}, {output_path}"
+        )
+
+    return staging_path
+
+
 class _ProviderOutputStager:  # pylint: disable=too-many-instance-attributes
     """Stage the provider outputs for one order file."""
 
-    def __init__(self, input_file: Path, output_directory: Path, year: int) -> None:
+    def __init__(
+        self,
+        input_file: Path,
+        output_directory: Path,
+        staging_directory: Path,
+        year: int,
+    ) -> None:
         self.input_file = input_file
         self.output_directory = output_directory
+        self.staging_directory = staging_directory
         self.year = year
         self.writers: dict[str, MARCWriter] = {}
         self.temporary_paths: dict[str, Path] = {}
@@ -126,7 +157,9 @@ class _ProviderOutputStager:  # pylint: disable=too-many-instance-attributes
             self.skipped_providers.add(provider)
             return None
 
-        temporary_path = final_path.with_name(f".{final_path.name}.{uuid4().hex}.tmp")
+        temporary_path = (
+            self.staging_directory / f".{final_path.name}.{uuid4().hex}.tmp"
+        )
         writer = MARCWriter(temporary_path.open("xb"))
         self.temporary_paths[provider] = temporary_path
         self.writers[provider] = writer
@@ -168,16 +201,17 @@ def process_order_file(
     input_file: Path | str,
     output_directory: Path | str,
     processed_directory: Path | str,
+    staging_directory: Path | str,
     *,
     year: int | None = None,
 ) -> dict[str, object]:
     """Split one GOBI order file by provider and archive the source file.
 
-    Provider outputs are first written beside their destination as hidden temporary
-    files. They are renamed into place only after every MARC record parses and
-    writes successfully. Existing provider outputs are left unchanged, matching
-    the behavior of the original processor and making a retry safe after output
-    publication but before source archival.
+    Provider outputs are first written to a run- and input-specific staging
+    directory on the destination filesystem. They are renamed into place only
+    after every MARC record parses and writes successfully. Existing provider
+    outputs are left unchanged, matching the behavior of the original processor
+    and making a retry safe after output publication but before source archival.
     """
 
     input_path = Path(input_file)
@@ -187,13 +221,22 @@ def process_order_file(
         raise ValueError(f"Order file must have a .ord extension: {input_path}")
 
     output_path = require_directory(output_directory, "Output")
-    processed_path = require_directory(processed_directory, "Processed")
-    archive_path = processed_path / input_path.name
+    staging_path = require_directory(staging_directory, "Staging")
+    if staging_path.stat().st_dev != output_path.stat().st_dev:
+        raise OSError(
+            "Staging and output directories must be on the same filesystem: "
+            f"{staging_path}, {output_path}"
+        )
+    archive_path = require_directory(processed_directory, "Processed") / input_path.name
     if archive_path.exists():
         raise FileExistsError(f"Processed order file already exists: {archive_path}")
 
-    output_year = year if year is not None else date.today().year
-    stager = _ProviderOutputStager(input_path, output_path, output_year)
+    stager = _ProviderOutputStager(
+        input_path,
+        output_path,
+        staging_path,
+        year if year is not None else date.today().year,
+    )
     records_read = 0
 
     try:
@@ -229,6 +272,7 @@ def process_order_file(
     return {
         "input_file": str(input_path),
         "archive_file": str(archive_path),
+        "staging_directory": str(staging_path),
         "records_read": records_read,
         "records_written": stager.records_written,
         "records_skipped": stager.records_skipped,
