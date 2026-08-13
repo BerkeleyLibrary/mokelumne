@@ -115,10 +115,6 @@ Important environment variables for our build/environment:
 | `TIND_IIIF_MANIFEST_URL_PATTERN` | URL pattern for TIND IIIF manifests | `TIND_IIIF_MANIFEST_URL_PATTERN="https://digicoll.lib.berkeley.edu/record/{tind_id}/export/iiif_manifest"` |
 | `MOKELUMNE_PUBLIC_URL`|URL to access public assets - must end in `/`|`MOKELUMNE_PUBLIC_URL=https://mokelumne-assets.ucblib.org/`|
 | `MOKELUMNE_TIND_DOWNLOAD_DIR` | Path for downloaded image cache | `MOKELUMNE_TIND_DOWNLOAD_DIR="/some/path/to/download/to"` |
-| `MOKELUMNE_GOBI_INPUT_DIR` | Shared directory containing incoming GOBI `.ord` files | `MOKELUMNE_GOBI_INPUT_DIR="/srv/alma/gobi-ebook-eocr-input"` |
-| `MOKELUMNE_GOBI_OUTPUT_DIR` | Shared directory for provider-specific GOBI output files | `MOKELUMNE_GOBI_OUTPUT_DIR="/opt/airflow/files/gobi/gobi_processed"` |
-| `MOKELUMNE_GOBI_PROCESSED_DIR` | Shared directory for archived original GOBI files | `MOKELUMNE_GOBI_PROCESSED_DIR="/opt/airflow/files/gobi/incoming/processed"` |
-| `MOKELUMNE_GOBI_SCHEDULE` | Cron schedule for scanning the GOBI input directory | `MOKELUMNE_GOBI_SCHEDULE="*/30 * * * *"` |
 
 Note: The `AIRFLOW_UID` example in `example.env` maps to the reserved `uid` for the `airflow` user in [lap/workflow](https://git.lib.berkeley.edu/lap/workflow/-/wikis/UIDs).
 

@@ -15,44 +15,30 @@ from mokelumne.util.gobi import find_order_files, process_order_file, require_di
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_INPUT_DIRECTORY = os.environ.get(
-    "MOKELUMNE_GOBI_INPUT_DIR", "/srv/alma/gobi-ebook-eocr-input"
-)
-DEFAULT_OUTPUT_DIRECTORY = os.environ.get(
-    "MOKELUMNE_GOBI_OUTPUT_DIR", "/opt/airflow/files/gobi/gobi_processed"
-)
-DEFAULT_PROCESSED_DIRECTORY = os.environ.get(
-    "MOKELUMNE_GOBI_PROCESSED_DIR", "/opt/airflow/files/gobi/incoming/processed"
-)
-DEFAULT_SCHEDULE = os.environ.get("MOKELUMNE_GOBI_SCHEDULE", "*/30 * * * *")
-
 
 @dag(
     dag_id="process_gobi_orders",
     description="Split GOBI MARC order files into provider-specific files",
-    schedule=DEFAULT_SCHEDULE,
+    schedule="*/30 * * * *",  # every 30 minutes
     start_date=datetime(2025, 1, 1, tzinfo=timezone.utc),
     catchup=False,
     max_active_runs=1,
     params={
         "input_directory": Param(
-            default=DEFAULT_INPUT_DIRECTORY,
+            default="/srv/alma/gobi-ebook-eocr-input",
             type="string",
-            minLength=1,
             title="Incoming order directory",
             description="Shared directory containing GOBI .ord files.",
         ),
         "output_directory": Param(
-            default=DEFAULT_OUTPUT_DIRECTORY,
+            default="/opt/airflow/files/gobi/gobi_processed",
             type="string",
-            minLength=1,
             title="Provider output directory",
             description="Shared directory where provider-specific files are written.",
         ),
         "processed_directory": Param(
-            default=DEFAULT_PROCESSED_DIRECTORY,
+            default="/opt/airflow/files/gobi/incoming/processed",
             type="string",
-            minLength=1,
             title="Processed order directory",
             description="Shared directory where original .ord files are archived.",
         ),
