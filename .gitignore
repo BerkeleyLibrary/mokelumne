@@ -6,7 +6,8 @@ artifacts/*
 logs/*
 download/*
 files/*
-!files/.keep
+!files/**/.keep
+!files/gobi/**/.keep
 __pycache__/
 *.py[cod]
 *$py.class
