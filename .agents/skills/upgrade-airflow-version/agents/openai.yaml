@@ -1,0 +1,4 @@
+interface:
+  display_name: "Upgrade Airflow Version"
+  short_description: "Upgrade Mokelumne to a new Airflow release"
+  default_prompt: "Use $upgrade-airflow-version to upgrade Mokelumne to a specified Airflow release and validate the result."
