@@ -126,8 +126,10 @@ pins conflict with packages preinstalled in the Airflow image:
 
 1. Compare each conflict with the target image's `pip freeze` output and
    installed-package requirements.
-2. Add the narrowest appropriate constraint to `constraints.txt`.
-3. Regenerate `requirements.txt` with hashes.
+2. Add the widest appropriate constraint to `constraints.txt`. For example,
+specify `cryptography >= 49, < 51` instead of `cryptography == 50.0.0` if it is known that major versions 49 and 50 of `cryptography` 
+work with the specified Airflow version.
+3. Regenerate `requirements.txt` with hashes as specified above.
 4. Rebuild until `pip check` reports no broken requirements.
 
 Common conflict families include `cryptography`/`pyOpenSSL`,
@@ -166,11 +168,10 @@ print('mokelumne-providers-ldc', version('mokelumne-providers-ldc'))"
 docker compose exec airflow-cli python -m pip check
 ```
 
-Run focused DAG tests, followed by the complete suite:
+Run the complete test suite:
 
 ```sh
-docker compose exec airflow-cli \
-  python -m pytest test/dags test/tests/test_dags.py
+
 docker compose exec airflow-cli python -m pytest
 ```
 
