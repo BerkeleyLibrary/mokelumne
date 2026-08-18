@@ -16,6 +16,7 @@ dependencies = [
     "mokelumne-providers-ldc >= 1.1.1",
     "mokelumne-providers-tind >= 1.1.1",
     "pymarc",
+    "yarl",
 ]
 requires-python = ">= 3.13, < 3.15"
 authors = [

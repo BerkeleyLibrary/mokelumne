@@ -66,7 +66,6 @@ class TestFileTransfer:
         result = file_transfer.build_volume_path(
             "/srv/pa",
             "aerial/ucb",
-            "Source",
         )
 
         assert result == Path("/srv/pa/aerial/ucb")
@@ -74,21 +73,19 @@ class TestFileTransfer:
     def test_build_volume_path_requires_subdirectory(self):
         """Ensure build_volume_path requires a subdirectory."""
 
-        with pytest.raises(ValueError, match="Source subdirectory is required"):
+        with pytest.raises(ValueError, match="Subdirectory is required"):
             file_transfer.build_volume_path(
                 "/srv/lpsdata4",
                 "",
-                "Source",
             )
 
     def test_build_volume_path_rejects_absolute_subdirectory(self):
         """Ensure build_volume_path rejects absolute subdirectories."""
 
-        with pytest.raises(ValueError, match="Source subdirectory must be relative"):
+        with pytest.raises(ValueError, match="Subdirectory must be relative"):
             file_transfer.build_volume_path(
                 "tmp/srv/pa",
                 "/aerial/ucb",
-                "Source",
             )
 
     def test_build_manifest_empty_directory(self, tmp_path: Path):
