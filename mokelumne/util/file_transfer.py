@@ -19,8 +19,8 @@ SOURCE_VOLUMES = [
 ]
 
 DESTINATION_VOLUMES = [
-    "/srv/da",
     "/srv/pa",
+    "/srv/da",
 ]
 
 
