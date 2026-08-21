@@ -27,9 +27,11 @@ def validate_destination_path(destination_path: Path) -> None:
 def validate_source_structure(source_path: Path) -> None:
     """Validate the source directory structure for PDF creation."""
 
+    source_entries = list(source_path.iterdir())
+
     root_images = [
         path
-        for path in source_path.iterdir()
+        for path in source_entries
         if path.is_file() and path.suffix.lower() in IMAGE_EXTENSIONS
     ]
 
@@ -39,7 +41,7 @@ def validate_source_structure(source_path: Path) -> None:
 
     document_dirs = [
         path
-        for path in source_path.iterdir()
+        for path in source_entries
         if path.is_dir()
     ]
 
