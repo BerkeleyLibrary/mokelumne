@@ -4,6 +4,7 @@ from airflow.sdk import Param, dag, task, get_current_context
 from airflow.sdk.exceptions import AirflowFailException
 
 from mokelumne.dags.fetch_tind_records import write_query_results_to_xml
+from mokelumne.plugins.static_files.helpers import static_files_run_dir, static_path_to_url
 from mokelumne.util.file_transfer import list_files, build_volume_path
 from mokelumne.util.parse_marc_xml import list_values_from_marc_xml, extract_url_names
 from mokelumne.util.tind_reports import format_da_tind_report
@@ -133,7 +134,7 @@ def tind_file_check():
         Write Tind comparison report to disk
         """
         context = get_current_context()
-        report_dir = run_dir(context["run_id"])
+        report_dir = static_files_run_dir(context["dag"].dag_id, context["run_id"])
         report_file = report_dir / "tind_report.txt"
 
         search_criteria = params["search_options"]
@@ -148,14 +149,15 @@ def tind_file_check():
     def view_report_log(context=None):
         """View the Tind report in the Airflow"""
         context = get_current_context()
-        report_dir = run_dir(context["run_id"])
+        report_dir = static_files_run_dir(context["dag"].dag_id, context["run_id"])
         report_file = report_dir / "tind_report.txt"
 
         output_file = Path(report_file)
     
         if output_file.exists():
             logger.info("========================================")
-            logger.info("Results are also written to %s", report_file)
+            summary_url = static_path_to_url(report_file)
+            logger.info("Results are also written to %s", summary_url)
             logger.info("========================================")
             logger.info(output_file.read_text(encoding="utf-8"))
         else:
@@ -164,7 +166,6 @@ def tind_file_check():
 
     file_list = retrieve_file_list(da_path=validated_source_dir())
     file_list_ready = has_files(file_list=file_list)
-
     tind_metadata = write_query_results_to_xml(tind_query="{{ params.tind_query }}")
     tind_filename_list = retrieve_856_filenames()    
     comparison_results = compare_to_tind(file_list, tind_filename_list)
