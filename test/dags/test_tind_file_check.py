@@ -63,8 +63,16 @@ class TestTindFileCheckTaskBehavior:
     def test_write_results_writes_report_file(self, tmp_path, monkeypatch):
         write_task = DAG.get_task("write_results").python_callable
 
-        monkeypatch.setitem(write_task.__globals__, "get_current_context", lambda: {"run_id": "run-1"})
-        monkeypatch.setitem(write_task.__globals__, "run_dir", lambda _run_id: tmp_path)
+        monkeypatch.setitem(
+            write_task.__globals__,
+            "get_current_context",
+            lambda: {"dag": DAG, "run_id": "run-1"},
+        )
+        monkeypatch.setitem(
+            write_task.__globals__,
+            "static_files_run_dir",
+            lambda _dag_id, _run_id: tmp_path,
+        )
 
         report_path = write_task(
             {"in_tind": ["a.jpg"], "not_in_tind": ["b.jpg"]},
