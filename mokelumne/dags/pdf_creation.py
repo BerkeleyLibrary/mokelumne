@@ -45,7 +45,18 @@ def pdf_creation():
         pdf_utils.validate_destination_path(destination_path)
         pdf_utils.validate_source_structure(source_path)
 
-    validate_inputs()
+    @task
+    def discover_documents():
+        """Discover document directories and build work items."""
+        context = get_current_context()
+        source_path = Path(context["params"]["source"])
+
+        return pdf_utils.discover_documents(source_path)
+
+    validation = validate_inputs()
+    documents = discover_documents()
+
+    validation >> documents
 
 
 pdf_creation()

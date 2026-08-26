@@ -119,3 +119,55 @@ class TestPDFUtils:
             match="Destination path is not a directory",
         ):
             pdf_utils.validate_destination_path(destination_path)
+
+    def test_discover_documents_builds_work_items(self, tmp_path: Path):
+        """Build work items for document directories containing images."""
+        pdf_1 = tmp_path / "pdf_1"
+        pdf_1.mkdir()
+        (pdf_1 / "001.tif").write_text("image", encoding="utf-8")
+
+        pdf_2 = tmp_path / "pdf_2"
+        pdf_2.mkdir()
+        (pdf_2 / "001.jpg").write_text("image", encoding="utf-8")
+
+        work_items = pdf_utils.discover_documents(tmp_path)
+
+        assert work_items == [
+            {
+                "source": str(pdf_1),
+                "output": "pdf_1.pdf",
+            },
+            {
+                "source": str(pdf_2),
+                "output": "pdf_2.pdf",
+            },
+        ]
+
+    def test_discover_documents_ignores_directories_without_images(self, tmp_path: Path):
+        """Ignore subdirectories that do not contain TIFF/JPEG images."""
+        document_dir = tmp_path / "document"
+        document_dir.mkdir()
+        (document_dir / "001.tif").write_text("image", encoding="utf-8")
+
+        notes_dir = tmp_path / "notes"
+        notes_dir.mkdir()
+        (notes_dir / "README.txt").write_text("notes", encoding="utf-8")
+
+        work_items = pdf_utils.discover_documents(tmp_path)
+
+        assert work_items == [
+            {
+                "source": str(document_dir),
+                "output": "document.pdf",
+            }
+        ]
+
+    def test_discover_documents_accepts_uppercase_image_extensions(self, tmp_path: Path):
+        """Accept TIFF/JPEG extensions regardless of case."""
+        document_dir = tmp_path / "document"
+        document_dir.mkdir()
+        (document_dir / "001.TIF").write_text("image", encoding="utf-8")
+
+        work_items = pdf_utils.discover_documents(tmp_path)
+
+        assert len(work_items) == 1

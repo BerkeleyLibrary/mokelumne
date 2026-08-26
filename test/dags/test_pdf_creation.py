@@ -13,9 +13,19 @@ class TestPDFCreationDag:
         """Ensure validate_inputs task exists."""
         assert DAG.get_task("validate_inputs")
 
+    def test_discover_documents_task_exists(self):
+        """Ensure discover_documents task exists."""
+        assert DAG.get_task("discover_documents")
+
     def test_expected_params_exist(self):
         """Ensure expected DAG parameters exist."""
         assert "source" in DAG.params
         assert "destination" in DAG.params
         assert "language" in DAG.params
 
+    def test_task_order(self):
+        """Ensure DAG tasks execute in the expected order."""
+        # TODO: Update this test as additional tasks are implemented.
+        validate_inputs = DAG.get_task("validate_inputs")
+
+        assert [task.task_id for task in validate_inputs.downstream_list] == ["discover_documents"]
