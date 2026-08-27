@@ -49,23 +49,12 @@ def validate_source_structure(source_path: Path) -> None:
 
     # Thou shalt not have nested subdirectories!!
     for document_dir in document_dirs:
-        nested_image_dirs = [
-            path
-            for path in document_dir.iterdir()
-            if (
-                path.is_dir()
-                and any(
-                    child.is_file()
-                    and child.suffix.lower() in IMAGE_EXTENSIONS
-                    for child in path.iterdir()
-                )
-            )
-        ]
+        nested_image_dirs = _directories_with_images(document_dir)
 
         if nested_image_dirs:
             raise ValueError(f"Document directory contains nested TIFF/JPEG directories: {document_dir}")
 
-    valid_document_dirs = _document_dirs(source_path)
+    valid_document_dirs = _directories_with_images(source_path)
 
     # Thou shalt contain at least one subdirectory with TIFFs or JPEGs!!!
     if not valid_document_dirs:
@@ -76,7 +65,7 @@ def discover_documents(source_path: Path) -> list[DocumentWorkItem]:
     """Build work items for document subdirectories in the source directory."""
 
     # TODO: Consider natural sorting if document directory names require it.
-    document_dirs = sorted(_document_dirs(source_path))
+    document_dirs = sorted(_directories_with_images(source_path))
 
     work_items = [
         {
@@ -89,8 +78,8 @@ def discover_documents(source_path: Path) -> list[DocumentWorkItem]:
     return work_items
 
 
-def _document_dirs(source_path: Path) -> list[Path]:
-    """Return document subdirectories containing TIFF/JPEG images."""
+def _directories_with_images(source_path: Path) -> list[Path]:
+    """Return immediate subdirectories containing TIFF/JPEG images."""
 
     return [
         path
