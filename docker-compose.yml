@@ -65,8 +65,9 @@ x-airflow-common: &airflow-common
     AIRFLOW__LOGGING__LOGGING_LEVEL: DEBUG
     AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
     AIRFLOW_CONN_SMTP_DEFAULT: 'smtp://mailpit:1025?disable_ssl=true&disable_tls=true'
-    AIRFLOW_CONN_AWS_S3_CITY_ARTS: ${AIRFLOW_CONN_AWS_S3_CITY_ARTS:-} 
-    AIRFLOW_CONN_AWS_S3_TEST: ${AIRFLOW_CONN_AWS_S3_TEST:-} 
+    AIRFLOW_CONN_AWS_S3_CITY_ARTS: ${AIRFLOW_CONN_AWS_S3_CITY_ARTS:-}
+    AIRFLOW_CONN_AWS_S3_TEST: ${AIRFLOW_CONN_AWS_S3_TEST:-}
+    ALMA_HOST: ${ALMA_HOST:-https://berkeley.alma.exlibrisgroup.com/view/sru/01UCS_BER}
     CI: ${CI:-}
   volumes:
     - ./:/opt/airflow
@@ -122,10 +123,15 @@ services:
           airflow connections delete tind_default || true;
           airflow connections add tind_default \
             --conn-type tind \
-            --conn-host "${TIND_API_URL}" \
-            --conn-password "${TIND_API_KEY}" \
+            --conn-host "$${TIND_API_URL}" \
+            --conn-password "$${TIND_API_KEY}" \
             --conn-description "TIND API connection"
         fi
+        airflow connections delete alma_default || true;
+        airflow connections add alma_default \
+          --conn-type alma \
+          --conn-host "$${ALMA_HOST}" \
+          --conn-description "Alma SRU connection"
         chown -cR airflow:root /opt/airflow/files
         chmod 0775 /opt/airflow/files
     depends_on:
