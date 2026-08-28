@@ -10,6 +10,34 @@ from pathlib import Path
 import pytest
 
 
+GOBI_DAG_VARIABLES = {
+    "process_gobi_orders_input_dir": "/opt/airflow/files/gobi/in",
+    "process_gobi_orders_output_dir": "/opt/airflow/files/gobi/out",
+    "process_gobi_orders_processed_dir": "/opt/airflow/files/gobi/processed",
+}
+_gobi_dag_variables_patch = pytest.MonkeyPatch()
+
+
+def pytest_sessionstart() -> None:
+    """Set Variables needed by collection-time DagBag parsing."""
+
+    for key, value in GOBI_DAG_VARIABLES.items():
+        _gobi_dag_variables_patch.setenv(f"AIRFLOW_VAR_{key.upper()}", value)
+
+
+def pytest_sessionfinish() -> None:
+    """Restore the environment after the test session."""
+
+    _gobi_dag_variables_patch.undo()
+
+
+@pytest.fixture(scope="session")
+def gobi_dag_variables() -> dict[str, str]:
+    """Return the mocked Airflow Variable values used by Dag tests."""
+
+    return GOBI_DAG_VARIABLES
+
+
 def read_csv(path: Path | str) -> csv.DictReader:
     """
     Return a csv.DictReader over the rows of the given CSV.
