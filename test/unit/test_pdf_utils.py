@@ -14,7 +14,6 @@ class TestPDFUtils:
         """Accept an existing source directory."""
         pdf_utils.validate_source_path(tmp_path)
 
-
     def test_validate_source_path_rejects_missing_directory(self, tmp_path: Path):
         """Reject a source directory that does not exist."""
         source_path = tmp_path / "missing"
@@ -24,7 +23,6 @@ class TestPDFUtils:
             match="Source directory does not exist",
         ):
             pdf_utils.validate_source_path(source_path)
-
 
     def test_validate_source_path_rejects_file(self, tmp_path: Path):
         """Reject a source path that is a file."""
@@ -48,7 +46,6 @@ class TestPDFUtils:
         ):
             pdf_utils.validate_source_structure(tmp_path)
 
-
     def test_validate_source_structure_nested(self, tmp_path: Path):
         """Reject a source path that has nested subdirectories."""
         document_dir = tmp_path / "document_1"
@@ -66,7 +63,6 @@ class TestPDFUtils:
         ):
             pdf_utils.validate_source_structure(tmp_path)
 
-
     def test_validate_source_structure_no_images(self, tmp_path: Path):
         """Reject a source path that contains no images in any subdirectories."""
         document_dir = tmp_path / "document_1"
@@ -81,7 +77,6 @@ class TestPDFUtils:
         ):
             pdf_utils.validate_source_structure(tmp_path)
 
-
     def test_validate_source_structure_accepts_valid_structure(self, tmp_path: Path):
         """Accept source subdirectories that contain TIFF/JPEG images."""
         document_dir = tmp_path / "document_1"
@@ -92,11 +87,9 @@ class TestPDFUtils:
 
         pdf_utils.validate_source_structure(tmp_path)
 
-
     def test_validate_destination_path_accepts_directory(self, tmp_path: Path):
         """Accept an existing destination directory."""
         pdf_utils.validate_destination_path(tmp_path)
-
 
     def test_validate_destination_path_rejects_missing_directory(self, tmp_path: Path):
         """Reject a destination directory that does not exist."""
@@ -107,7 +100,6 @@ class TestPDFUtils:
             match="Destination directory does not exist",
         ):
             pdf_utils.validate_destination_path(destination_path)
-
 
     def test_validate_destination_path_rejects_file(self, tmp_path: Path):
         """Reject a destination path that is a file."""
@@ -170,4 +162,52 @@ class TestPDFUtils:
 
         work_items = pdf_utils.discover_documents(tmp_path)
 
-        assert len(work_items) == 1
+        assert work_items == [
+            {
+                "source": str(document_dir),
+                "output": "document.pdf",
+            }
+        ]
+
+    def test_output_exists_returns_true_when_pdf_exists(self, tmp_path: Path):
+        """Return true when the expected output PDF exists."""
+        output_file = tmp_path / "document.pdf"
+        output_file.write_text("pdf", encoding="utf-8")
+
+        assert pdf_utils.output_exists(tmp_path, "document.pdf")
+
+    def test_output_exists_returns_false_when_pdf_does_not_exist(self, tmp_path: Path):
+        """Return false when the expected output PDF does not exist."""
+        assert not pdf_utils.output_exists(tmp_path, "document.pdf")
+
+    def test_output_exists_returns_false_when_output_is_directory(self, tmp_path: Path):
+        """Return false when the expected output path is a directory."""
+        output_dir = tmp_path / "document.pdf"
+        output_dir.mkdir()
+
+        assert not pdf_utils.output_exists(tmp_path, "document.pdf")
+
+    def test_prepare_workspace_creates_directory(self, tmp_path: Path):
+        """Create the document workspace when it does not exist."""
+        workspace_path = pdf_utils.prepare_workspace(tmp_path, "document")
+
+        assert workspace_path.is_dir()
+
+    def test_prepare_workspace_returns_expected_path(self, tmp_path: Path):
+        """Return the expected document workspace path."""
+        workspace_path = pdf_utils.prepare_workspace(tmp_path, "document")
+
+        assert workspace_path == tmp_path / "document"
+
+    def test_prepare_workspace_replaces_existing_directory(self, tmp_path: Path):
+        """Replace an existing workspace with a clean directory."""
+        existing_workspace = tmp_path / "document"
+        existing_workspace.mkdir()
+
+        stale_file = existing_workspace / "stale.txt"
+        stale_file.write_text("old data", encoding="utf-8")
+
+        workspace_path = pdf_utils.prepare_workspace(tmp_path, "document")
+
+        assert workspace_path.is_dir()
+        assert not stale_file.exists()
