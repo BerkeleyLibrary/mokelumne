@@ -101,7 +101,17 @@ def _directories_with_images(source_path: Path) -> list[Path]:
 def output_exists(destination_path: Path, output_filename: str) -> bool:
     """Return whether the expected output PDF already exists."""
 
-    return (destination_path / output_filename).is_file()
+    output_path = destination_path / output_filename
+
+    if output_path.is_file():
+        return True
+
+    if not output_path.exists():
+        return False
+
+    raise FileExistsError(
+        f"Output path exists and is not a regular file: {output_path}"
+    )
 
 
 def prepare_workspace(run_path: Path, document_name: str) -> Path:

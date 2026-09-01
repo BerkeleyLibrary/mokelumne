@@ -180,12 +180,16 @@ class TestPDFUtils:
         """Return false when the expected output PDF does not exist."""
         assert not pdf_utils.output_exists(tmp_path, "document.pdf")
 
-    def test_output_exists_returns_false_when_output_is_directory(self, tmp_path: Path):
-        """Return false when the expected output path is a directory."""
+    def test_output_exists_raises_when_output_is_directory(self, tmp_path: Path):
+        """Raise when the expected output path exists but is not a regular file."""
         output_dir = tmp_path / "document.pdf"
         output_dir.mkdir()
 
-        assert not pdf_utils.output_exists(tmp_path, "document.pdf")
+        with pytest.raises(
+            FileExistsError,
+            match="Output path exists and is not a regular file",
+        ):
+            pdf_utils.output_exists(tmp_path, "document.pdf")
 
     def test_prepare_workspace_creates_directory(self, tmp_path: Path):
         """Create the document workspace when it does not exist."""
