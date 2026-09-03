@@ -1,10 +1,15 @@
 """DAG for creating searchable PDFs from directories of source images."""
 
+import logging
 from pathlib import Path
 
 from airflow.sdk import Param, dag, get_current_context, task
+from airflow.sdk.exceptions import AirflowSkipException
 
-from mokelumne.util import pdf_utils
+from mokelumne.util import pdf_utils, storage
+
+
+logger = logging.getLogger(__name__)
 
 
 @dag(
@@ -53,10 +58,38 @@ def pdf_creation():
 
         return pdf_utils.discover_documents(source_path)
 
+    @task
+    def process_document(document: pdf_utils.DocumentWorkItem):
+        """Process a document directory into a searchable PDF."""
+
+        context = get_current_context()
+        destination_path = Path(context["params"]["destination"])
+        run_id = context["run_id"]
+
+        # 1 - Check if output PDF already exists (skip if it does)
+        if pdf_utils.output_exists(destination_path, document["output"]):
+            raise AirflowSkipException(
+                f"Output PDF already exists: {destination_path / document['output']}"
+            )
+
+        # 2 - Prepare workspace!
+        run_path = storage.run_dir(run_id)
+        workspace_path = pdf_utils.prepare_workspace(
+            run_path,
+            Path(document["source"]).name,
+        )
+
+        # Log the workspace path for now; later stages will use it directly.
+        logger.info("Prepared document workspace: %s", workspace_path)
+
+        # 3 - Determine language (coming soon to a theater near you!)
+        # 4 - Prepare images (size/convert as necessary)
+
     validation = validate_inputs()
     documents = discover_documents()
+    processed_documents = process_document.expand(document=documents)
 
-    validation >> documents
+    validation >> documents >> processed_documents
 
 
 pdf_creation()

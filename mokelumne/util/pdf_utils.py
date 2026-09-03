@@ -1,3 +1,6 @@
+"""Utilities for validating and preparing files for PDF creation."""
+
+import shutil
 from pathlib import Path
 
 
@@ -93,3 +96,32 @@ def _directories_with_images(source_path: Path) -> list[Path]:
             )
         )
     ]
+
+
+def output_exists(destination_path: Path, output_filename: str) -> bool:
+    """Return whether the expected output PDF already exists."""
+
+    output_path = destination_path / output_filename
+
+    if output_path.is_file():
+        return True
+
+    if not output_path.exists():
+        return False
+
+    raise FileExistsError(
+        f"Output path exists and is not a regular file: {output_path}"
+    )
+
+
+def prepare_workspace(run_path: Path, document_name: str) -> Path:
+    """Create and return a clean workspace for a document."""
+
+    workspace_path = run_path / document_name
+
+    if workspace_path.exists():
+        shutil.rmtree(workspace_path)
+
+    workspace_path.mkdir(parents=True)
+
+    return workspace_path
