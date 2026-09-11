@@ -62,17 +62,15 @@ def _language_codes_from_record(record: Record) -> list[str]:
 
     # if codes is empty or contains a 'mul' value, check the 546a
     if not codes or "mul" in codes:
-        # lang_regex_map from marc_tesseract_mapper.py
-        # lang_marc_map = lang_to_marc_map()
         lang_regex = marc_lang_regex()
-        lang_to_marc_map = lang_to_marc_map()
+        lang_map = lang_to_marc_map()
         fields_546 = record.get_fields("546")
-        first_546a = field_546[0].get("a") if fields_546 else None
+        first_546a = fields_546[0].get("a") if fields_546 else None
         if first_546a:
             for match in re.finditer(lang_regex, first_546a, flags=re.IGNORECASE):
                 lang = match.group().lower()
-                if lang in lang_to_marc_map:
-                    marc_code = lang_to_marc_map[lang]
+                if lang in lang_map:
+                    marc_code = lang_map[lang]
                     if marc_code not in codes:
                         codes.append(marc_code)
         else:
@@ -84,9 +82,9 @@ def _language_codes_from_record(record: Record) -> list[str]:
                 subfield_a = field_500.get("a")
                 if subfield_a:
                     for match in re.finditer(context_regex, subfield_a, flags=re.IGNORECASE):
-                        lang = match.group().lower()
-                        if lang in lang_to_marc_map:
-                            marc_code = lang_to_marc_map[lang]
+                        lang = (match.group(1) or match.group(2)).lower()
+                        if lang in lang_map:
+                            marc_code = lang_map[lang]
                             if marc_code not in codes:
                                 codes.append(marc_code)
 
