@@ -6,7 +6,8 @@ from pathlib import Path
 from airflow.sdk import Param, dag, get_current_context, task
 from airflow.sdk.exceptions import AirflowSkipException
 
-from mokelumne.util import pdf_utils, storage
+from mokelumne.util import pdf_utils
+from mokelumne.util import storage
 
 
 logger = logging.getLogger(__name__)
@@ -31,7 +32,10 @@ logger = logging.getLogger(__name__)
             default="",
             type=["null", "string"],
             title="OCR Language",
-            description="Optional Tesseract language code to use instead of automatic language selection.",
+            description=(
+                "Optional Tesseract language code to use instead of "
+                "automatic language selection."
+            ),
         ),
     },
 )
@@ -83,7 +87,14 @@ def pdf_creation():
         logger.info("Prepared document workspace: %s", workspace_path)
 
         # 3 - Determine language (coming soon to a theater near you!)
+
         # 4 - Prepare images (size/convert as necessary)
+        file_list_path = pdf_utils.prepare_images(
+            Path(document["source"]),
+            workspace_path,
+        )
+
+        logger.info("Prepared Tesseract file list: %s", file_list_path)
 
     validation = validate_inputs()
     documents = discover_documents()

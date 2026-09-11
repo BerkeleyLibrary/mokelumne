@@ -3,8 +3,11 @@
 import shutil
 from pathlib import Path
 
+import pyvips  # type: ignore[import-untyped]
 
 IMAGE_EXTENSIONS = {".tif", ".tiff", ".jpg", ".jpeg"}
+MAX_RESOLUTION = 200
+MM_PER_INCH = 25.4
 
 DocumentWorkItem = dict[str, str]
 
@@ -55,7 +58,9 @@ def validate_source_structure(source_path: Path) -> None:
         nested_image_dirs = _directories_with_images(document_dir)
 
         if nested_image_dirs:
-            raise ValueError(f"Document directory contains nested TIFF/JPEG directories: {document_dir}")
+            raise ValueError(
+                f"Document directory contains nested TIFF/JPEG directories: {document_dir}"
+            )
 
     valid_document_dirs = _directories_with_images(source_path)
 
@@ -125,3 +130,66 @@ def prepare_workspace(run_path: Path, document_name: str) -> Path:
     workspace_path.mkdir(parents=True)
 
     return workspace_path
+
+
+def _source_images(source_path: Path) -> list[Path]:
+    """Return TIFF/JPEG source images in page order."""
+
+    return sorted(
+        path
+        for path in source_path.iterdir()
+        if (
+            path.is_file()
+            and not path.name.startswith(".")
+            and path.suffix.lower() in IMAGE_EXTENSIONS
+        )
+    )
+
+
+def _prepare_image(source_path: Path, output_path: Path) -> None:
+    """Normalize a source image to TIFF for OCR."""
+
+    image = pyvips.Image.new_from_file(
+        str(source_path),
+        access="sequential",
+    )
+
+    resolution = image.xres * MM_PER_INCH
+    target_xres = image.xres
+    target_yres = image.yres
+
+    if resolution > MAX_RESOLUTION:
+        scale = MAX_RESOLUTION / resolution
+        image = image.resize(scale)
+        target_xres = MAX_RESOLUTION / MM_PER_INCH
+        target_yres = MAX_RESOLUTION / MM_PER_INCH
+
+    image.tiffsave(
+        str(output_path),
+        compression="lzw",
+        xres=target_xres,
+        yres=target_yres,
+    )
+
+
+def prepare_images(source_path: Path, workspace_path: Path) -> Path:
+    """Prepare source images for OCR and return the Tesseract file list path."""
+
+    source_images = _source_images(source_path)
+    prepared_images = []
+
+    for sequence, source_image in enumerate(source_images, start=1):
+        output_path = workspace_path / f"{sequence:08}.tif"
+
+        _prepare_image(source_image, output_path)
+
+        prepared_images.append(output_path)
+
+    file_list_path = workspace_path / "filelist.txt"
+
+    file_list_path.write_text(
+        "".join(f"{path}\n" for path in prepared_images),
+        encoding="utf-8",
+    )
+
+    return file_list_path
