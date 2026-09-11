@@ -1279,9 +1279,9 @@ methodtools==0.4.7 \
     #   apache-airflow-core
     #   apache-airflow-providers-common-sql
     #   apache-airflow-task-sdk
-mokelumne-providers-alma==0.1.0 \
-    --hash=sha256:7a3df45e10d6d8a47ecce3e715cc3c76c249d6aa743bb33b922087fd63dc1a59 \
-    --hash=sha256:b5b595765b6b2194cf89d4a4c7d59e7b30cac4b875e0ae186a47c54d7d749c23
+mokelumne-providers-alma==0.2.0 \
+    --hash=sha256:dc202a592ea6abaa71f69935306028f2f89ac01bd150923be42d6cb8634b6d48 \
+    --hash=sha256:eb73dee75465dcab07f75f171227f777d26c26f02bb7b03ac68eafe640cfdebe
     # via mokelumne (pyproject.toml)
 mokelumne-providers-ldc==1.1.1 \
     --hash=sha256:578d8f15b69ed7e896590bbf6ef12414ac96beef913c2044c06f0f8534bab129 \
