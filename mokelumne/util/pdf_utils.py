@@ -6,7 +6,7 @@ from pathlib import Path
 import pyvips  # type: ignore[import-untyped]
 
 IMAGE_EXTENSIONS = {".tif", ".tiff", ".jpg", ".jpeg"}
-MAX_RESOLUTION = 200
+MAX_DOCUMENT_IMAGES = 99_999_999
 MM_PER_INCH = 25.4
 
 DocumentWorkItem = dict[str, str]
@@ -146,7 +146,7 @@ def _source_images(source_path: Path) -> list[Path]:
     )
 
 
-def _prepare_image(source_path: Path, output_path: Path) -> None:
+def _prepare_image(source_path: Path, output_path: Path, max_resolution: int) -> None:
     """Normalize a source image to TIFF for OCR."""
 
     image = pyvips.Image.new_from_file(
@@ -158,11 +158,11 @@ def _prepare_image(source_path: Path, output_path: Path) -> None:
     target_xres = image.xres
     target_yres = image.yres
 
-    if resolution > MAX_RESOLUTION:
-        scale = MAX_RESOLUTION / resolution
+    if resolution > max_resolution:
+        scale = max_resolution / resolution
         image = image.resize(scale)
-        target_xres = MAX_RESOLUTION / MM_PER_INCH
-        target_yres = MAX_RESOLUTION / MM_PER_INCH
+        target_xres = max_resolution / MM_PER_INCH
+        target_yres = max_resolution / MM_PER_INCH
 
     image.tiffsave(
         str(output_path),
@@ -172,16 +172,23 @@ def _prepare_image(source_path: Path, output_path: Path) -> None:
     )
 
 
-def prepare_images(source_path: Path, workspace_path: Path) -> Path:
+def prepare_images(source_path: Path, workspace_path: Path, max_resolution: int) -> Path:
     """Prepare source images for OCR and return the Tesseract file list path."""
 
     source_images = _source_images(source_path)
+
+    if len(source_images) > MAX_DOCUMENT_IMAGES:
+        raise ValueError(
+            f"Document contains {len(source_images):,} images "
+            f"(maximum allowed: {MAX_DOCUMENT_IMAGES:,})"
+        )
+
     prepared_images = []
 
     for sequence, source_image in enumerate(source_images, start=1):
         output_path = workspace_path / f"{sequence:08}.tif"
 
-        _prepare_image(source_image, output_path)
+        _prepare_image(source_image, output_path, max_resolution)
 
         prepared_images.append(output_path)
 

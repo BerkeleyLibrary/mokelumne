@@ -9,6 +9,7 @@ from mokelumne.util import pdf_utils
 
 MM_PER_INCH = 25.4
 
+
 class TestPDFUtils:
     """Test for PDF utils module"""
 
@@ -256,7 +257,7 @@ class TestPDFUtils:
             yres=150 / 25.4,
         )
 
-        pdf_utils._prepare_image(source_path, output_path)
+        pdf_utils._prepare_image(source_path, output_path, 200)
 
         output = pyvips.Image.new_from_file(str(output_path))
 
@@ -273,7 +274,7 @@ class TestPDFUtils:
         image = pyvips.Image.black(1000, 1500)
         image.jpegsave(str(source_path))
 
-        pdf_utils._prepare_image(source_path, output_path)
+        pdf_utils._prepare_image(source_path, output_path, 200)
 
         output = pyvips.Image.new_from_file(str(output_path))
 
@@ -300,6 +301,7 @@ class TestPDFUtils:
         file_list_path = pdf_utils.prepare_images(
             source_path,
             workspace_path,
+            200,
         )
 
         assert file_list_path == workspace_path / "filelist.txt"
@@ -326,10 +328,60 @@ class TestPDFUtils:
             yres=400 / 25.4,
         )
 
-        pdf_utils._prepare_image(source_path, output_path)
+        pdf_utils._prepare_image(source_path, output_path, 200)
 
         output = pyvips.Image.new_from_file(str(output_path))
 
         assert output.width == 2000
         assert output.height == 3000
         assert output.xres * MM_PER_INCH == pytest.approx(200)
+
+    def test_prepare_images_rejects_too_many_images(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        """Reject documents with more images than the allowed maximum."""
+
+        source_path = tmp_path / "source"
+        workspace_path = tmp_path / "workspace"
+
+        source_path.mkdir()
+        workspace_path.mkdir()
+
+        pyvips.Image.black(100, 100).jpegsave(
+            str(source_path / "001.jpg")
+        )
+        pyvips.Image.black(100, 100).jpegsave(
+            str(source_path / "002.jpg")
+        )
+
+        monkeypatch.setattr(pdf_utils, "MAX_DOCUMENT_IMAGES", 1)
+
+        with pytest.raises(
+            ValueError,
+            match=r"Document contains 2 images \(maximum allowed: 1\)",
+        ):
+            pdf_utils.prepare_images(source_path, workspace_path, 200)
+
+    def test_prepare_image_uses_configured_max_resolution(self, tmp_path: Path):
+        """Downsample images to the configured maximum resolution."""
+
+        source_path = tmp_path / "source.tif"
+        output_path = tmp_path / "output.tif"
+
+        image = pyvips.Image.black(4000, 6000)
+        image.tiffsave(
+            str(source_path),
+            compression="lzw",
+            xres=400 / MM_PER_INCH,
+            yres=400 / MM_PER_INCH,
+        )
+
+        pdf_utils._prepare_image(source_path, output_path, 300)
+
+        output = pyvips.Image.new_from_file(str(output_path))
+
+        assert output.width == 3000
+        assert output.height == 4500
+        assert output.xres * MM_PER_INCH == pytest.approx(300)

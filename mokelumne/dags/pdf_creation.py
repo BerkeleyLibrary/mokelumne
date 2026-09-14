@@ -6,8 +6,7 @@ from pathlib import Path
 from airflow.sdk import Param, dag, get_current_context, task
 from airflow.sdk.exceptions import AirflowSkipException
 
-from mokelumne.util import pdf_utils
-from mokelumne.util import storage
+from mokelumne.util import pdf_utils, storage
 
 
 logger = logging.getLogger(__name__)
@@ -35,6 +34,17 @@ logger = logging.getLogger(__name__)
             description=(
                 "Optional Tesseract language code to use instead of "
                 "automatic language selection."
+            ),
+        ),
+        "max_resolution": Param(
+            default=200,
+            type="integer",
+            minimum=150,
+            maximum=600,
+            title="Maximum Resolution",
+            description=(
+                "Maximum image resolution in DPI. Images above this "
+                "resolution will be downsampled."
             ),
         ),
     },
@@ -69,6 +79,7 @@ def pdf_creation():
         context = get_current_context()
         destination_path = Path(context["params"]["destination"])
         run_id = context["run_id"]
+        max_resolution = context["params"]["max_resolution"]
 
         # 1 - Check if output PDF already exists (skip if it does)
         if pdf_utils.output_exists(destination_path, document["output"]):
@@ -92,6 +103,7 @@ def pdf_creation():
         file_list_path = pdf_utils.prepare_images(
             Path(document["source"]),
             workspace_path,
+            max_resolution,
         )
 
         logger.info("Prepared Tesseract file list: %s", file_list_path)
