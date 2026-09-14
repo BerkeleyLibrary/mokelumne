@@ -69,6 +69,7 @@ include = ['mokelumne*']
 [tool.setuptools.package-data]
 "mokelumne.plugins.static_files" = ["templates/*.html"]
 "mokelumne.batch_image.templates" = ["*.html"]
+"mokelumne.util" = ["marc_tesseract_map.json"]
 
 [tool.pydoclint]
 allow-init-docstring = true
