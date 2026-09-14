@@ -6,7 +6,11 @@ import pytest
 from airflow.sdk.exceptions import AirflowException
 from pymarc.marcxml import parse_xml_to_array
 
-from mokelumne.util.marc import _extract_language_codes, derive_tesseract_codes_from_marc, _language_codes_from_record
+from mokelumne.util.marc import (
+    _extract_language_codes,
+    derive_tesseract_codes_from_marc,
+    _language_codes_from_record,
+)
 
 
 def _record_xml(*fields: str) -> str:
@@ -14,7 +18,7 @@ def _record_xml(*fields: str) -> str:
     return "\n".join(
         [
             '<record xmlns="http://www.loc.gov/MARC21/slim">',
-            '<leader>00000nam a2200000 i 4500</leader>',
+            "<leader>00000nam a2200000 i 4500</leader>",
             *fields,
             "</record>",
         ]
@@ -78,14 +82,14 @@ def test_extract_language_codes_rejects_malformed_xml():
 
 def test_extract_language_codes_returns_empty_list_when_no_language_data():
     """Return an empty list when the record has no 008, 041, 546, or 500 data."""
-    assert _extract_language_codes(_record_xml()) == []
+    assert not _extract_language_codes(_record_xml())
 
 
 def test_extract_language_codes_ignores_008_shorter_than_38_chars():
     """Ignore an 008 field too short to contain the language code position."""
     controlfield = '<controlfield tag="008">230101s2023</controlfield>'
 
-    assert _extract_language_codes(_record_xml(controlfield)) == []
+    assert not _extract_language_codes(_record_xml(controlfield))
 
 
 def test_extract_language_codes_ignores_non_alpha_008_language_code():
@@ -96,7 +100,7 @@ def test_extract_language_codes_ignores_non_alpha_008_language_code():
         "</controlfield>"
     )
 
-    assert _extract_language_codes(_record_xml(controlfield)) == []
+    assert not _extract_language_codes(_record_xml(controlfield))
 
 
 def test_extract_language_codes_falls_back_to_546_when_008_is_mul():
@@ -150,7 +154,7 @@ def test_extract_language_codes_500_when_546_present_but_empty():
     </datafield>
     """
 
-    assert _extract_language_codes(_record_xml(datafield_546, datafield_500)) == ['fre']
+    assert _extract_language_codes(_record_xml(datafield_546, datafield_500)) == ["fre"]
 
 
 def test_extract_language_codes_no_match_returns_empty_when_546_and_500_unhelpful():
@@ -161,7 +165,7 @@ def test_extract_language_codes_no_match_returns_empty_when_546_and_500_unhelpfu
     </datafield>
     """
 
-    assert _extract_language_codes(_record_xml(datafield)) == []
+    assert not _extract_language_codes(_record_xml(datafield))
 
 
 def test_language_codes_from_record_deduplicates_across_008_and_041():
@@ -195,7 +199,11 @@ def test_derive_tesseract_codes_from_marc_maps_and_joins_unique_codes():
     </datafield>
     """
 
-    assert derive_tesseract_codes_from_marc(_record_xml(controlfield, datafield)) == "ara+fra"
+    assert (
+        derive_tesseract_codes_from_marc(_record_xml(controlfield, datafield))
+        == "ara+fra"
+    )
+
 
 def test_derive_tesseract_codes_from_marc_for_chinese_lang():
     """Correctly returns tesseract script codes for Chinese language records."""
@@ -214,6 +222,7 @@ def test_derive_tesseract_codes_from_marc_for_chinese_lang():
         derive_tesseract_codes_from_marc(_record_xml(controlfield, datafield))
         == "script/HanT+script/HanS"
     )
+
 
 def test_derive_tesseract_codes_from_marc_returns_empty_string_when_no_codes():
     """Return an empty string when no language codes can be derived."""

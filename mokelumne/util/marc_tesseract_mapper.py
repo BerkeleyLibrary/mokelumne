@@ -20,7 +20,8 @@ def load_marc_tesseract_map() -> Dict[str, Dict[str, str]]:
     :rtype: Dict[str, Dict[str, str]]
     """
     with _MAP_PATH.open(encoding="utf-8") as f:
-        return json.load(f)
+        data: Dict[str, Dict[str, str]] = json.load(f)
+    return data
 
 
 def get_tesseract_code(marc_code: str) -> str | None:

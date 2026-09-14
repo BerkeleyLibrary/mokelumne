@@ -1,3 +1,5 @@
+"""Utilities for working with MARC records."""
+
 import re
 from io import StringIO
 from xml.sax import SAXException
@@ -6,7 +8,12 @@ from airflow.sdk.exceptions import AirflowException
 from pymarc import Record
 from pymarc.marcxml import parse_xml_to_array
 
-from mokelumne.util.marc_tesseract_mapper import marc_lang_regex, lang_to_marc_map, get_tesseract_code, tesseract_code_list_to_string
+from mokelumne.util.marc_tesseract_mapper import (
+    marc_lang_regex,
+    lang_to_marc_map,
+    get_tesseract_code,
+    tesseract_code_list_to_string,
+)
 
 _MMSID_RE = re.compile(r"^\d{18}$")
 _LANG_CODE_RE = re.compile(r"[a-z]{3}")
@@ -37,6 +44,35 @@ def _extract_language_codes(record_xml: str) -> list[str]:
     return _language_codes_from_record(records[0])
 
 
+def _language_codes_from_notes(
+    record: Record, lang_regex: str, lang_map: dict[str, str]
+) -> list[str]:
+    """Extract language codes from 546 and 500 note fields in the MARC record."""
+    codes = []
+    fields_546 = record.get_fields("546")
+    first_546a = fields_546[0].get("a") if fields_546 else None
+    if first_546a:
+        for match in re.finditer(lang_regex, first_546a, flags=re.IGNORECASE):
+            lang = match.group().lower()
+            if marc_code := lang_map.get(lang):
+                codes.append(marc_code)
+    else:
+        # if no 546a, check if 500a starts with a language or phrases like
+        # "In [language]", "Captions in [language]", or "Text in [language]"
+        context_regex = rf"(?:In|Captions in|Text in)\s+({lang_regex})|^({lang_regex})"
+        fields_500 = record.get_fields("500")
+        for field_500 in fields_500:
+            subfield_a = field_500.get("a")
+            if subfield_a:
+                for match in re.finditer(
+                    context_regex, subfield_a, flags=re.IGNORECASE
+                ):
+                    lang = (match.group(1) or match.group(2)).lower()
+                    if marc_code := lang_map.get(lang):
+                        codes.append(marc_code)
+    return codes
+
+
 def _language_codes_from_record(record: Record) -> list[str]:
     """Return unique MARC language codes from *record*.
 
@@ -64,31 +100,13 @@ def _language_codes_from_record(record: Record) -> list[str]:
     if not codes or "mul" in codes:
         lang_regex = marc_lang_regex()
         lang_map = lang_to_marc_map()
-        fields_546 = record.get_fields("546")
-        first_546a = fields_546[0].get("a") if fields_546 else None
-        if first_546a:
-            for match in re.finditer(lang_regex, first_546a, flags=re.IGNORECASE):
-                lang = match.group().lower()
-                if lang in lang_map:
-                    marc_code = lang_map[lang]
-                    if marc_code not in codes:
-                        codes.append(marc_code)
-        else:
-            # if no 546a, check if 500a starts with a language or phrases like 
-            # "In [language]", "Captions in [language]", or "Text in [language]"
-            context_regex = rf"(?:In|Captions in|Text in)\s+({lang_regex})|^({lang_regex})"
-            fields_500 = record.get_fields("500")
-            for field_500 in fields_500:
-                subfield_a = field_500.get("a")
-                if subfield_a:
-                    for match in re.finditer(context_regex, subfield_a, flags=re.IGNORECASE):
-                        lang = (match.group(1) or match.group(2)).lower()
-                        if lang in lang_map:
-                            marc_code = lang_map[lang]
-                            if marc_code not in codes:
-                                codes.append(marc_code)
-
+        codes = list(
+            dict.fromkeys(
+                codes + _language_codes_from_notes(record, lang_regex, lang_map)
+            )
+        )
     return codes
+
 
 def derive_tesseract_codes_from_marc(record_xml: str) -> str:
     """Derive Tesseract language codes from MARCXML record.
@@ -99,6 +117,6 @@ def derive_tesseract_codes_from_marc(record_xml: str) -> str:
     """
     marc_codes = _extract_language_codes(record_xml)
     tesseract_codes = [
-        get_tesseract_code(marc_code) for marc_code in marc_codes if get_tesseract_code(marc_code)
+        code for marc_code in marc_codes if (code := get_tesseract_code(marc_code))
     ]
     return tesseract_code_list_to_string(tesseract_codes)
