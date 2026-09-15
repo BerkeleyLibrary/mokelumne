@@ -31,7 +31,21 @@ logger = logging.getLogger(__name__)
             default="",
             type=["null", "string"],
             title="OCR Language",
-            description="Optional Tesseract language code to use instead of automatic language selection.",
+            description=(
+                "Optional Tesseract language code to use instead of "
+                "automatic language selection."
+            ),
+        ),
+        "max_resolution": Param(
+            default=200,
+            type="integer",
+            minimum=150,
+            maximum=600,
+            title="Maximum Resolution",
+            description=(
+                "Maximum image resolution in DPI. Images above this "
+                "resolution will be downsampled."
+            ),
         ),
     },
 )
@@ -65,6 +79,7 @@ def pdf_creation():
         context = get_current_context()
         destination_path = Path(context["params"]["destination"])
         run_id = context["run_id"]
+        max_resolution = context["params"]["max_resolution"]
 
         # 1 - Check if output PDF already exists (skip if it does)
         if pdf_utils.output_exists(destination_path, document["output"]):
@@ -83,7 +98,15 @@ def pdf_creation():
         logger.info("Prepared document workspace: %s", workspace_path)
 
         # 3 - Determine language (coming soon to a theater near you!)
+
         # 4 - Prepare images (size/convert as necessary)
+        file_list_path = pdf_utils.prepare_images(
+            Path(document["source"]),
+            workspace_path,
+            max_resolution,
+        )
+
+        logger.info("Prepared Tesseract file list: %s", file_list_path)
 
     validation = validate_inputs()
     documents = discover_documents()

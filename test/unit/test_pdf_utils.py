@@ -3,8 +3,11 @@
 from pathlib import Path
 
 import pytest
+import pyvips
 
 from mokelumne.util import pdf_utils
+
+MM_PER_INCH = 25.4
 
 
 class TestPDFUtils:
@@ -215,3 +218,170 @@ class TestPDFUtils:
 
         assert workspace_path.is_dir()
         assert not stale_file.exists()
+
+    def test_source_images_returns_supported_images_in_lexical_order(self, tmp_path: Path):
+        """Return TIFF/JPEG images sorted lexically by filename."""
+
+        filenames = [
+            "002.tif",
+            ".hidden.tif",
+            "001.jpg",
+            "010.jpeg",
+            "003.TIFF",
+            "notes.txt",
+        ]
+
+        for filename in filenames:
+            (tmp_path / filename).touch()
+
+        images = pdf_utils._source_images(tmp_path)
+
+        assert [image.name for image in images] == [
+            "001.jpg",
+            "002.tif",
+            "003.TIFF",
+            "010.jpeg",
+        ]
+
+    def test_prepare_image_does_not_resize_low_resolution_image(self, tmp_path: Path):
+        """Do not resize images at or below the maximum resolution."""
+
+        source_path = tmp_path / "source.tif"
+        output_path = tmp_path / "output.tif"
+
+        image = pyvips.Image.black(2000, 3000)
+        image.tiffsave(
+            str(source_path),
+            compression="lzw",
+            xres=150 / 25.4,
+            yres=150 / 25.4,
+        )
+
+        pdf_utils._prepare_image(source_path, output_path, 200)
+
+        output = pyvips.Image.new_from_file(str(output_path))
+
+        assert output.width == 2000
+        assert output.height == 3000
+        assert output.xres * MM_PER_INCH == pytest.approx(150)
+
+    def test_prepare_image_converts_jpeg_to_tiff(self, tmp_path: Path):
+        """Convert JPEG source images to TIFF."""
+
+        source_path = tmp_path / "source.jpg"
+        output_path = tmp_path / "output.tif"
+
+        image = pyvips.Image.black(1000, 1500)
+        image.jpegsave(str(source_path))
+
+        pdf_utils._prepare_image(source_path, output_path, 200)
+
+        output = pyvips.Image.new_from_file(str(output_path))
+
+        assert output.width == 1000
+        assert output.height == 1500
+        assert output.get("vips-loader") == "tiffload"
+
+    def test_prepare_images_creates_ordered_tiffs_and_file_list(self, tmp_path: Path):
+        """Prepare images in page order and create the Tesseract file list."""
+
+        source_path = tmp_path / "source"
+        workspace_path = tmp_path / "workspace"
+
+        source_path.mkdir()
+        workspace_path.mkdir()
+
+        pyvips.Image.black(100, 100).jpegsave(
+            str(source_path / "002.jpg")
+        )
+        pyvips.Image.black(100, 100).jpegsave(
+            str(source_path / "001.jpg")
+        )
+
+        file_list_path = pdf_utils.prepare_images(
+            source_path,
+            workspace_path,
+            200,
+        )
+
+        assert file_list_path == workspace_path / "filelist.txt"
+
+        assert (workspace_path / "00000001.tif").is_file()
+        assert (workspace_path / "00000002.tif").is_file()
+
+        assert file_list_path.read_text(encoding="utf-8").splitlines() == [
+            str(workspace_path / "00000001.tif"),
+            str(workspace_path / "00000002.tif"),
+        ]
+
+    def test_prepare_image_resizes_high_resolution_image(self, tmp_path: Path):
+        """Downsample images whose resolution exceeds the maximum."""
+
+        source_path = tmp_path / "source.tif"
+        output_path = tmp_path / "output.tif"
+
+        image = pyvips.Image.black(4000, 6000)
+        image.tiffsave(
+            str(source_path),
+            compression="lzw",
+            xres=400 / 25.4,
+            yres=400 / 25.4,
+        )
+
+        pdf_utils._prepare_image(source_path, output_path, 200)
+
+        output = pyvips.Image.new_from_file(str(output_path))
+
+        assert output.width == 2000
+        assert output.height == 3000
+        assert output.xres * MM_PER_INCH == pytest.approx(200)
+
+    def test_prepare_images_rejects_too_many_images(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        """Reject documents with more images than the allowed maximum."""
+
+        source_path = tmp_path / "source"
+        workspace_path = tmp_path / "workspace"
+
+        source_path.mkdir()
+        workspace_path.mkdir()
+
+        pyvips.Image.black(100, 100).jpegsave(
+            str(source_path / "001.jpg")
+        )
+        pyvips.Image.black(100, 100).jpegsave(
+            str(source_path / "002.jpg")
+        )
+
+        monkeypatch.setattr(pdf_utils, "MAX_DOCUMENT_IMAGES", 1)
+
+        with pytest.raises(
+            ValueError,
+            match=r"Document contains 2 images \(maximum allowed: 1\)",
+        ):
+            pdf_utils.prepare_images(source_path, workspace_path, 200)
+
+    def test_prepare_image_uses_configured_max_resolution(self, tmp_path: Path):
+        """Downsample images to the configured maximum resolution."""
+
+        source_path = tmp_path / "source.tif"
+        output_path = tmp_path / "output.tif"
+
+        image = pyvips.Image.black(4000, 6000)
+        image.tiffsave(
+            str(source_path),
+            compression="lzw",
+            xres=400 / MM_PER_INCH,
+            yres=400 / MM_PER_INCH,
+        )
+
+        pdf_utils._prepare_image(source_path, output_path, 300)
+
+        output = pyvips.Image.new_from_file(str(output_path))
+
+        assert output.width == 3000
+        assert output.height == 4500
+        assert output.xres * MM_PER_INCH == pytest.approx(300)
