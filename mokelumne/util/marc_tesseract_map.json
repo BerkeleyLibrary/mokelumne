@@ -1,0 +1,554 @@
+{
+  "afr": {
+    "tesseract_code": "afr",
+    "lang_regex": "afrikaans"
+  },
+  "alb": {
+    "tesseract_code": "sqi",
+    "lang_regex": "albanian"
+  },
+  "amh": {
+    "tesseract_code": "amh",
+    "lang_regex": "amharic"
+  },
+  "ara": {
+    "tesseract_code": "ara",
+    "lang_regex": "arabic"
+  },
+  "jrb": {
+    "tesseract_code": "ara",
+    "lang_regex": "arabic"
+  },
+  "arm": {
+    "tesseract_code": "script/Armenian",
+    "lang_regex": "armenian"
+  },
+  "asm": {
+    "tesseract_code": "asm",
+    "lang_regex": "assamese"
+  },
+  "aze": {
+    "tesseract_code": "aze, aze_cyrl",
+    "lang_regex": "azerbaijani"
+  },
+  "baq": {
+    "tesseract_code": "eus",
+    "lang_regex": "basque"
+  },
+  "bel": {
+    "tesseract_code": "bel",
+    "lang_regex": "belarusian"
+  },
+  "ben": {
+    "tesseract_code": "ben",
+    "lang_regex": "bengali"
+  },
+  "bos": {
+    "tesseract_code": "bos",
+    "lang_regex": "bosnian"
+  },
+  "bre": {
+    "tesseract_code": "bre",
+    "lang_regex": "breton"
+  },
+  "bul": {
+    "tesseract_code": "bul",
+    "lang_regex": "bulgarian"
+  },
+  "bur": {
+    "tesseract_code": "mya",
+    "lang_regex": "burmese"
+  },
+  "cat": {
+    "tesseract_code": "cat",
+    "lang_regex": "catalan"
+  },
+  "ceb": {
+    "tesseract_code": "ceb",
+    "lang_regex": "cebuano"
+  },
+  "chr": {
+    "tesseract_code": "chr",
+    "lang_regex": "cherokee"
+  },
+  "chi": {
+    "tesseract_code": "script/HanT, script/HanS",
+    "lang_regex": "chinese"
+  },
+  "cos": {
+    "tesseract_code": "cos",
+    "lang_regex": "corsican"
+  },
+  "hrv": {
+    "tesseract_code": "hrv",
+    "lang_regex": "croatian"
+  },
+  "scr": {
+    "tesseract_code": "hrv",
+    "lang_regex": "croatian"
+  },
+  "cze": {
+    "tesseract_code": "ces",
+    "lang_regex": "czech"
+  },
+  "dan": {
+    "tesseract_code": "dan",
+    "lang_regex": "danish"
+  },
+  "div": {
+    "tesseract_code": "div",
+    "lang_regex": "divehi"
+  },
+  "dum": {
+    "tesseract_code": "nld",
+    "lang_regex": "dutch"
+  },
+  "dut": {
+    "tesseract_code": "nld",
+    "lang_regex": "dutch"
+  },
+  "dzo": {
+    "tesseract_code": "dzo",
+    "lang_regex": "dzongkha"
+  },
+  "ang": {
+    "tesseract_code": "enm",
+    "lang_regex": "old english"
+  },
+  "cpe": {
+    "tesseract_code": "eng",
+    "lang_regex": "creole"
+  },
+  "eng": {
+    "tesseract_code": "eng",
+    "lang_regex": "english"
+  },
+  "enm": {
+    "tesseract_code": "enm",
+    "lang_regex": "middle english"
+  },
+  "epo": {
+    "tesseract_code": "epo",
+    "lang_regex": "esperanto"
+  },
+  "esp": {
+    "tesseract_code": "epo",
+    "lang_regex": "esperanto"
+  },
+  "est": {
+    "tesseract_code": "est",
+    "lang_regex": "estonian"
+  },
+  "fao": {
+    "tesseract_code": "fao",
+    "lang_regex": "faroese"
+  },
+  "fil": {
+    "tesseract_code": "fil",
+    "lang_regex": "filipino"
+  },
+  "fin": {
+    "tesseract_code": "fin",
+    "lang_regex": "finnish"
+  },
+  "fre": {
+    "tesseract_code": "fra",
+    "lang_regex": "french"
+  },
+  "frm": {
+    "tesseract_code": "frm",
+    "lang_regex": "middle french"
+  },
+  "fro": {
+    "tesseract_code": "frm",
+    "lang_regex": "old french"
+  },
+  "fry": {
+    "tesseract_code": "fry",
+    "lang_regex": "frisian"
+  },
+  "gag": {
+    "tesseract_code": "glg",
+    "lang_regex": "galician"
+  },
+  "gla": {
+    "tesseract_code": "gla",
+    "lang_regex": "gaelic"
+  },
+  "gle": {
+    "tesseract_code": "gle",
+    "lang_regex": "irish"
+  },
+  "glg": {
+    "tesseract_code": "glg",
+    "lang_regex": "galician"
+  },
+  "geo": {
+    "tesseract_code": "kat",
+    "lang_regex": "georgian"
+  },
+  "ger": {
+    "tesseract_code": "deu",
+    "lang_regex": "german"
+  },
+  "gmh": {
+    "tesseract_code": "deu_frak, deu",
+    "lang_regex": "middle high german"
+  },
+  "goh": {
+    "tesseract_code": "deu_frak, deu",
+    "lang_regex": "old high german"
+  },
+  "gsw": {
+    "tesseract_code": "deu",
+    "lang_regex": "german"
+  },
+  "nds": {
+    "tesseract_code": "deu_frak, deu",
+    "lang_regex": "low german"
+  },
+  "grc": {
+    "tesseract_code": "grc",
+    "lang_regex": "greek"
+  },
+  "gre": {
+    "tesseract_code": "ell",
+    "lang_regex": "greek"
+  },
+  "guj": {
+    "tesseract_code": "guj",
+    "lang_regex": "gujarati"
+  },
+  "hat": {
+    "tesseract_code": "hat",
+    "lang_regex": "haitian"
+  },
+  "heb": {
+    "tesseract_code": "heb",
+    "lang_regex": "hebrew"
+  },
+  "hin": {
+    "tesseract_code": "hin",
+    "lang_regex": "hindi"
+  },
+  "hun": {
+    "tesseract_code": "hun",
+    "lang_regex": "hungarian"
+  },
+  "ice": {
+    "tesseract_code": "isl",
+    "lang_regex": "icelandic"
+  },
+  "ind": {
+    "tesseract_code": "ind",
+    "lang_regex": "indonesian"
+  },
+  "iku": {
+    "tesseract_code": "iku",
+    "lang_regex": "inuktitut"
+  },
+  "ita": {
+    "tesseract_code": "ita",
+    "lang_regex": "italian"
+  },
+  "nap": {
+    "tesseract_code": "ita",
+    "lang_regex": "italian"
+  },
+  "scn": {
+    "tesseract_code": "ita",
+    "lang_regex": "italian"
+  },
+  "jpn": {
+    "tesseract_code": "script/Japanese, script/Japanese_vert",
+    "lang_regex": "japanese"
+  },
+  "jav": {
+    "tesseract_code": "jav",
+    "lang_regex": "javanese"
+  },
+  "kan": {
+    "tesseract_code": "kan",
+    "lang_regex": "kannada"
+  },
+  "kaz": {
+    "tesseract_code": "kaz",
+    "lang_regex": "kazakh"
+  },
+  "khm": {
+    "tesseract_code": "khm",
+    "lang_regex": "khmer"
+  },
+  "kir": {
+    "tesseract_code": "kir",
+    "lang_regex": "kirghiz"
+  },
+  "kor": {
+    "tesseract_code": "kor",
+    "lang_regex": "korean"
+  },
+  "kur": {
+    "tesseract_code": "kmr",
+    "lang_regex": "kurdish"
+  },
+  "lao": {
+    "tesseract_code": "lao",
+    "lang_regex": "lao"
+  },
+  "lat": {
+    "tesseract_code": "lat",
+    "lang_regex": "latin"
+  },
+  "lav": {
+    "tesseract_code": "lav",
+    "lang_regex": "latvian"
+  },
+  "lit": {
+    "tesseract_code": "lit",
+    "lang_regex": "lithuanian"
+  },
+  "ltz": {
+    "tesseract_code": "ltz",
+    "lang_regex": "luxembourgish"
+  },
+  "mac": {
+    "tesseract_code": "mkd",
+    "lang_regex": "macedonian"
+  },
+  "mao": {
+    "tesseract_code": "mri",
+    "lang_regex": "maori"
+  },
+  "may": {
+    "tesseract_code": "msa",
+    "lang_regex": "malay"
+  },
+  "mal": {
+    "tesseract_code": "mal",
+    "lang_regex": "malayalam"
+  },
+  "mar": {
+    "tesseract_code": "mar",
+    "lang_regex": "marathi"
+  },
+  "mlt": {
+    "tesseract_code": "mlt",
+    "lang_regex": "maltese"
+  },
+  "mon": {
+    "tesseract_code": "mon",
+    "lang_regex": "mongolian"
+  },
+  "nep": {
+    "tesseract_code": "nep",
+    "lang_regex": "nepali"
+  },
+  "nno": {
+    "tesseract_code": "nor",
+    "lang_regex": "norwegian"
+  },
+  "nob": {
+    "tesseract_code": "nor",
+    "lang_regex": "norwegian"
+  },
+  "nor": {
+    "tesseract_code": "nor",
+    "lang_regex": "norwegian"
+  },
+  "oci": {
+    "tesseract_code": "oci",
+    "lang_regex": "occitan"
+  },
+  "ori": {
+    "tesseract_code": "ori",
+    "lang_regex": "oriya"
+  },
+  "pan": {
+    "tesseract_code": "pan",
+    "lang_regex": "panjabi"
+  },
+  "jpr": {
+    "tesseract_code": "fas",
+    "lang_regex": "persian"
+  },
+  "peo": {
+    "tesseract_code": "fas",
+    "lang_regex": "persian"
+  },
+  "per": {
+    "tesseract_code": "fas",
+    "lang_regex": "persian|farsi"
+  },
+  "pol": {
+    "tesseract_code": "pol",
+    "lang_regex": "polish"
+  },
+  "cpp": {
+    "tesseract_code": "por",
+    "lang_regex": "portuguese"
+  },
+  "por": {
+    "tesseract_code": "por",
+    "lang_regex": "portuguese"
+  },
+  "pus": {
+    "tesseract_code": "pus",
+    "lang_regex": "pushto"
+  },
+  "que": {
+    "tesseract_code": "que",
+    "lang_regex": "quechua"
+  },
+  "roa": {
+    "tesseract_code": "por+fra+spa",
+    "lang_regex": "romance"
+  },
+  "rum": {
+    "tesseract_code": "ron",
+    "lang_regex": "romanian"
+  },
+  "rus": {
+    "tesseract_code": "rus",
+    "lang_regex": "russian"
+  },
+  "san": {
+    "tesseract_code": "san",
+    "lang_regex": "sanskrit"
+  },
+  "sin": {
+    "tesseract_code": "sin",
+    "lang_regex": "sinhalese"
+  },
+  "scc": {
+    "tesseract_code": "srp, srp_latn",
+    "lang_regex": "serbian"
+  },
+  "srp": {
+    "tesseract_code": "srp, srp_latn",
+    "lang_regex": "serbian"
+  },
+  "slo": {
+    "tesseract_code": "slk",
+    "lang_regex": "slovak"
+  },
+  "slv": {
+    "tesseract_code": "slv",
+    "lang_regex": "slovenian"
+  },
+  "snd": {
+    "tesseract_code": "snd",
+    "lang_regex": "sindhi"
+  },
+  "spa": {
+    "tesseract_code": "spa",
+    "lang_regex": "spanish"
+  },
+  "sun": {
+    "tesseract_code": "sun",
+    "lang_regex": "sundanese"
+  },
+  "swa": {
+    "tesseract_code": "swa",
+    "lang_regex": "swahili"
+  },
+  "swe": {
+    "tesseract_code": "swe",
+    "lang_regex": "swedish"
+  },
+  "syc": {
+    "tesseract_code": "syr",
+    "lang_regex": "syriac"
+  },
+  "syr": {
+    "tesseract_code": "syr",
+    "lang_regex": "syriac"
+  },
+  "tag": {
+    "tesseract_code": "tgl",
+    "lang_regex": "tagalog"
+  },
+  "tgl": {
+    "tesseract_code": "tgl",
+    "lang_regex": "tagalog"
+  },
+  "taj": {
+    "tesseract_code": "tgk",
+    "lang_regex": "tajik"
+  },
+  "tgk": {
+    "tesseract_code": "tgk",
+    "lang_regex": "tajik"
+  },
+  "tam": {
+    "tesseract_code": "tam",
+    "lang_regex": "tamil"
+  },
+  "tat": {
+    "tesseract_code": "tat",
+    "lang_regex": "tatar"
+  },
+  "tel": {
+    "tesseract_code": "tel",
+    "lang_regex": "telugu"
+  },
+  "tha": {
+    "tesseract_code": "tha",
+    "lang_regex": "thai"
+  },
+  "ton": {
+    "tesseract_code": "ton",
+    "lang_regex": "tongan"
+  },
+  "sit": {
+    "tesseract_code": "bod",
+    "lang_regex": "tibetan"
+  },
+  "tib": {
+    "tesseract_code": "bod",
+    "lang_regex": "tibetan"
+  },
+  "tir": {
+    "tesseract_code": "tir",
+    "lang_regex": "tigrinya"
+  },
+  "ota": {
+    "tesseract_code": "tur",
+    "lang_regex": "turkish"
+  },
+  "tur": {
+    "tesseract_code": "tur",
+    "lang_regex": "turkish"
+  },
+  "uig": {
+    "tesseract_code": "uig",
+    "lang_regex": "uighur"
+  },
+  "ukr": {
+    "tesseract_code": "ukr",
+    "lang_regex": "ukrainian"
+  },
+  "urd": {
+    "tesseract_code": "urd",
+    "lang_regex": "urdu"
+  },
+  "uzb": {
+    "tesseract_code": "uzb_cyrl, uzb",
+    "lang_regex": "uzbek"
+  },
+  "vie": {
+    "tesseract_code": "vie",
+    "lang_regex": "vietnamese"
+  },
+  "wel": {
+    "tesseract_code": "cym",
+    "lang_regex": "welsh"
+  },
+  "yid": {
+    "tesseract_code": "yid",
+    "lang_regex": "yiddish"
+  },
+  "yor": {
+    "tesseract_code": "yor",
+    "lang_regex": "yoruba"
+  }
+}

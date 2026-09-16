@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><searchRetrieveResponse xmlns="http://www.loc.gov/zing/srw/">
+  <version>1.2</version>
+  <numberOfRecords>1</numberOfRecords>
+  <records>
+    <record>
+      <recordSchema>marcxml</recordSchema>
+      <recordPacking>xml</recordPacking>
+      <recordData>
+        <record xmlns="http://www.loc.gov/MARC21/slim">
+          <leader>03694cam a22006851  4500</leader>
+          <controlfield tag="001">991029909489706532</controlfield>
+          <controlfield tag="005">20250710213019.0</controlfield>
+          <controlfield tag="008">730313s1954    mau      b    001 0 eng^^</controlfield>
+          <datafield ind1=" " ind2=" " tag="010">
+            <subfield code="a">53005055</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="015">
+            <subfield code="a">GB5413793</subfield>
+            <subfield code="2">bnb</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="016">
+            <subfield code="a">(AMICUS)000004331596</subfield>
+          </datafield>
+          <datafield ind1="7" ind2=" " tag="016">
+            <subfield code="a">008639236</subfield>
+            <subfield code="2">Uk</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="035">
+            <subfield code="a">(CaAwUCM)577015-01ucs_ucm</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="035">
+            <subfield code="a">(OCoLC)00577015</subfield>
+            <subfield code="z">(OCoLC)979899540</subfield>
+            <subfield code="z">(OCoLC)980192979</subfield>
+            <subfield code="z">(OCoLC)1008218894</subfield>
+            <subfield code="z">(OCoLC)1013334753</subfield>
+            <subfield code="z">(OCoLC)1015462363</subfield>
+            <subfield code="z">(OCoLC)1016226703</subfield>
+            <subfield code="z">(OCoLC)1017800973</subfield>
+            <subfield code="z">(OCoLC)1047813005</subfield>
+            <subfield code="z">(OCoLC)1051600240</subfield>
+            <subfield code="z">(OCoLC)1113836294</subfield>
+            <subfield code="z">(OCoLC)1120040496</subfield>
+            <subfield code="z">(OCoLC)1336187906</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="035">
+            <subfield code="a">(OCoLC)ocm00577015</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="035">
+            <subfield code="a">(EXLNZ-01UCS_NETWORK)9912309826606531</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="040">
+            <subfield code="a">DLC</subfield>
+            <subfield code="b">eng</subfield>
+            <subfield code="c">DLC</subfield>
+            <subfield code="d">WSU</subfield>
+            <subfield code="d">UKM</subfield>
+            <subfield code="d">EL$</subfield>
+            <subfield code="d">MUQ</subfield>
+            <subfield code="d">NLGGC</subfield>
+            <subfield code="d">BAKER</subfield>
+            <subfield code="d">STF</subfield>
+            <subfield code="d">EYM</subfield>
+            <subfield code="d">DEBBG</subfield>
+            <subfield code="d">TULIB</subfield>
+            <subfield code="d">OCLCF</subfield>
+            <subfield code="d">OCLCO</subfield>
+            <subfield code="d">NLC</subfield>
+            <subfield code="d">FHL</subfield>
+            <subfield code="d">TYC</subfield>
+            <subfield code="d">CSA</subfield>
+            <subfield code="d">CSJ</subfield>
+            <subfield code="d">OCLCQ</subfield>
+            <subfield code="d">DHA</subfield>
+            <subfield code="d">MUX</subfield>
+            <subfield code="d">OCLCQ</subfield>
+            <subfield code="d">CPO</subfield>
+            <subfield code="d">OCLCQ</subfield>
+            <subfield code="d">UKMGB</subfield>
+            <subfield code="d">OCL</subfield>
+            <subfield code="d">IL4J6</subfield>
+            <subfield code="d">OCLCO</subfield>
+            <subfield code="d">YBM</subfield>
+            <subfield code="d">OCLCO</subfield>
+            <subfield code="d">OCLCL</subfield>
+            <subfield code="d">OCLCQ</subfield>
+            <subfield code="d">OCLCL</subfield>
+          </datafield>
+          <datafield ind1="0" ind2=" " tag="041">
+            <subfield code="a">eng</subfield>
+            <subfield code="a">fre</subfield>
+            <subfield code="a">ger</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="042">
+            <subfield code="a">premarc</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="043">
+            <subfield code="a">a-ja---</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="049">
+            <subfield code="a">MAIN</subfield>
+          </datafield>
+          <datafield ind1="0" ind2="0" tag="050">
+            <subfield code="a">Z3306</subfield>
+            <subfield code="b">.B67 1954</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="066">
+            <subfield code="c">Hrkt</subfield>
+            <subfield code="c">$1</subfield>
+          </datafield>
+          <datafield ind1="0" ind2=" " tag="082">
+            <subfield code="a">016.952</subfield>
+            <subfield code="1">https://id.oclc.org/worldcat/ddc/E3y7QTrPkrXGPw6wTQTYYxMGPY</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="084">
+            <subfield code="a">AD 81520</subfield>
+            <subfield code="2">rvk</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="090">
+            <subfield code="a">DS803.1</subfield>
+            <subfield code="b">.B65 1954</subfield>
+            <subfield code="9">LOCAL</subfield>
+          </datafield>
+          <datafield ind1="0" ind2="2" tag="245">
+            <subfield code="6">880-01</subfield>
+            <subfield code="a">A selected list of books and articles on Japan in English, French, and German,</subfield>
+            <subfield code="c">compiled by Hugh Borton [and others].</subfield>
+          </datafield>
+          <datafield ind1="0" ind2="2" tag="880">
+            <subfield code="6">245-01/Hrkt</subfield>
+            <subfield code="a">A selected list of books and articles on Japan in English, French and German /</subfield>
+            <subfield code="c">compiled by Hugh Borton ･･･ [and others].</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="250">
+            <subfield code="a">Rev. and enl.</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="260">
+            <subfield code="a">Cambridge,</subfield>
+            <subfield code="b">Published by the Harvard University Press for the Harvard-Yenching Institute,</subfield>
+            <subfield code="c">1954.</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="300">
+            <subfield code="a">xiv, 272 pages</subfield>
+            <subfield code="c">24 cm</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="336">
+            <subfield code="a">text</subfield>
+            <subfield code="b">txt</subfield>
+            <subfield code="2">rdacontent</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="337">
+            <subfield code="a">unmediated</subfield>
+            <subfield code="b">n</subfield>
+            <subfield code="2">rdamedia</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="338">
+            <subfield code="a">volume</subfield>
+            <subfield code="b">nc</subfield>
+            <subfield code="2">rdacarrier</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="504">
+            <subfield code="a">Classified, with author, title, and subject index.</subfield>
+          </datafield>
+          <datafield ind1=" " ind2="0" tag="651">
+            <subfield code="6">880-02</subfield>
+            <subfield code="a">Japan</subfield>
+            <subfield code="v">Bibliography.</subfield>
+          </datafield>
+          <datafield ind1=" " ind2="7" tag="880">
+            <subfield code="6">651-02/$1</subfield>
+            <subfield code="a">日本</subfield>
+            <subfield code="x">書目.</subfield>
+            <subfield code="2">fssh</subfield>
+          </datafield>
+          <datafield ind1=" " ind2="4" tag="651">
+            <subfield code="6">880-03</subfield>
+            <subfield code="a">Japan</subfield>
+            <subfield code="v">Bibliography.</subfield>
+          </datafield>
+          <datafield ind1=" " ind2="7" tag="880">
+            <subfield code="6">651-03/$1</subfield>
+            <subfield code="a">日本</subfield>
+            <subfield code="x">書目.</subfield>
+            <subfield code="2">fssh</subfield>
+          </datafield>
+          <datafield ind1=" " ind2="6" tag="651">
+            <subfield code="a">Japon</subfield>
+            <subfield code="x">Bibliographie.</subfield>
+          </datafield>
+          <datafield ind1=" " ind2="7" tag="651">
+            <subfield code="a">Japan</subfield>
+            <subfield code="2">fast</subfield>
+            <subfield code="1">https://id.oclc.org/worldcat/entity/E39PBJkT7GyCmyjxytDfqk6Yfq</subfield>
+          </datafield>
+          <datafield ind1=" " ind2="7" tag="651">
+            <subfield code="a">Japan</subfield>
+            <subfield code="x">Bibliography.</subfield>
+            <subfield code="2">fssh</subfield>
+          </datafield>
+          <datafield ind1=" " ind2="7" tag="651">
+            <subfield code="a">Japan</subfield>
+            <subfield code="v">Bibliography.</subfield>
+            <subfield code="2">nli</subfield>
+          </datafield>
+          <datafield ind1=" " ind2="7" tag="655">
+            <subfield code="a">Bibliographies</subfield>
+            <subfield code="2">fast</subfield>
+          </datafield>
+          <datafield ind1="0" ind2="8" tag="776">
+            <subfield code="i">Online version:</subfield>
+            <subfield code="a">Borton, Hugh.</subfield>
+            <subfield code="t">Selected list of books and articles on Japan in English, French, and German.</subfield>
+            <subfield code="b">Rev. and enl.</subfield>
+            <subfield code="d">Cambridge, Published by the Harvard University Press for the Harvard-Yenching Institute, 1954</subfield>
+            <subfield code="w">(OCoLC)579239984</subfield>
+          </datafield>
+          <datafield ind1="0" ind2="8" tag="776">
+            <subfield code="i">Online version:</subfield>
+            <subfield code="a">Borton, Hugh.</subfield>
+            <subfield code="t">Selected list of books and articles on Japan in English, French, and German.</subfield>
+            <subfield code="b">Rev. and enl.</subfield>
+            <subfield code="d">Cambridge, Published by the Harvard University Press for the Harvard-Yenching Institute, 1954</subfield>
+            <subfield code="w">(OCoLC)606257592</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="758">
+            <subfield code="i">has work:</subfield>
+            <subfield code="a">French and German A selected list of books and articles on Japan in English (Text)</subfield>
+            <subfield code="1">https://id.oclc.org/worldcat/entity/E39PCFDY8HXvjtmHrvkcFcDbbd</subfield>
+            <subfield code="4">https://id.oclc.org/worldcat/ontology/hasWork</subfield>
+          </datafield>
+          <datafield ind1="1" ind2=" " tag="700">
+            <subfield code="a">Borton, Hugh,</subfield>
+            <subfield code="d">1903-1995,</subfield>
+            <subfield code="e">compiler.</subfield>
+            <subfield code="0">http://id.loc.gov/authorities/names/n50043796</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="908">
+            <subfield code="a">WorldCat Daily Updates 2023-09-20</subfield>
+            <subfield code="b">WorldCat record variable field(s) change: 040, 100, 245, 700, 880</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="908">
+            <subfield code="a">WorldCat Daily Updates 2023-09-29</subfield>
+            <subfield code="b">WorldCat record variable field(s) change: 019</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="908">
+            <subfield code="a">WorldCat Daily Updates 2023-11-14</subfield>
+            <subfield code="b">WorldCat record variable field(s) change: 040, 651, 655</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="908">
+            <subfield code="a">WorldCat Daily Updates 2024-01-27</subfield>
+            <subfield code="b">WorldCat record variable field(s) change: 758</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="908">
+            <subfield code="a">WorldCat Daily Updates 2025-04-25</subfield>
+            <subfield code="b">WorldCat record variable field(s) change: 029, 040</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="908">
+            <subfield code="a">WorldCat Daily Updates 2025-07-10</subfield>
+            <subfield code="b">WorldCat record variable field(s) change: 040, 082</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="935">
+            <subfield code="a">(OCoLC)ocm00577015</subfield>
+            <subfield code="9">ExL</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="938">
+            <subfield code="a">Baker &amp; Taylor</subfield>
+            <subfield code="b">BKTY</subfield>
+            <subfield code="c">18.50</subfield>
+            <subfield code="d">18.50</subfield>
+            <subfield code="i">0674798007</subfield>
+            <subfield code="n">0006994876</subfield>
+            <subfield code="s">active</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="968">
+            <subfield code="a">Reclvl: r Addate: 900616 Addid: OCL Moddate: 080530 Modid: XRF</subfield>
+            <subfield code="9">LOCAL</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="994">
+            <subfield code="a">92</subfield>
+            <subfield code="b">MERUC</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="996">
+            <subfield code="e">GLADN117682454</subfield>
+            <subfield code="9">LOCAL</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="996">
+            <subfield code="a">b108651216</subfield>
+            <subfield code="b">Updated: 12-21-20</subfield>
+            <subfield code="c">Created: 03-16-09</subfield>
+            <subfield code="d">CatDate: 06-16-90</subfield>
+            <subfield code="9">LOCAL</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="AVA">
+            <subfield code="0">991029909489706532</subfield>
+            <subfield code="8">22926519450006532</subfield>
+            <subfield code="a">01UCS_BER</subfield>
+            <subfield code="b">EAL</subfield>
+            <subfield code="c">East Asian Reference</subfield>
+            <subfield code="d">DS803.1 .B65 1954</subfield>
+            <subfield code="e">available</subfield>
+            <subfield code="f">2</subfield>
+            <subfield code="g">0</subfield>
+            <subfield code="i">UCB_Campus</subfield>
+            <subfield code="j">ear</subfield>
+            <subfield code="k">0</subfield>
+            <subfield code="p">1</subfield>
+            <subfield code="q">East Asian Library</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="AVA">
+            <subfield code="0">991029909489706532</subfield>
+            <subfield code="8">22926519400006532</subfield>
+            <subfield code="a">01UCS_BER</subfield>
+            <subfield code="b">NRLF</subfield>
+            <subfield code="c">SLF-North (UCB)</subfield>
+            <subfield code="d">DS803.1 .B65 1954</subfield>
+            <subfield code="e">available</subfield>
+            <subfield code="f">1</subfield>
+            <subfield code="g">0</subfield>
+            <subfield code="i">UCB_Campus</subfield>
+            <subfield code="j">nbma</subfield>
+            <subfield code="k">0</subfield>
+            <subfield code="p">2</subfield>
+            <subfield code="q">Systemwide Library Facility - North (SLF-N)</subfield>
+          </datafield>
+        </record>
+      </recordData>
+      <recordIdentifier>991029909489706532</recordIdentifier>
+      <recordPosition>1</recordPosition>
+    </record>
+  </records>
+  <extraResponseData xmlns:xb="http://www.exlibris.com/repository/search/xmlbeans/">
+    <xb:exact>true</xb:exact>
+    <xb:responseDate>2026-08-25T13:59:20-0700</xb:responseDate>
+  </extraResponseData>
+</searchRetrieveResponse>

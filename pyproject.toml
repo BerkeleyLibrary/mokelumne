@@ -15,6 +15,7 @@ dependencies = [
     "langfuse",
     "mokelumne-providers-ldc >= 1.1.1",
     "mokelumne-providers-tind >= 1.1.1",
+    "mokelumne-providers-alma >= 0.2.0",
     "pymarc",
     "pyvips",
     "yarl",
@@ -69,6 +70,7 @@ include = ['mokelumne*']
 [tool.setuptools.package-data]
 "mokelumne.plugins.static_files" = ["templates/*.html"]
 "mokelumne.batch_image.templates" = ["*.html"]
+"mokelumne.util" = ["marc_tesseract_map.json"]
 
 [tool.pydoclint]
 allow-init-docstring = true
