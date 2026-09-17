@@ -385,3 +385,21 @@ class TestPDFUtils:
         assert output.width == 3000
         assert output.height == 4500
         assert output.xres * MM_PER_INCH == pytest.approx(300)
+
+    def test_extract_mms_id_from_document_name(self):
+        """Extract an MMS ID from the beginning of a document name."""
+        mms_id = pdf_utils.extract_mms_id("991234567890123456_document")
+
+        assert mms_id == "991234567890123456"
+
+    def test_extract_mms_id_returns_none_without_mms_id(self):
+        """Return None when a document name does not begin with an MMS ID."""
+        mms_id = pdf_utils.extract_mms_id("document_001")
+
+        assert mms_id is None
+
+    def test_extract_mms_id_returns_none_for_non_mms_id(self):
+        """Return None when an 18-digit identifier does not begin with 9."""
+        mms_id = pdf_utils.extract_mms_id("891234567890123456_document")
+
+        assert mms_id is None

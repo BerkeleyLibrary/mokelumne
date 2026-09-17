@@ -1,5 +1,6 @@
 """Utilities for validating and preparing files for PDF creation."""
 
+import re
 import shutil
 from pathlib import Path
 
@@ -200,3 +201,14 @@ def prepare_images(source_path: Path, workspace_path: Path, max_resolution: int)
     )
 
     return file_list_path
+
+def extract_mms_id(document_name: str) -> str | None:
+    """Return an Alma MMS ID from a document name when present."""
+
+    mms_id_match = r'9\d{17}'
+    match = re.match(mms_id_match, document_name)
+
+    if match:
+        return match.group(0)
+
+    return None

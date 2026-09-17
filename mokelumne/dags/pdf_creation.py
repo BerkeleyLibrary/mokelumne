@@ -11,6 +11,8 @@ from mokelumne.util import pdf_utils, storage
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_OCR_LANGUAGES = "eng+spa+fra+ita+deu"
+
 
 @dag(
     description="Creates searchable PDFs from directories of source images",
@@ -77,8 +79,10 @@ def pdf_creation():
         """Process a document directory into a searchable PDF."""
 
         context = get_current_context()
+        document_name = Path(document["source"]).name
         destination_path = Path(context["params"]["destination"])
         run_id = context["run_id"]
+        language = context["params"]["language"]
         max_resolution = context["params"]["max_resolution"]
 
         # 1 - Check if output PDF already exists (skip if it does)
@@ -91,13 +95,30 @@ def pdf_creation():
         run_path = storage.run_dir(run_id)
         workspace_path = pdf_utils.prepare_workspace(
             run_path,
-            Path(document["source"]).name,
+            document_name,
         )
 
         # Log the workspace path for now; later stages will use it directly.
         logger.info("Prepared document workspace: %s", workspace_path)
 
-        # 3 - Determine language (coming soon to a theater near you!)
+        # 3 - Determine language
+        if language:
+            # User specified a language...use it!
+            logger.info("Using requested OCR language(s): %s", language)
+        else:
+            mms_id = pdf_utils.extract_mms_id(document_name)
+
+            if mms_id:
+                # TODO: Replace with alma provider lookup.
+                logger.warning(
+                    "Document identified as MMS ID %s, but Alma lookup is not yet "
+                    "implemented; using default OCR languages.",
+                    mms_id,
+                )
+                language = DEFAULT_OCR_LANGUAGES
+            else:
+                language = DEFAULT_OCR_LANGUAGES
+                logger.info("Using default OCR language(s): %s", language)
 
         # 4 - Prepare images (size/convert as necessary)
         file_list_path = pdf_utils.prepare_images(
@@ -105,8 +126,17 @@ def pdf_creation():
             workspace_path,
             max_resolution,
         )
-
         logger.info("Prepared Tesseract file list: %s", file_list_path)
+
+        # 5 - Submit OCR job
+        # TODO: Pass language to the OCR job when OCR submission is implemented.
+
+        # 6 - Wait for OCR.....
+
+        # 7 - Validate and publish
+
+        # 8 - Cleanup
+
 
     validation = validate_inputs()
     documents = discover_documents()
