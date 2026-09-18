@@ -22,6 +22,7 @@ class TestPDFCreationDag:
         assert "source" in DAG.params
         assert "destination" in DAG.params
         assert "language" in DAG.params
+        assert "max_resolution" in DAG.params
 
     def test_task_order(self):
         """Ensure DAG tasks execute in the expected order."""
