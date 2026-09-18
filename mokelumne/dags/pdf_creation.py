@@ -8,7 +8,6 @@ from airflow.sdk.exceptions import AirflowSkipException
 
 from mokelumne.util import pdf_utils, storage
 
-
 logger = logging.getLogger(__name__)
 
 DEFAULT_OCR_LANGUAGES = "eng+spa+fra+ita+deu"
@@ -102,23 +101,12 @@ def pdf_creation():
         logger.info("Prepared document workspace: %s", workspace_path)
 
         # 3 - Determine language
-        if language:
-            # User specified a language...use it!
-            logger.info("Using requested OCR language(s): %s", language)
-        else:
-            mms_id = pdf_utils.extract_mms_id(document_name)
-
-            if mms_id:
-                # TODO: Replace with alma provider lookup.
-                logger.warning(
-                    "Document identified as MMS ID %s, but Alma lookup is not yet "
-                    "implemented; using default OCR languages.",
-                    mms_id,
-                )
-                language = DEFAULT_OCR_LANGUAGES
-            else:
-                language = DEFAULT_OCR_LANGUAGES
-                logger.info("Using default OCR language(s): %s", language)
+        language = pdf_utils.determine_language(
+            language,
+            document_name,
+            DEFAULT_OCR_LANGUAGES,
+        )
+        logger.info("Using OCR language(s): %s", language)
 
         # 4 - Prepare images (size/convert as necessary)
         file_list_path = pdf_utils.prepare_images(

@@ -6,6 +6,9 @@ from pathlib import Path
 
 import pyvips  # type: ignore[import-untyped]
 
+from mokelumne.providers.alma.hooks.alma import AlmaHook
+from mokelumne.util import marc
+
 IMAGE_EXTENSIONS = {".tif", ".tiff", ".jpg", ".jpeg"}
 MAX_DOCUMENT_IMAGES = 99_999_999
 MM_PER_INCH = 25.4
@@ -202,6 +205,7 @@ def prepare_images(source_path: Path, workspace_path: Path, max_resolution: int)
 
     return file_list_path
 
+
 def extract_mms_id(document_name: str) -> str | None:
     """Return an Alma MMS ID from a document name when present."""
 
@@ -212,3 +216,26 @@ def extract_mms_id(document_name: str) -> str | None:
         return match.group(0)
 
     return None
+
+
+def determine_language(
+    requested_language: str,
+    document_name: str,
+    default_languages: str,
+) -> str:
+    """Determine the Tesseract language codes for a document."""
+    if requested_language:
+        return requested_language
+
+    mms_id = extract_mms_id(document_name)
+
+    if not mms_id:
+        return default_languages
+
+    record_xml = AlmaHook().get_record_by_mms_id(mms_id)
+    language = marc.derive_tesseract_codes_from_marc(record_xml)
+
+    if not language:
+        return default_languages
+
+    return language

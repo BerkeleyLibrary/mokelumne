@@ -403,3 +403,82 @@ class TestPDFUtils:
         mms_id = pdf_utils.extract_mms_id("891234567890123456_document")
 
         assert mms_id is None
+
+    def test_determine_language_uses_requested_language(self, monkeypatch):
+        """Use the requested language without looking up the document in Alma."""
+
+        def fail_if_alma_called():
+            raise AssertionError("Alma should not be called when language is provided")
+
+        monkeypatch.setattr(pdf_utils, "AlmaHook", fail_if_alma_called)
+
+        language = pdf_utils.determine_language(
+            "jpn",
+            "991234567890123456_document",
+            "eng+spa+fra+ita+deu",
+        )
+
+        assert language == "jpn"
+
+    def test_determine_language_uses_defaults_without_mms_id(self, monkeypatch):
+        """Use the default languages when the document has no MMS ID."""
+
+        def fail_if_alma_called():
+            raise AssertionError("Alma should not be called without an MMS ID")
+
+        monkeypatch.setattr(pdf_utils, "AlmaHook", fail_if_alma_called)
+
+        language = pdf_utils.determine_language(
+            "",
+            "document_001",
+            "eng+spa+fra+ita+deu",
+        )
+
+        assert language == "eng+spa+fra+ita+deu"
+
+    def test_determine_language_uses_alma_languages_for_mms_id(self, monkeypatch):
+        """Use Tesseract languages derived from Alma for an MMS ID."""
+
+        class FakeAlmaHook:
+            def get_record_by_mms_id(self, mms_id):
+                assert mms_id == "991234567890123456"
+                return "<record>fake MARC XML</record>"
+
+        monkeypatch.setattr(pdf_utils, "AlmaHook", FakeAlmaHook)
+        monkeypatch.setattr(
+            pdf_utils.marc,
+            "derive_tesseract_codes_from_marc",
+            lambda _record_xml: "ara+fra",
+        )
+
+        language = pdf_utils.determine_language(
+            "",
+            "991234567890123456_document",
+            "eng+spa+fra+ita+deu",
+        )
+
+        assert language == "ara+fra"
+
+    def test_determine_language_uses_defaults_when_alma_has_no_languages(
+        self, monkeypatch
+    ):
+        """Use the default languages when no languages can be derived from Alma."""
+
+        class FakeAlmaHook:
+            def get_record_by_mms_id(self, _mms_id):
+                return "<record>fake MARC XML</record>"
+
+        monkeypatch.setattr(pdf_utils, "AlmaHook", FakeAlmaHook)
+        monkeypatch.setattr(
+            pdf_utils.marc,
+            "derive_tesseract_codes_from_marc",
+            lambda _record_xml: "",
+        )
+
+        language = pdf_utils.determine_language(
+            "",
+            "991234567890123456_document",
+            "eng+spa+fra+ita+deu",
+        )
+
+        assert language == "eng+spa+fra+ita+deu"
