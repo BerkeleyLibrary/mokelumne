@@ -1,10 +1,15 @@
 """Utilities for validating and preparing files for PDF creation."""
 
+import re
 import shutil
 from pathlib import Path
 
 import pyvips  # type: ignore[import-untyped]
 
+from mokelumne.providers.alma.hooks.alma import AlmaHook
+from mokelumne.util import marc
+
+DEFAULT_OCR_LANGUAGES = "eng+spa+fra+ita+deu"
 IMAGE_EXTENSIONS = {".tif", ".tiff", ".jpg", ".jpeg"}
 MAX_DOCUMENT_IMAGES = 99_999_999
 MM_PER_INCH = 25.4
@@ -200,3 +205,37 @@ def prepare_images(source_path: Path, workspace_path: Path, max_resolution: int)
     )
 
     return file_list_path
+
+
+def extract_mms_id(document_name: str) -> str | None:
+    """Return an Alma MMS ID from a document name when present."""
+
+    mms_id_match = r'9\d{17}'
+    match = re.match(mms_id_match, document_name)
+
+    if match:
+        return match.group(0)
+
+    return None
+
+
+def determine_language(
+    requested_language: str,
+    document_name: str,
+) -> str:
+    """Determine the Tesseract language codes for a document."""
+    if requested_language:
+        return requested_language
+
+    mms_id = extract_mms_id(document_name)
+
+    if not mms_id:
+        return DEFAULT_OCR_LANGUAGES
+
+    record_xml = AlmaHook().get_record_by_mms_id(mms_id)
+    language = marc.derive_tesseract_codes_from_marc(record_xml)
+
+    if not language:
+        return DEFAULT_OCR_LANGUAGES
+
+    return language

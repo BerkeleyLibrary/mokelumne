@@ -8,7 +8,6 @@ from airflow.sdk.exceptions import AirflowSkipException
 
 from mokelumne.util import pdf_utils, storage
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -29,7 +28,7 @@ logger = logging.getLogger(__name__)
         ),
         "language": Param(
             default="",
-            type=["null", "string"],
+            type="string",
             title="OCR Language",
             description=(
                 "Optional Tesseract language code to use instead of "
@@ -77,8 +76,10 @@ def pdf_creation():
         """Process a document directory into a searchable PDF."""
 
         context = get_current_context()
+        document_name = Path(document["source"]).name
         destination_path = Path(context["params"]["destination"])
         run_id = context["run_id"]
+        language = context["params"]["language"]
         max_resolution = context["params"]["max_resolution"]
 
         # 1 - Check if output PDF already exists (skip if it does)
@@ -91,13 +92,18 @@ def pdf_creation():
         run_path = storage.run_dir(run_id)
         workspace_path = pdf_utils.prepare_workspace(
             run_path,
-            Path(document["source"]).name,
+            document_name,
         )
 
         # Log the workspace path for now; later stages will use it directly.
         logger.info("Prepared document workspace: %s", workspace_path)
 
-        # 3 - Determine language (coming soon to a theater near you!)
+        # 3 - Determine language
+        language = pdf_utils.determine_language(
+            language,
+            document_name,
+        )
+        logger.info("Using OCR language(s): %s", language)
 
         # 4 - Prepare images (size/convert as necessary)
         file_list_path = pdf_utils.prepare_images(
@@ -105,8 +111,17 @@ def pdf_creation():
             workspace_path,
             max_resolution,
         )
-
         logger.info("Prepared Tesseract file list: %s", file_list_path)
+
+        # 5 - Submit OCR job
+        # TODO: Pass language to the OCR job when OCR submission is implemented.
+
+        # 6 - Wait for OCR.....
+
+        # 7 - Validate and publish
+
+        # 8 - Cleanup
+
 
     validation = validate_inputs()
     documents = discover_documents()
