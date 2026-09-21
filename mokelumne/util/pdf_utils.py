@@ -9,6 +9,7 @@ import pyvips  # type: ignore[import-untyped]
 from mokelumne.providers.alma.hooks.alma import AlmaHook
 from mokelumne.util import marc
 
+DEFAULT_OCR_LANGUAGES = "eng+spa+fra+ita+deu"
 IMAGE_EXTENSIONS = {".tif", ".tiff", ".jpg", ".jpeg"}
 MAX_DOCUMENT_IMAGES = 99_999_999
 MM_PER_INCH = 25.4
@@ -221,7 +222,6 @@ def extract_mms_id(document_name: str) -> str | None:
 def determine_language(
     requested_language: str,
     document_name: str,
-    default_languages: str,
 ) -> str:
     """Determine the Tesseract language codes for a document."""
     if requested_language:
@@ -230,12 +230,12 @@ def determine_language(
     mms_id = extract_mms_id(document_name)
 
     if not mms_id:
-        return default_languages
+        return DEFAULT_OCR_LANGUAGES
 
     record_xml = AlmaHook().get_record_by_mms_id(mms_id)
     language = marc.derive_tesseract_codes_from_marc(record_xml)
 
     if not language:
-        return default_languages
+        return DEFAULT_OCR_LANGUAGES
 
     return language

@@ -10,8 +10,6 @@ from mokelumne.util import pdf_utils, storage
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_OCR_LANGUAGES = "eng+spa+fra+ita+deu"
-
 
 @dag(
     description="Creates searchable PDFs from directories of source images",
@@ -30,7 +28,7 @@ DEFAULT_OCR_LANGUAGES = "eng+spa+fra+ita+deu"
         ),
         "language": Param(
             default="",
-            type=["null", "string"],
+            type="string",
             title="OCR Language",
             description=(
                 "Optional Tesseract language code to use instead of "
@@ -104,7 +102,6 @@ def pdf_creation():
         language = pdf_utils.determine_language(
             language,
             document_name,
-            DEFAULT_OCR_LANGUAGES,
         )
         logger.info("Using OCR language(s): %s", language)
 

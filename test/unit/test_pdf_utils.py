@@ -415,7 +415,6 @@ class TestPDFUtils:
         language = pdf_utils.determine_language(
             "jpn",
             "991234567890123456_document",
-            "eng+spa+fra+ita+deu",
         )
 
         assert language == "jpn"
@@ -431,7 +430,6 @@ class TestPDFUtils:
         language = pdf_utils.determine_language(
             "",
             "document_001",
-            "eng+spa+fra+ita+deu",
         )
 
         assert language == "eng+spa+fra+ita+deu"
@@ -454,7 +452,6 @@ class TestPDFUtils:
         language = pdf_utils.determine_language(
             "",
             "991234567890123456_document",
-            "eng+spa+fra+ita+deu",
         )
 
         assert language == "ara+fra"
@@ -478,7 +475,6 @@ class TestPDFUtils:
         language = pdf_utils.determine_language(
             "",
             "991234567890123456_document",
-            "eng+spa+fra+ita+deu",
         )
 
         assert language == "eng+spa+fra+ita+deu"
