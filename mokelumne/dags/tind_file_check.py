@@ -6,7 +6,7 @@ from airflow.sdk.exceptions import AirflowFailException
 from mokelumne.dags.fetch_tind_records import write_query_results_to_xml
 from mokelumne.plugins.static_files.helpers import static_files_run_dir, static_path_to_url
 from mokelumne.util.file_transfer import list_files, build_volume_path
-from mokelumne.util.parse_marc_xml import list_values_from_marc_xml, extract_url_names
+from mokelumne.util.marc import list_values_from_marc_xml, extract_url_names
 from mokelumne.util.tind_reports import format_da_tind_report
 
 from mokelumne.util.storage import run_dir
