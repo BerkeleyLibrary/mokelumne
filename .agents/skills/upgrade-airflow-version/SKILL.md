@@ -2,7 +2,7 @@
 name: upgrade-airflow-version
 description: >-
   Upgrade Mokelumne's Apache Airflow dependency and Docker base image to a
-  specified release, upgrade the Berkeley TIND, Alma, and LDC provider distributions,
+  specified release, upgrade the Berkeley provider distributions,
   refresh compatibility constraints and hash-pinned requirements, rebuild and
   recreate Compose services, and run package, DAG, and full-suite verification.
   Use when asked to bump, upgrade, or test Mokelumne against a new Airflow
@@ -58,10 +58,17 @@ compatibility constraints.
 
 ## Upgrade the Berkeley Providers First
 
-Treat compatible new releases of `mokelumne-providers-alma`,
-`mokelumne-providers-tind`, and `mokelumne-providers-ldc` as required
+Treat compatible new releases of Berkeley providers for Airflow as required
 parts of every Airflow upgrade. Their source lives in separate upstream
 repositories, not in Mokelumne.
+
+### List of Berkeley providers
+
+* `mokelumne-providers-alma`,
+* `mokelumne-providers-tind`
+* `mokelumne-providers-ldc`
+
+### Provider upgrade instructions
 
 For each provider repository:
 
@@ -84,9 +91,9 @@ chain as a blocker before compiling Mokelumne's requirements.
 1. Change `AIRFLOW_VERSION` in `Dockerfile`.
 2. Change the exact `apache-airflow-task-sdk` dependency in `pyproject.toml` to
    the version installed in the target image.
-3. Update the minimum versions of `mokelumne-providers-alma`,
-   `mokelumne-providers-tind`, and `mokelumne-providers-ldc` in
-   `pyproject.toml` to their newly released, Airflow-compatible versions.
+3. Update the minimum versions of all packages in the list of Berkeley
+   providers in `pyproject.toml` to their newly released,
+   Airflow-compatible versions.
 4. Update the Airflow version example in `README.md` when it is stale.
 5. Update the base-image version in the `constraints.txt` header.
 6. Refresh the selective constraints in `constraints.txt` from the target
@@ -108,10 +115,10 @@ UV_CACHE_DIR=/tmp/mokelumne-uv-cache \
 ```
 
 Confirm that `requirements.txt` resolves `apache-airflow`,
-`apache-airflow-core`, `apache-airflow-task-sdk`, `mokelumne-providers-alma`,
-`mokelumne-providers-tind`, and `mokelumne-providers-ldc` to the intended
-versions. Verify that all three provider pins changed to the new releases. Update
-lock data only when it is tracked or otherwise part of the repository's current
+`apache-airflow-core`, `apache-airflow-task-sdk`, and the packages listed
+in the list of Berkeley providers to the intended versions. Verify that
+all the provider pins changed to the new releases. Update lock data only
+when it is tracked or otherwise part of the repository's current
 dependency workflow; `uv.lock` is currently ignored.
 
 ## Resolve Base-Image Conflicts
@@ -192,9 +199,9 @@ separately.
 4. If the stack was stopped initially, restore that state with
    `docker compose down`. Never add `-v` unless the user explicitly requests
    deletion of persistent volumes.
-5. Report updated Airflow, task SDK, Alma provider, TIND provider, and
-   LDC provider versions; build and `pip check` results; focused and
-   full test counts; warnings; and final Compose state.
+5. Report updated Airflow, task SDK, Berkeley-specific provider versions;
+   build and `pip check` results; focused and full test counts; warnings;
+   and final Compose state.
 
 Do not commit, push, publish, or create a pull request unless the user
 separately requests each action.
