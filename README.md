@@ -93,6 +93,8 @@ Important environment variables for our build/environment:
 | `AIRFLOW__API_AUTH__JWT_SECRET` | Secret key used to sign JWT tokens for Airflow's API authentication. The default value used in development and testing should be replaced in production. | `AIRFLOW__API_AUTH__JWT_SECRET="some32bytesecret"` |
 | `AIRFLOW_CONN_LANGFUSE_DEFAULT` | Airflow connection string for Langfuse access.<br>Note: This will create a `langfuse_default` conn_id, will not store the connection in the Airflow metastore, and will override any other connection settings.  | `AIRFLOW_CONN_LANGFUSE_DEFAULT='{"conn_type":"langfuse","host":"us.cloud.langfuse.com","schema":"https","login":"pk-lf-blah-blah-blah","password":"ssk-lf-blah-blah-blah"}'`|
 | `AIRFLOW_CONN_TIND_DEFAULT` | (Optional override) Airflow connection json string for TIND access.<br>Note: This will create a `tind_default` conn_id, will not store the connection in the Airflow metastore, and will override any other connection settings.  | `AIRFLOW_CONN_TIND_DEFAULT='{"conn_type": "http","password": "your-tind-key-here","host": "https://digicoll.lib.berkeley.edu/api/v1","schema": "https"}'` |
+| `AIRFLOW_CONN_GOBI_SFTP` | SFTP connection for the daily GOBI order download. Host-key checking must be explicitly enabled. | Configure securely as `gobi_sftp`; see [SFTP fetch Dags](docs/sftp-fetch-dags.md). |
+| `AIRFLOW_CONN_LBNL_SFTP` | SFTP connection for the weekly LBNL patron download. Uses a securely mounted private key and explicit host-key checking. | Configure securely as `lbnl_sftp`; see [SFTP fetch Dags](docs/sftp-fetch-dags.md). |
 | `AIRFLOW_CONN_AWS_DEFAULT` | Airflow connection string for AWS Bedrock access used by image description DAGs (`conn_id=aws_default`).<br>Expected fields are `login` (AWS access key), `password` (AWS secret), `extra.region_name` and `extra.endpoint_url`  | `AIRFLOW_CONN_AWS_DEFAULT='{"conn_type":"aws","login":"AKIAblah-blah-blah","password":"blah-blah-blah","extra":{"region_name":"us-west-1","endpoint_url":"https://bedrock-runtime.us-west-1.amazonaws.com"}}'` |
 | `AWS_MODEL_ID` | The model to use. Make sure it's supported on the ARN. | `AWS_MODEL_ID="us.anthropic.claude-haiku-4-5-20251001-v1:0"` |
 | `AWS_MODEL_LABEL` | A human friendly label for the model. Will eventually be displayed in the Tind record. | `AWS_MODEL_LABEL="Claude Haiku 4.5"` |
@@ -115,6 +117,11 @@ Important environment variables for our build/environment:
 | `TIND_IIIF_MANIFEST_URL_PATTERN` | URL pattern for TIND IIIF manifests | `TIND_IIIF_MANIFEST_URL_PATTERN="https://digicoll.lib.berkeley.edu/record/{tind_id}/export/iiif_manifest"` |
 | `MOKELUMNE_PUBLIC_URL`|URL to access public assets - must end in `/`|`MOKELUMNE_PUBLIC_URL=https://mokelumne-assets.ucblib.org/`|
 | `MOKELUMNE_TIND_DOWNLOAD_DIR` | Path for downloaded image cache | `MOKELUMNE_TIND_DOWNLOAD_DIR="/some/path/to/download/to"` |
+| `MOKELUMNE_GOBI_SFTP_CONN_ID` | Airflow connection ID used by the GOBI SFTP fetch Dag. | `MOKELUMNE_GOBI_SFTP_CONN_ID="gobi_sftp"` |
+| `MOKELUMNE_GOBI_DOWNLOAD_DIR` | Existing shared directory for fetched GOBI order files. | `MOKELUMNE_GOBI_DOWNLOAD_DIR="/srv/alma/gobi-ebook-eocr-input"` |
+| `MOKELUMNE_LBNL_SFTP_CONN_ID` | Airflow connection ID used by the LBNL SFTP fetch Dag. | `MOKELUMNE_LBNL_SFTP_CONN_ID="lbnl_sftp"` |
+| `MOKELUMNE_LBNL_DOWNLOAD_DIR` | Existing shared directory for fetched LBNL patron files. | `MOKELUMNE_LBNL_DOWNLOAD_DIR="/srv/alma/patron_lbl"` |
+| `MOKELUMNE_LBNL_FILENAME_PREFIX` | Filename prefix supplied by LBNL. | `MOKELUMNE_LBNL_FILENAME_PREFIX="lbnl_people"` |
 
 Note: The `AIRFLOW_UID` example in `example.env` maps to the reserved `uid` for the `airflow` user in [lap/workflow](https://git.lib.berkeley.edu/lap/workflow/-/wikis/UIDs).
 
