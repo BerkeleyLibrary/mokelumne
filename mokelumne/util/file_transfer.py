@@ -2,8 +2,12 @@
 
 import hashlib
 import json
+import logging
+import os
 import re
 import shutil
+import time
+from contextlib import contextmanager
 
 from pathlib import Path
 
@@ -23,6 +27,35 @@ DESTINATION_VOLUMES = [
     "/srv/da",
 ]
 
+logger = logging.getLogger(__name__)
+
+# Set the default log level to debug if environment variable is not set or is invalid. 
+FILE_TRANSFER_LOG_LEVEL = logging.getLevelNamesMapping().get(
+    os.environ.get("MOKELUMNE_FILE_TRANSFER_LOGLEVEL", "DEBUG").upper(),
+    logging.DEBUG,
+)
+
+@contextmanager
+def logged_file_transfer(file_path: Path):
+    """Log the elapsed time for file action."""
+    started_at = time.perf_counter()
+    try:
+        yield
+    finally:
+        _log_file_transfer(file_path, started_at)
+
+
+def _log_file_transfer(file_path: Path, started_at: float) -> None:
+    """Log the elapsed time for file transfer."""
+    logger.log(
+        FILE_TRANSFER_LOG_LEVEL,
+        json.dumps(
+            {
+                "file": str(file_path),
+                "elapsed_seconds": time.perf_counter() - started_at,
+            }
+        ),
+    )
 
 def build_volume_path(
     volume: str,
@@ -58,15 +91,22 @@ def build_file_manifest(
     ) -> Manifest:
     exregex = re.compile(exclude_regex or r"^(\.(.*)|(?i:Thumbs\.db))$")
 
-    files = [
-        { "path": str(f.relative_to(source_path)), "size": f.stat().st_size, "sha256": sha256_for_file(f) }
-        for f in source_path.rglob("*")
-        if (
-            f.is_file()
-            and not any(re.search(exregex, p) for p in f.relative_to(source_path).parts)
-        )
-    ]
-    
+    files: list[ManifestEntry] = []
+    for file_path in source_path.rglob("*"):
+        relative_path = file_path.relative_to(source_path)
+        if not file_path.is_file() or any(
+            re.search(exregex, part) for part in relative_path.parts
+        ):
+            continue
+
+        with logged_file_transfer(file_path):
+            files.append(
+                {
+                    "path": str(relative_path),
+                    "size": file_path.stat().st_size,
+                    "sha256": sha256_for_file(file_path),
+                }
+            )
     return {
         "source_root": str(source_path),
         "files": files,
@@ -108,38 +148,37 @@ def verify_file_manifest(destination_path: Path, manifest_path: Path) -> list[Ma
         expected_sha256 = entry["sha256"]
 
         destination_file = destination_path / relative_path
+        with logged_file_transfer(destination_file):
+            if not destination_file.exists():
+                raise FileNotFoundError(f"File not found: {destination_file}")
 
-        if not destination_file.exists():
-            raise FileNotFoundError(f"File not found: {destination_file}")
+            if not destination_file.is_file():
+                raise ValueError(f"Path exists but is not a file: {destination_file}")
 
-        if not destination_file.is_file():
-            raise ValueError(f"Path exists but is not a file: {destination_file}")
+            actual_size = destination_file.stat().st_size
 
-        actual_size = destination_file.stat().st_size
+            if actual_size != expected_size:
+                raise ValueError(
+                    f"Size mismatch for {destination_file}: "
+                    f"expected {expected_size}, got {actual_size}"
+                )
 
-        if actual_size != expected_size:
-            raise ValueError(
-                f"Size mismatch for {destination_file}: "
-                f"expected {expected_size}, got {actual_size}"
+            actual_sha256 = sha256_for_file(destination_file)
+
+            if actual_sha256 != expected_sha256:
+                raise ValueError(
+                    f"Checksum mismatch for {destination_file}: "
+                    f"expected {expected_sha256}, got {actual_sha256}"
+                )
+
+            verification_report.append(
+                {
+                    "path": str(relative_path),
+                    "status": "verified",
+                    "size": expected_size,
+                    "sha256": expected_sha256,
+                }
             )
-
-        actual_sha256 = sha256_for_file(destination_file)
-
-        if actual_sha256 != expected_sha256:
-            raise ValueError(
-                f"Checksum mismatch for {destination_file}: "
-                f"expected {expected_sha256}, got {actual_sha256}"
-            )
-
-        verification_report.append(
-            {
-                "path": str(relative_path),
-                "status": "verified",
-                "size": expected_size,
-                "sha256": expected_sha256,
-            }
-        )
-
     return verification_report
 
 def rename_temp_dir(temp_dir: Path) -> Path:
@@ -182,7 +221,8 @@ def copy_files_from_manifest(source_path: Path, destination_path: Path, manifest
 
         destination_file.parent.mkdir(parents=True, exist_ok=True)
 
-        shutil.copy2(source_file, destination_file)
+        with logged_file_transfer(source_file):
+            shutil.copy2(source_file, destination_file)
 
 def manifest_entry_matches_file(
         file_path: Path,
