@@ -87,6 +87,22 @@ def check_job_status(response: Response) -> PokeReturnValue:
                 "automatic language selection."
             ),
         ),
+        "max_poll_interval": Param(
+            default=1,
+            type="integer",
+            minimum=1,
+            maximum=3,
+            title="Maximum poll interval",
+            description="This is the maximum time in hours between polling attempts.",
+        ),
+        "max_total_poll_time": Param(
+            default=3,
+            type="integer",
+            minimum=1,
+            maximum=7,
+            title="Maximum total poll time",
+            description="This is the maximum total time in days for all polling attempts.",
+        ),
         "max_resolution": Param(
             default=200,
             type="integer",
@@ -176,6 +192,22 @@ def pdf_creation():
             }
         )
 
+    @task
+    def set_sensor_kwargs(endpoints: list[str]) -> list[dict]:
+        """Set kwargs for HttpSensor. This allows us to set runtime polling params."""
+        context = get_current_context()
+        max_wait = 60 * 60 * context["params"]["max_poll_interval"]
+        timeout = 24 * 60 * 60 * context["params"]["max_total_poll_time"]
+
+        return [
+            {
+                "endpoint": endpoint,
+                "max_wait": max_wait,
+                "timeout": timeout
+            }
+            for endpoint in endpoints
+        ]
+
     validation = validate_inputs()
     documents = discover_documents()
     processed_documents = process_document.expand(document=documents)
@@ -188,15 +220,16 @@ def pdf_creation():
         endpoint="/jobs",
         method="POST",
         headers={"Content-Type": "application/json"},
-        # response_check=valid_submission,
         response_check=valid_submission,
         response_filter=status_endpoint,
         deferrable=False,
     ).expand(data=processed_documents)
 
+    sensor_kwargs = set_sensor_kwargs(submissions.output)
+
     # 6 - Wait for OCR.....
     # Will poll for up to a week for success or failure.
-    # xcom for each submission will be a dict with keys "output_path" and "sha256" if successful, or "status" and "result" if failed?
+    # xcom for each submission will be a dict with keys "output_path" and "sha256" if successful
     wait_for_pdf = HttpSensor.partial(
         task_id="wait_for_pdf",
         http_conn_id="quiabo_default",
@@ -205,9 +238,7 @@ def pdf_creation():
         deferrable=False,
         poke_interval=15,
         exponential_backoff=True,
-        max_wait=60 * 60, 
-        timeout=7 * 24 * 60 * 60,
-    ).expand(endpoint=submissions.output)
+    ).expand_kwargs(sensor_kwargs)
 
     # 7 - Validate and publish
     #   TODO: Fail and log any jobs that returned a "FAILURE" status 
