@@ -67,6 +67,7 @@ x-airflow-common: &airflow-common
     AIRFLOW_CONN_SMTP_DEFAULT: 'smtp://mailpit:1025?disable_ssl=true&disable_tls=true'
     AIRFLOW_CONN_AWS_S3_CITY_ARTS: ${AIRFLOW_CONN_AWS_S3_CITY_ARTS:-}
     AIRFLOW_CONN_AWS_S3_TEST: ${AIRFLOW_CONN_AWS_S3_TEST:-}
+    AIRFLOW_CONN_QUIABO_DEFAULT: ${AIRFLOW_CONN_QUIABO_DEFAULT:-http://host.docker.internal:8000}
     ALMA_HOST: ${ALMA_HOST:-https://berkeley.alma.exlibrisgroup.com/view/sru/01UCS_BER}
     CI: ${CI:-}
   volumes:
@@ -75,6 +76,9 @@ x-airflow-common: &airflow-common
     - ./files:/opt/airflow/files
     - ./test:/opt/airflow/test
     - ./tmp:/srv
+  # networks: [default, quiabo-net]
+  extra_hosts:
+    - host.docker.internal:host-gateway
   user: "${AIRFLOW_UID:-40093}:0"
 
 services:

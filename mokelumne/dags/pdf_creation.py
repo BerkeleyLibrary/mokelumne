@@ -134,7 +134,7 @@ def pdf_creation():
             )
 
         # 2 - Prepare workspace!
-        run_path = storage.run_dir(run_id)
+        run_path = storage.run_dir(run_id, base_dir=str(Path("/srv/ocr/quiabo")))
         workspace_path = pdf_utils.prepare_workspace(
             run_path,
             document_name,
@@ -197,7 +197,7 @@ def pdf_creation():
         exponential_backoff=True,
         max_wait=60 * 60, 
         timeout=7 * 24 * 60 * 60,
-    ).expand(endpoint=submissions)
+    ).expand(endpoint=submissions.output)
 
     # 7 - Validate and publish
     #   TODO: Fail and log any jobs that returned a "FAILURE" status 

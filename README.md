@@ -114,7 +114,8 @@ Important environment variables for our build/environment:
 | `TIND_API_URL` | URL for TIND access | `TIND_API_URL="https://digicoll.lib.berkeley.edu/api/v1"` |
 | `TIND_IIIF_MANIFEST_URL_PATTERN` | URL pattern for TIND IIIF manifests | `TIND_IIIF_MANIFEST_URL_PATTERN="https://digicoll.lib.berkeley.edu/record/{tind_id}/export/iiif_manifest"` |
 | `MOKELUMNE_PUBLIC_URL`|URL to access public assets - must end in `/`|`MOKELUMNE_PUBLIC_URL=https://mokelumne-assets.ucblib.org/`|
-| `MOKELUMNE_TIND_DOWNLOAD_DIR` | Path for downloaded image cache | `MOKELUMNE_TIND_DOWNLOAD_DIR="/some/path/to/download/to"` |
+| `MOKELUMNE_TIND_DOWNLOAD` | Path for downloaded image cache | `MOKELUMNE_TIND_DOWNLOAD="/some/path/to/download/to"` |
+| `MOKELUMNE_OCR_RUN_DIR` | Path for ocr processing runs (Quiabo service must have same path mounted) | `MOKELUMNE_OCR_RUN_DIR="/srv/ocr/quiabo"` |
 
 Note: The `AIRFLOW_UID` example in `example.env` maps to the reserved `uid` for the `airflow` user in [lap/workflow](https://git.lib.berkeley.edu/lap/workflow/-/wikis/UIDs).
 
