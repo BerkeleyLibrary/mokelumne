@@ -67,9 +67,16 @@ def check_job_status(response: Response) -> PokeReturnValue:
             description="Directory containing the document subdirectories to process.",
         ),
         "destination": Param(
+            default="/srv/ocr/pdfs",
             type="string",
             title="Destination directory",
             description="Directory where the generated PDFs will be saved.",
+        ),
+        "run_base": Param(
+            default="/srv/ocr/quiabo",
+            type="string",
+            title="Runs base directory",
+            description="Base directory for all run temp files.",
         ),
         "language": Param(
             default="",
@@ -103,10 +110,12 @@ def pdf_creation():
 
         source_path = Path(context["params"]["source"])
         destination_path = Path(context["params"]["destination"])
+        run_base = Path(context["params"]["run_base"])
 
         pdf_utils.validate_source_path(source_path)
         pdf_utils.validate_destination_path(destination_path)
         pdf_utils.validate_source_structure(source_path)
+        pdf_utils.validate_run_base(run_base)
 
     @task
     def discover_documents():
@@ -123,6 +132,7 @@ def pdf_creation():
         context = get_current_context()
         document_name = Path(document["source"]).name
         destination_path = Path(context["params"]["destination"])
+        run_base = Path(context["params"]["run_base"])
         run_id = context["run_id"]
         language = context["params"]["language"]
         max_resolution = context["params"]["max_resolution"]
@@ -134,7 +144,7 @@ def pdf_creation():
             )
 
         # 2 - Prepare workspace!
-        run_path = storage.run_dir(run_id, base_dir=str(Path("/srv/ocr/quiabo")))
+        run_path = storage.run_dir(run_id, base_dir=str(run_base))
         workspace_path = pdf_utils.prepare_workspace(
             run_path,
             document_name,

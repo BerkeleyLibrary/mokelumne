@@ -7,7 +7,7 @@ from pathlib import Path
 import pyvips  # type: ignore[import-untyped]
 
 from mokelumne.providers.alma.hooks.alma import AlmaHook
-from mokelumne.util import marc
+from mokelumne.util import marc, storage
 
 DEFAULT_OCR_LANGUAGES = "eng+spa+fra+ita+deu"
 IMAGE_EXTENSIONS = {".tif", ".tiff", ".jpg", ".jpeg"}
@@ -35,6 +35,16 @@ def validate_destination_path(destination_path: Path) -> None:
 
     if not destination_path.is_dir():
         raise ValueError(f"Destination path is not a directory: {destination_path}")
+
+
+def validate_run_base(run_base: Path) -> None:
+    """Validate that the run base path exists and is a directory."""
+
+    if not run_base.exists():
+        raise FileNotFoundError(f"Run base directory does not exist: {run_base}")
+
+    if not run_base.is_dir():
+        raise ValueError(f"Run base path is not a directory: {run_base}")
 
 
 def validate_source_structure(source_path: Path) -> None:

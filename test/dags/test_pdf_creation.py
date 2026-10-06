@@ -21,6 +21,7 @@ class TestPDFCreationDag:
         """Ensure expected DAG parameters exist."""
         assert "source" in DAG.params
         assert "destination" in DAG.params
+        assert "run_base" in DAG.params
         assert "language" in DAG.params
         assert "max_resolution" in DAG.params
 
