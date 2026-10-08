@@ -1,16 +1,16 @@
 """DAG for creating searchable PDFs from directories of source images."""
 
-from http import HTTPStatus
 import json
 import logging
+from http import HTTPStatus
 from pathlib import Path
-from requests import Response
 
 from airflow.providers.http.operators.http import HttpOperator
 from airflow.providers.http.sensors.http import HttpSensor
 from airflow.sdk import Param, PokeReturnValue, dag, get_current_context, task
 from airflow.sdk.exceptions import AirflowSkipException
 from celery.states import ALL_STATES, READY_STATES
+from requests import Response
 
 from mokelumne.util import pdf_utils, storage
 
@@ -34,11 +34,11 @@ def valid_submission(response: Response, **_context: object) -> bool:
     return accepted
 
 
-
 def status_endpoint(response: Response) -> str:
     """Return polling endpoint from the job submission response."""
 
     return response.json()["job_status"]
+
 
 def check_job_status(response: Response) -> PokeReturnValue:
     """Check the status of a submitted OCR job."""
@@ -245,8 +245,6 @@ def pdf_creation():
 
     # 8 - Cleanup
 
-
     validation >> documents >> processed_documents >> submissions >> wait_for_pdf
-
 
 pdf_creation()

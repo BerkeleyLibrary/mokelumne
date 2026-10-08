@@ -7,7 +7,7 @@ from pathlib import Path
 import pyvips  # type: ignore[import-untyped]
 
 from mokelumne.providers.alma.hooks.alma import AlmaHook
-from mokelumne.util import marc, storage
+from mokelumne.util import marc
 
 DEFAULT_OCR_LANGUAGES = "eng+spa+fra+ita+deu"
 IMAGE_EXTENSIONS = {".tif", ".tiff", ".jpg", ".jpeg"}
