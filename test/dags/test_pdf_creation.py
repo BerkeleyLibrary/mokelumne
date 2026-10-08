@@ -10,10 +10,55 @@ from test.util.dag_helper import get_dag
 
 DAG = get_dag("pdf_creation")
 check_job_status = DAG.get_task("wait_for_pdf").partial_kwargs["response_check"]
+valid_submission = DAG.get_task("submit_ocr_job").partial_kwargs["response_check"]
 
 
 class TestPDFCreationDag:
     """Tests for the pdf_creation DAG."""
+
+    def test_valid_submission_accepts_pending_job(self):
+        """Accept a valid HTTP 202 job submission response."""
+        response = Mock()
+        response.status_code = 202
+        response.json.return_value = {
+            "job_id": "job-123",
+            "job_status": "jobs/job-123",
+            "status": "PENDING",
+        }
+
+        assert valid_submission(response) is True
+
+    @pytest.mark.parametrize(
+        "status_code,payload",
+        [
+            (
+                200,
+                {
+                    "job_id": "job-123",
+                    "job_status": "jobs/job-123",
+                    "status": "PENDING",
+                },
+            ),
+            (202, {"job_status": "jobs/job-123", "status": "PENDING"}),
+            (202, {"job_id": "job-123", "status": "PENDING"}),
+            (
+                202,
+                {
+                    "job_id": "job-123",
+                    "job_status": "jobs/job-123",
+                    "status": "STARTED",
+                },
+            ),
+        ],
+        ids=["wrong-http-status", "missing-job-id", "missing-job-status", "not-pending"],
+    )
+    def test_valid_submission_rejects_invalid_response(self, status_code, payload):
+        """Reject responses that do not match Quiabo's submission contract."""
+        response = Mock()
+        response.status_code = status_code
+        response.json.return_value = payload
+
+        assert valid_submission(response) is False
 
     @pytest.mark.parametrize("status", ["PENDING", "STARTED"])
     def test_check_job_status_continues_polling(self, status):
