@@ -1,13 +1,70 @@
 """Test the pdf_creation DAG."""
 
+from unittest.mock import Mock
+
+import pytest
+
+# from mokelumne.dags.pdf_creation import check_job_status
 from test.util.dag_helper import get_dag
 
 
 DAG = get_dag("pdf_creation")
+check_job_status = DAG.get_task("wait_for_pdf").partial_kwargs["response_check"]
 
 
 class TestPDFCreationDag:
     """Tests for the pdf_creation DAG."""
+
+    @pytest.mark.parametrize("status", ["PENDING", "STARTED"])
+    def test_check_job_status_continues_polling(self, status):
+        """Keep polling while a job is in a nonterminal state."""
+        response = Mock()
+        response.json.return_value = {"id": "job-123", "status": status}
+
+        result = check_job_status(response)
+
+        assert result.is_done is False
+        assert result.xcom_value is None
+
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            {
+                "id": "job-123",
+                "status": "SUCCESS",
+                "result": {
+                    "output_path": "/srv/test/output.pdf",
+                    "sha256": "abc123",
+                },
+                "date_done": "2026-10-08T12:00:00",
+            },
+            {
+                "id": "job-123",
+                "status": "FAILURE",
+                "result": "Tesseract failed",
+                "traceback": "Traceback: Tesseract failed",
+            },
+            {"id": "job-123", "status": "REVOKED"},
+        ],
+        ids=["success", "failure", "revoked"],
+    )
+    def test_check_job_status_returns_terminal_payload(self, payload):
+        """Return the response payload when a job reaches a terminal state."""
+        response = Mock()
+        response.json.return_value = payload
+
+        result = check_job_status(response)
+
+        assert result.is_done is True
+        assert result.xcom_value == payload
+
+    def test_check_job_status_rejects_unknown_status(self):
+        """Reject statuses that Celery does not recognize."""
+        response = Mock()
+        response.json.return_value = {"status": "UNKNOWN"}
+
+        with pytest.raises(ValueError, match="Unexpected job status: UNKNOWN"):
+            check_job_status(response)
 
     def test_validate_inputs_task_exists(self):
         """Ensure validate_inputs task exists."""
