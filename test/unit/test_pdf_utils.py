@@ -115,6 +115,31 @@ class TestPDFUtils:
         ):
             pdf_utils.validate_destination_path(destination_path)
 
+    def test_validate_run_base_accepts_directory(self, tmp_path: Path):
+        """Accept an existing run base directory."""
+        pdf_utils.validate_run_base(tmp_path)
+
+    def test_validate_run_base_rejects_missing_directory(self, tmp_path: Path):
+        """Reject a run base directory that does not exist."""
+        run_base_path = tmp_path / "missing"
+
+        with pytest.raises(
+            FileNotFoundError,
+            match="Run base directory does not exist",
+        ):
+            pdf_utils.validate_run_base(run_base_path)
+
+    def test_validate_run_base_rejects_file(self, tmp_path: Path):
+        """Reject a run base path that is a file."""
+        run_base_path = tmp_path / "run_base.txt"
+        run_base_path.write_text("not a directory", encoding="utf-8")
+
+        with pytest.raises(
+            ValueError,
+            match="Run base path is not a directory",
+        ):
+            pdf_utils.validate_run_base(run_base_path)
+
     def test_discover_documents_builds_work_items(self, tmp_path: Path):
         """Build work items for document directories containing images."""
         pdf_1 = tmp_path / "pdf_1"
