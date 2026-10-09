@@ -76,8 +76,6 @@ x-airflow-common: &airflow-common
     - ./files:/opt/airflow/files
     - ./test:/opt/airflow/test
     - ./tmp:/srv
-  extra_hosts:
-    - host.docker.internal:host-gateway
   user: "${AIRFLOW_UID:-40093}:0"
 
 services:
