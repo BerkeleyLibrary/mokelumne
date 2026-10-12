@@ -1,5 +1,8 @@
 """PyTest cases for the mokelumne.util.file_transfer module."""
 
+import json
+import logging
+
 from pathlib import Path
 
 import pytest
@@ -117,6 +120,49 @@ class TestFileTransfer:
             "subdir/file_two.txt",
         }
         assert len(result["files"]) == 2
+
+    def test_file_transfer_logging(self, tmp_path: Path, caplog):
+        """Ensure manifest, copy, and verification operations log events."""
+        source = tmp_path / "source"
+        source.mkdir()
+        source_file = source / "test.txt"
+        source_file.write_text("hello", encoding="utf-8")
+
+        destination = tmp_path / "destination"
+        destination.mkdir()
+        manifest_path = tmp_path / "manifest.json"
+
+        caplog.set_level(logging.DEBUG, logger=file_transfer.logger.name)
+        manifest = file_transfer.build_file_manifest(source)
+        file_transfer.save_json(manifest, manifest_path)
+        file_transfer.copy_files_from_manifest(source, destination, manifest_path)
+        file_transfer.verify_file_manifest(destination, manifest_path)
+
+        events = [json.loads(record.message) for record in caplog.records]
+
+        assert all(event["file"] for event in events)
+        assert all(event["elapsed_seconds"] >= 0 for event in events)
+
+    def test_logged_file_transfer_logs_when_operation_fails(
+        self, tmp_path: Path, caplog
+    ):
+        """Ensure failed operations are logged along with their exceptions."""
+        file_path = tmp_path / "test.txt"
+        caplog.set_level(logging.DEBUG, logger=file_transfer.logger.name)
+
+        with pytest.raises(OSError, match="transfer failed"):
+            with file_transfer.logged_file_transfer(file_path):
+                raise OSError("transfer failed")
+
+        events = [json.loads(record.message) for record in caplog.records]
+
+        assert events == [
+            {
+                "file": str(file_path),
+                "elapsed_seconds": events[0]["elapsed_seconds"],
+            }
+        ]
+        assert events[0]["elapsed_seconds"] >= 0
 
     @pytest.mark.parametrize(
         "pattern,expected",

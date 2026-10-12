@@ -7,7 +7,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 
-from airflow.sdk import Param, dag, get_current_context, task
+from airflow.sdk import Param, Variable, dag, get_current_context, task
 from airflow.sdk.exceptions import AirflowFailException
 
 from mokelumne.util.gobi import (
@@ -17,6 +17,9 @@ from mokelumne.util.gobi import (
     require_directory,
 )
 
+input_dir = Variable.get("process_gobi_orders_input_dir")
+output_dir = Variable.get("process_gobi_orders_output_dir")
+processed_dir = Variable.get("process_gobi_orders_processed_dir")
 logger = logging.getLogger(__name__)
 
 
@@ -29,19 +32,19 @@ logger = logging.getLogger(__name__)
     max_active_runs=1,
     params={
         "input_directory": Param(
-            default="/srv/alma/gobi-ebook-eocr-input",
+            default=input_dir,
             type="string",
             title="Incoming order directory",
             description="Shared directory containing GOBI .ord files.",
         ),
         "output_directory": Param(
-            default="/opt/airflow/files/gobi/gobi_processed",
+            default=output_dir,
             type="string",
             title="Provider output directory",
             description="Shared directory where provider-specific files are written.",
         ),
         "processed_directory": Param(
-            default="/opt/airflow/files/gobi/incoming/processed",
+            default=processed_dir,
             type="string",
             title="Processed order directory",
             description="Shared directory where original .ord files are archived.",
@@ -50,7 +53,23 @@ logger = logging.getLogger(__name__)
     tags=["gobi", "marc", "recurring"],
 )
 def process_gobi_orders():
-    """Discover and process each currently pending GOBI order file."""
+    """
+    Discover and process each currently pending GOBI order file.
+
+    The directory parameters get their default values from these Airflow
+    Variables:
+
+    * ``process_gobi_orders_input_dir`` for incoming ``.ord`` files
+    * ``process_gobi_orders_output_dir`` for provider-specific output files
+    * ``process_gobi_orders_processed_dir`` for archived source files
+
+    Airflow Variables are used instead of literal strings for the parameter
+    defaults so the same Dag code can run in staging and production while each
+    environment supplies its own shared-volume paths. Scheduled runs use these
+    environment-specific defaults, while manually triggered runs can still
+    override the directory parameters. All three Variables must exist before
+    Airflow parses the Dag.
+    """
 
     @task
     def discover_order_files() -> list[str]:
