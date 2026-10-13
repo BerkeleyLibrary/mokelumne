@@ -15,7 +15,10 @@ RUN umask 0002; \
     chown -R airflow:0 "${AIRFLOW_USER_HOME_DIR}/artifacts"
 
 RUN apt-get update -y && apt-get upgrade -y \
-    && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/
+    && apt-get install -y \
+        libvips42 \
+        postgresql-client \
+    && rm -rf /var/lib/apt/lists/
 
 USER airflow
 WORKDIR $AIRFLOW_HOME
