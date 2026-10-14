@@ -133,10 +133,19 @@ class TestPDFCreationDag:
         """Ensure DAG tasks execute in the expected order."""
         # TODO: Update this test as additional tasks are implemented.
         validate_inputs = DAG.get_task("validate_inputs")
+        prepare_run_directory = DAG.get_task("prepare_run_directory")
         discover_documents = DAG.get_task("discover_documents")
 
-        assert [task.task_id for task in validate_inputs.downstream_list] == ["discover_documents"]
-        assert [task.task_id for task in discover_documents.downstream_list] == ["process_document"]
+        assert [task.task_id for task in validate_inputs.downstream_list] == ["prepare_run_directory"]
+        assert {
+            task.task_id for task in prepare_run_directory.downstream_list
+        } == {
+            "discover_documents",
+            "process_document",
+        }
+        assert [task.task_id for task in discover_documents.downstream_list] == [
+            "process_document"
+        ]
 
     def test_process_document_task_exists(self):
         """Ensure process_document task exists."""
@@ -179,3 +188,21 @@ class TestPDFCreationDag:
                 "timeout": 4 * 24 * 60 * 60,
             },
         ]
+
+    def test_prepare_run_directory(self, monkeypatch, tmp_path):
+        """Create and return the scratch directory for the Dag run."""
+        task = DAG.get_task("prepare_run_directory").python_callable
+
+        monkeypatch.setitem(
+            task.__globals__,
+            "get_current_context",
+            lambda: {
+                "params": {"run_base": str(tmp_path)},
+                "run_id": "test_run",
+            },
+        )
+
+        result = task()
+
+        assert result == str(tmp_path / "test_run")
+        assert (tmp_path / "test_run").is_dir()

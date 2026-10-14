@@ -134,6 +134,17 @@ def pdf_creation():
         pdf_utils.validate_run_base(run_base)
 
     @task
+    def prepare_run_directory() -> str:
+        """Create and return the scratch directory for this Dag run."""
+        context = get_current_context()
+        run_base = context["params"]["run_base"]
+        run_id = context["run_id"]
+
+        run_path = storage.run_dir(run_id, base_dir=run_base)
+
+        return str(run_path)
+
+    @task
     def discover_documents():
         """Discover document directories and build work items."""
         context = get_current_context()
@@ -142,14 +153,12 @@ def pdf_creation():
         return pdf_utils.discover_documents(source_path)
 
     @task
-    def process_document(document: pdf_utils.DocumentWorkItem):
+    def process_document(document: pdf_utils.DocumentWorkItem, run_path: str):
         """Process a document directory into a searchable PDF."""
 
         context = get_current_context()
         document_name = Path(document["source"]).name
         destination_path = Path(context["params"]["destination"])
-        run_base = Path(context["params"]["run_base"])
-        run_id = context["run_id"]
         language = context["params"]["language"]
         max_resolution = context["params"]["max_resolution"]
 
@@ -160,9 +169,8 @@ def pdf_creation():
             )
 
         # 2 - Prepare workspace!
-        run_path = storage.run_dir(run_id, base_dir=str(run_base))
         workspace_path = pdf_utils.prepare_workspace(
-            run_path,
+            Path(run_path),
             document_name,
         )
 
@@ -209,8 +217,11 @@ def pdf_creation():
         ]
 
     validation = validate_inputs()
+    run_path = prepare_run_directory()
     documents = discover_documents()
-    processed_documents = process_document.expand(document=documents)
+    processed_documents = process_document.partial(
+        run_path=run_path
+    ).expand(document=documents)
 
     # 5 - Submit OCR job
     # submissions will be a list of job_status endpoints to poll for completion.
@@ -245,6 +256,6 @@ def pdf_creation():
 
     # 8 - Cleanup
 
-    validation >> documents >> processed_documents >> submissions >> wait_for_pdf
+    validation >> run_path >> documents >> processed_documents >> submissions >> wait_for_pdf
 
 pdf_creation()
