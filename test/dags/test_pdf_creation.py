@@ -123,7 +123,6 @@ class TestPDFCreationDag:
         """Ensure expected DAG parameters exist."""
         assert "source" in DAG.params
         assert "destination" in DAG.params
-        assert "run_base" in DAG.params
         assert "language" in DAG.params
         assert "max_poll_interval" in DAG.params
         assert "max_total_poll_time" in DAG.params
@@ -197,12 +196,21 @@ class TestPDFCreationDag:
             task.__globals__,
             "get_current_context",
             lambda: {
-                "params": {"run_base": str(tmp_path)},
                 "run_id": "test_run",
             },
+        )
+
+        variable = Mock()
+        variable.get.return_value = str(tmp_path)
+
+        monkeypatch.setitem(
+            task.__globals__,
+            "Variable",
+            variable,
         )
 
         result = task()
 
         assert result == str(tmp_path / "test_run")
         assert (tmp_path / "test_run").is_dir()
+        variable.get.assert_called_once_with("pdf_creation_scratch_base")
