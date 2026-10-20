@@ -14,7 +14,7 @@ from celery.states import ALL_STATES, READY_STATES
 from requests import Response
 
 from mokelumne.plugins.static_files.helpers import static_files_run_dir
-from mokelumne.util import pdf_report, pdf_utils, storage
+from mokelumne.util import params, pdf_report, pdf_utils, storage
 
 logger = logging.getLogger(__name__)
 
@@ -64,19 +64,22 @@ def check_job_status(response: Response) -> PokeReturnValue:
     catchup=False,
     tags=["dlp", "pdf", "creation"],
     params={
-        "source": Param(
+        "source": params.configurable_param(
+            "pdf_creation_source_",
             default="tmp/srv/pa/collection1",
             type="string",
             title="Source directory",
             description="Directory containing the document subdirectories to process.",
         ),
-        "destination": Param(
+        "destination": params.configurable_param(
+            "pdf_creation_destination_",
             default="tmp/srv/ocr/pdfs",
             type="string",
             title="Destination directory",
             description="Directory where the generated PDFs will be saved.",
         ),
-        "language": Param(
+        "language": params.configurable_param(
+            "pdf_creation_language_",
             default="eng",
             type="string",
             minLength=0,
@@ -86,7 +89,8 @@ def check_job_status(response: Response) -> PokeReturnValue:
                 "automatic language selection."
             ),
         ),
-        "max_poll_interval": Param(
+        "max_poll_interval": params.configurable_param(
+            "pdf_creation_max_poll_interval_",
             default=1,
             type="integer",
             minimum=1,
@@ -94,7 +98,8 @@ def check_job_status(response: Response) -> PokeReturnValue:
             title="Maximum poll interval",
             description="This is the maximum time in hours between polling attempts.",
         ),
-        "max_total_poll_time": Param(
+        "max_total_poll_time": params.configurable_param(
+            "pdf_creation_max_total_poll_time_",
             default=3,
             type="integer",
             minimum=1,
@@ -102,7 +107,8 @@ def check_job_status(response: Response) -> PokeReturnValue:
             title="Maximum total poll time",
             description="This is the maximum total time in days for all polling attempts.",
         ),
-        "max_resolution": Param(
+        "max_resolution": params.configurable_param(
+            "pdf_creation_max_resolution_",
             default=200,
             type="integer",
             minimum=150,
