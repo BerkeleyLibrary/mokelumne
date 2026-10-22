@@ -62,19 +62,21 @@ def check_job_status(response: Response) -> PokeReturnValue:
     catchup=False,
     params={
         "source": Param(
+            default="tmp/srv/pa/collection1",
             type="string",
             title="Source directory",
             description="Directory containing the document subdirectories to process.",
         ),
         "destination": Param(
-            default="/srv/ocr/pdfs",
+            default="tmp/srv/ocr/pdfs",
             type="string",
             title="Destination directory",
             description="Directory where the generated PDFs will be saved.",
         ),
         "language": Param(
-            default="",
+            default="eng",
             type="string",
+            minLength=0,
             title="OCR Language",
             description=(
                 "Optional Tesseract language code to use instead of "
@@ -120,7 +122,7 @@ def pdf_creation():
 
         source_path = Path(context["params"]["source"])
         destination_path = Path(context["params"]["destination"])
-        scratch_base = Variable.get("pdf_creation_scratch_base")
+        scratch_base = Path(Variable.get("pdf_creation_scratch_base"))
 
         pdf_utils.validate_source_path(source_path)
         pdf_utils.validate_destination_path(destination_path)
