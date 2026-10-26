@@ -121,6 +121,29 @@ services:
       - |
         set -eo pipefail
         /entrypoint airflow db migrate
+
+        # Configure PDF cleanup API access when a password is provided.
+        if [ -n "$${PDF_CLEANUP_API_PASSWORD:-}" ]; then
+          if ! airflow users list --output json | grep -q '"username": *"pdf_cleanup_service"'; then
+            airflow users create \
+              --username pdf_cleanup_service \
+              --firstname PDF \
+              --lastname Cleanup \
+              --email pdf-cleanup@localhost \
+              --role Viewer \
+              --password "$${PDF_CLEANUP_API_PASSWORD}"
+          fi
+
+          airflow connections delete airflow_api || true
+          airflow connections add airflow_api \
+            --conn-type http \
+            --conn-host "http://airflow-apiserver" \
+            --conn-port 8080 \
+            --conn-login pdf_cleanup_service \
+            --conn-password "$${PDF_CLEANUP_API_PASSWORD}" \
+            --conn-description "Local Airflow API connection for PDF cleanup"
+        fi
+
         if [ -n "${TIND_API_KEY:-}" ]; then
           airflow connections delete tind_default || true;
           airflow connections add tind_default \
