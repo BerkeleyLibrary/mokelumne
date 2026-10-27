@@ -12,7 +12,7 @@ from airflow.sdk.exceptions import AirflowSkipException
 from celery.states import ALL_STATES, READY_STATES
 from requests import Response
 
-from mokelumne.util import pdf_utils, storage
+from mokelumne.util import configurable_param, pdf_utils, storage
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +61,8 @@ def check_job_status(response: Response) -> PokeReturnValue:
     schedule=None,
     catchup=False,
     params={
-        "source": Param(
+        "source": configurable_param(
+            "PDF_CREATION_SOURCE_",
             type="string",
             title="Source directory",
             description="Directory containing the document subdirectories to process.",
@@ -241,7 +242,7 @@ def pdf_creation():
     ).expand_kwargs(sensor_kwargs)
 
     # 7 - Validate and publish
-    #   TODO: Fail and log any jobs that returned a "FAILURE" status 
+    #   TODO: Fail and log any jobs that returned a "FAILURE" status
 
     # 8 - Cleanup
 
