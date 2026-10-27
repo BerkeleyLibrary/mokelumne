@@ -8,14 +8,14 @@ from unittest.mock import Mock
 
 from test.util.dag_helper import get_dag
 
-DAG = get_dag("pdf_cleanup")
+DAG = get_dag("pdf_creation_cleanup")
 
 
 class TestPdfCleanup:
     """Tests for the PDF cleanup DAG."""
 
     def test_calculate_cutoff(self, monkeypatch):
-        """Calculate the cutoff using the configured cleanup window."""
+        """Calculate the cleanup cutoff and maximum lookback dates."""
         task = DAG.get_task("calculate_cutoff").python_callable
 
         monkeypatch.setitem(
@@ -24,17 +24,38 @@ class TestPdfCleanup:
             lambda: {
                 "params": {
                     "cleanup_window": 30,
+                    "max_days": 90,
                 },
             },
         )
 
-        before = datetime.now(timezone.utc) - timedelta(days=30)
-        result = datetime.fromisoformat(task())
-        after = datetime.now(timezone.utc) - timedelta(days=30)
+        before = datetime.now(timezone.utc)
+        result = task()
+        after = datetime.now(timezone.utc)
 
-        assert before <= result <= after
+        cutoff = datetime.fromisoformat(result["cutoff"])
+        lookback = datetime.fromisoformat(result["lookback"])
 
+        assert before - timedelta(days=30) <= cutoff <= after - timedelta(days=30)
+        assert before - timedelta(days=90) <= lookback <= after - timedelta(days=90)
 
+    def test_calculate_cutoff_rejects_invalid_max_days(self, monkeypatch):
+        """Reject a maximum lookback shorter than the cleanup window."""
+        task = DAG.get_task("calculate_cutoff").python_callable
+
+        monkeypatch.setitem(
+            task.__globals__,
+            "get_current_context",
+            lambda: {
+                "params": {
+                    "cleanup_window": 30,
+                    "max_days": 20,
+                },
+            },
+        )
+
+        with pytest.raises(ValueError, match="max_days must be greater"):
+            task()
 
     def test_find_eligible_runs(self, monkeypatch):
         """Return the IDs of completed runs eligible for cleanup."""
@@ -49,13 +70,18 @@ class TestPdfCleanup:
             find_cleanup_runs,
         )
 
-        cutoff = "2026-09-14T12:00:00+00:00"
+        dates = {
+            "cutoff": "2026-09-14T12:00:00+00:00",
+            "lookback": "2026-07-16T12:00:00+00:00",
+        }
 
-        result = task(cutoff)
+        result = task(dates)
 
-        assert result == ["run_1", "run_2"]
+        assert result == runs
+
         find_cleanup_runs.assert_called_once_with(
-            datetime.fromisoformat(cutoff)
+            cutoff=datetime.fromisoformat(dates["cutoff"]),
+            lookback=datetime.fromisoformat(dates["lookback"]),
         )
 
     def test_find_run_directories(self, monkeypatch):

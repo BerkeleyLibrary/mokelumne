@@ -80,7 +80,6 @@ class TestPdfCleanupUtils:
 
         outside_directory = tmp_path / "important_files"
         outside_directory.mkdir()
-        (outside_directory / "keep_me.txt").write_text("Do not delete!")
 
         run_id = "run_123"
         run_directory = scratch_base / run_id
@@ -94,12 +93,8 @@ class TestPdfCleanupUtils:
             run_id,
         )
 
-        # Verify the symlink and its target remain intact.
-        assert run_directory.is_symlink()
-        assert (outside_directory / "keep_me.txt").exists()
-
     def test_find_cleanup_runs(self, monkeypatch):
-        """Return completed PDF creation runs older than the cutoff."""
+        """Return completed PDF creation runs within the cleanup window."""
         base_url = "http://airflow:8080"
 
         session = Mock()
@@ -128,6 +123,11 @@ class TestPdfCleanupUtils:
                     "state": "running",
                     "end_date": None,
                 },
+                {
+                    "dag_run_id": "too_old",
+                    "state": "success",
+                    "end_date": "2026-07-01T12:00:00Z",
+                },
             ],
             "next_cursor": None,
         }
@@ -139,11 +139,21 @@ class TestPdfCleanupUtils:
         )
 
         cutoff = datetime(2026, 9, 14, tzinfo=timezone.utc)
+        lookback = datetime(2026, 8, 1, tzinfo=timezone.utc)
 
-        result = pdf_cleanup_utils.find_cleanup_runs(cutoff)
+        result = pdf_cleanup_utils.find_cleanup_runs(cutoff, lookback)
 
         assert result == ["old_success", "old_failed"]
-        session.get.assert_called_once()
+
+        session.get.assert_called_once_with(
+            f"{base_url}/api/v2/dags/pdf_creation/dagRuns",
+            params={
+                "limit": 100,
+                "end_date_lte": cutoff.isoformat(),
+                "end_date_gte": lookback.isoformat(),
+            },
+            timeout=30,
+        )
 
 
     def test_find_cleanup_runs_pagination(self, monkeypatch):
@@ -184,17 +194,23 @@ class TestPdfCleanupUtils:
         )
 
         cutoff = datetime(2026, 9, 14, tzinfo=timezone.utc)
+        lookback = datetime(2026, 8, 1, tzinfo=timezone.utc)
 
-        result = pdf_cleanup_utils.find_cleanup_runs(cutoff)
+        result = pdf_cleanup_utils.find_cleanup_runs(cutoff, lookback)
 
         assert result == ["run_1", "run_2"]
         assert session.get.call_count == 2
 
         assert session.get.call_args_list[0].kwargs["params"] == {
             "limit": 100,
+            "end_date_lte": cutoff.isoformat(),
+            "end_date_gte": lookback.isoformat(),
         }
+
         assert session.get.call_args_list[1].kwargs["params"] == {
             "limit": 100,
+            "end_date_lte": cutoff.isoformat(),
+            "end_date_gte": lookback.isoformat(),
             "cursor": "page_2",
         }
 

@@ -35,18 +35,22 @@ def get_api_session() -> tuple[str, requests.Session]:
     return base_url, session
 
 
-def find_cleanup_runs(cutoff: datetime) -> list[str]:
+def find_cleanup_runs(cutoff: datetime, lookback: datetime) -> list[str]:
     """Find completed PDF creation runs eligible for cleanup via the API."""
     base_url, session = get_api_session()
 
     eligible_runs = []
 
-    # Fetch all pages of DAG runs
+    # Fetch DAG runs completed within the cleanup window
     cursor = None
 
     with session:
         while True:
-            params = {"limit": 100}
+            params = {
+                "limit": 100,
+                "end_date_lte": cutoff.isoformat(),
+                "end_date_gte": lookback.isoformat(),
+            }
 
             if cursor:
                 params["cursor"] = cursor
@@ -71,7 +75,7 @@ def find_cleanup_runs(cutoff: datetime) -> list[str]:
                     run["end_date"].replace("Z", "+00:00")
                 )
 
-                if end_date <= cutoff:
+                if lookback <= end_date <= cutoff:
                     eligible_runs.append(run["dag_run_id"])
 
             cursor = payload.get("next_cursor")
@@ -89,14 +93,14 @@ def expected_run_directory(
     run_id: str,
 ) -> bool:
     """Check that the path matches the expected scratch directory."""
-    raw_path = Path(run_directory)
+    run_path = Path(run_directory)
     scratch_path = Path(scratch_base).resolve()
 
     return (
-        raw_path.is_absolute()
-        and raw_path.parent == scratch_path
-        and raw_path.name == run_id
-        and raw_path != scratch_path
+        run_path.is_absolute()
+        and run_path.parent == scratch_path
+        and run_path.name == run_id
+        and run_path != scratch_path
         and Path(run_id).name == run_id
         and run_id not in (".", "..")
     )
@@ -108,13 +112,13 @@ def safe_run_directory(
     run_id: str,
 ) -> bool:
     """Return whether a recorded run directory is safe to remove."""
-    raw_path = Path(run_directory)
+    run_path = Path(run_directory)
 
     return (
         expected_run_directory(run_directory, scratch_base, run_id)
-        and not raw_path.is_symlink()
-        and raw_path.is_dir()
-        and raw_path.resolve() == Path(scratch_base).resolve() / run_id
+        and not run_path.is_symlink()
+        and run_path.is_dir()
+        and run_path.resolve() == Path(scratch_base).resolve() / run_id
     )
 
 

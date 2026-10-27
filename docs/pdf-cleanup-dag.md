@@ -2,31 +2,34 @@
 
 ## Overview
 
-The `pdf_cleanup` Dag removes temporary working directories left behind by completed runs of the `pdf_creation` Dag.
+The `pdf_creation_cleanup` Dag removes temporary working directories left behind by completed runs of the `pdf_creation` Dag.
 
 PDF creation can require substantial temporary disk space for image preparation and OCR processing. These working directories may remain after a Dag run finishes, so periodic cleanup helps prevent unnecessary disk usage.
 
-The cleanup Dag identifies successful or failed PDF Creation runs older than a configurable retention period (30 days by default) and removes their associated temporary directories.
+The cleanup Dag identifies successful or failed PDF creation runs within a configurable age range (30–90 days by default) and removes their associated temporary directories when deletion is enabled.
 
 The Dag is triggered manually (`schedule=None`) and runs in dry-run mode by default, allowing operators to review eligible directories before enabling deletion.
 
 To reduce the risk of accidental data loss, the Dag validates directory paths before removing anything.
 
 ## Dag Parameters
-The `pdf_cleanup` Dag accepts two parameters when triggered manually:
+The `pdf_creation_cleanup` Dag accepts three parameters when triggered manually:
 
 | Parameter | Default | Description |
 | --------- | ------- | ----------- |
 | `cleanup_window` | 30 | Number of days a `pdf_creation` Dag run must be older than to qualify for cleanup. |
+| `max_days` | 90 | Maximum number of days to look back when searching for completed PDF creation runs. Must be greater than `cleanup_window`. |
 | `dry_run` | True | When enabled, identifies and validates eligible directories without deleting them. Set to `False` to perform the cleanup. |
 
-The cleanup cutoff is calculated by subtracting `cleanup_window` days from the current date and time. Only `pdf_creation` runs that completed successfully or failed on or before that cutoff are considered eligible.
+With the default settings (`cleanup_window=30` and `max_days=90`), the Dag considers successful or failed PDF creation runs that completed between 30 and 90 days ago. Runs completed within the last 30 days are retained, while runs older than 90 days are excluded from the search.
+
+Both date boundaries are applied through the Airflow REST API to avoid retrieving unnecessary historical runs. To clean up older runs, increase `max_days` when manually triggering the Dag.
 
 For safety, `dry_run` defaults to `True`. Operators should review the eligible directories before triggering a run with deletion enabled.
 
 ## Configuration
 
-The `pdf_cleanup` Dag requires an Airflow Variable and an Airflow Connection.
+The `pdf_creation_cleanup` Dag requires an Airflow Variable and an Airflow Connection.
 
 ### Airflow Variable
 
@@ -59,18 +62,18 @@ Staging and production environments must provide an equivalent Connection and se
 Use credentials from the `airflow_api` Connection to request an authentication token from `/auth/token`.
 
 ### Retrieve and Filter Dag Runs
-Query `/api/v2/dags/pdf_creation/dagRuns`, follow pagination, and select successful or failed runs older than the cutoff.
+Query `/api/v2/dags/pdf_creation/dagRuns` using `end_date_gte` and `end_date_lte` to restrict results to the configured cleanup window. Follow pagination and select successful or failed runs within that window.
 
 ### Locate Scratch Directories
 Retrieve the scratch directory recorded in XCom for each eligible run, then validate that it belongs within the configured scratch base.
 
 ## Workflow
 
-The `pdf_cleanup` Dag consists of five tasks executed sequentially:
+The `pdf_creation_cleanup` Dag consists of five tasks executed sequentially:
 
-1. **`calculate_cutoff`** — Calculates the cutoff date and time by subtracting the configured `cleanup_window` from the current date and time.
+1. **`calculate_cutoff`** — Calculates the cutoff and lookback dates using `cleanup_window` and `max_days`. Validates that `max_days` is greater than `cleanup_window`.
 
-2. **`find_eligible_runs`** — Queries the Airflow REST API for historical `pdf_creation` Dag runs and identifies successful or failed runs older than the cutoff.
+2. **`find_eligible_runs`** — Queries the Airflow REST API for `pdf_creation` Dag runs completed within the configured date range and identifies successful or failed runs eligible for cleanup.
 
 3. **`find_run_directories`** — Retrieves the recorded scratch directory for each eligible `pdf_creation` run from the `prepare_run_directory` task's XCom. Runs without a recorded directory are skipped.
 
@@ -81,32 +84,33 @@ The `pdf_cleanup` Dag consists of five tasks executed sequentially:
 
 ## Safety Measures
 
-Because the `pdf_cleanup` Dag deletes directories from the filesystem, several safeguards are implemented to prevent accidental data loss:
+Because the `pdf_creation_cleanup` Dag deletes directories from the filesystem, several safeguards are implemented to prevent accidental data loss:
 
 - **Dry-run by default:** The `dry_run` parameter defaults to `True`, allowing operators to identify eligible directories without deleting anything.
-- **Retention period:** Only successful or failed `pdf_creation` Dag runs older than the configured `cleanup_window` are eligible for cleanup. Running or otherwise incomplete Dags are excluded.
+- **Retention and lookback limits:** Only successful or failed `pdf_creation` Dag runs completed within the configured cleanup window are eligible. Running or otherwise incomplete runs are excluded. Configurations where `max_days` is less than or equal to `cleanup_window` are rejected.
 - **Restricted deletion paths:** Candidate directories must be direct children of the configured `pdf_creation_scratch_base` directory, with directory names matching their Dag run IDs.
 - **Path validation:** Directory paths are validated before deletion to prevent removing unexpected or unsafe locations.
 - **Revalidation before removal:** Each directory is checked again immediately before deletion, reducing the risk of removing an unintended directory if its path or state has changed.
 - **Missing directories:** Directories that no longer exist are skipped rather than treated as errors.
 
-Operators should always review a dry run before triggering the Dag with `dry_run=False`.
 
 ## Running and Testing
 
 ### Running the Dag
 
-The `pdf_cleanup` Dag is configured with `schedule=None` and must be triggered manually through the Airflow UI.
+The `pdf_creation_cleanup` Dag is configured with `schedule=None` and must be triggered manually through the Airflow UI.
 
-1. Open the Airflow UI and navigate to the `pdf_cleanup` Dag.
+1. Open the Airflow UI and navigate to the `pdf_creation_cleanup` Dag.
 2. Select **Trigger** to start a new Dag run.
 3. Configure the parameters:
-   - `cleanup_window`: Number of days to retain temporary directories (default: `30`).
+   - `cleanup_window`: Minimum age of completed runs eligible for cleanup (default: `30`).
+   - `max_days`: Maximum age of completed runs to consider (default: `90`). Must exceed `cleanup_window`.
    - `dry_run`: Set to `True` to preview eligible directories without deleting them.
 4. Trigger the Dag and review the task logs, particularly `find_eligible_runs`, `validate_run_directories`, and `remove_run_directories`.
 5. Once the eligible directories have been reviewed, trigger the Dag again with `dry_run=False` to perform the cleanup.
 
-**Important:** Deletion is permanent. Always verify the selected directories before running with `dry_run=False`.
+**Important:** Deletion is permanent. Always verify the selected directories with `dry_run=True` first. After verification, switch to `False` to permanently delete the directories listed.
+
 
 ### Testing
 
@@ -114,7 +118,7 @@ Unit and Dag tests are provided for the cleanup workflow. With the local Docker 
 
 ```bash
 docker compose exec airflow-cli python3 -m pytest \
-  test/dags/test_pdf_cleanup.py \
+  test/dags/test_pdf_creation_cleanup.py \
   test/unit/test_pdf_cleanup_utils.py
 ```
 

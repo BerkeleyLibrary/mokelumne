@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 @dag(
-    dag_id="pdf_cleanup",
+    dag_id="pdf_creation_cleanup",
     schedule=None,
     catchup=False,
     params={
@@ -26,6 +26,13 @@ logger = logging.getLogger(__name__)
             title="Cleanup window (days)",
             description="Clean up completed PDF creation runs this many days old or older.",
         ),
+        "max_days": Param(
+            default=90,
+            type="integer",
+            minimum=1,
+            title="Maximum lookback (days)",
+            description="Only consider PDF creation runs completed within the last N days.",
+        ),
         "dry_run": Param(
             default=True,
             type="boolean",
@@ -34,26 +41,31 @@ logger = logging.getLogger(__name__)
         ),
     },
 )
-def pdf_cleanup():
+def pdf_creation_cleanup():
     """Clean up scratch directories from completed PDF creation runs."""
 
     @task
-    def calculate_cutoff() -> str:
-        """Calculate the cutoff date for eligible PDF creation runs."""
+    def calculate_cutoff() -> dict[str, str]:
         context = get_current_context()
         cleanup_window = context["params"]["cleanup_window"]
+        max_days = context["params"]["max_days"]
+
+        if max_days <= cleanup_window:
+            raise ValueError("max_days must be greater than cleanup_window")
 
         now = datetime.now(timezone.utc)
-        cutoff = now - timedelta(days=cleanup_window)
 
-        return cutoff.isoformat()
+        return {
+            "cutoff": (now - timedelta(days=cleanup_window)).isoformat(),
+            "lookback": (now - timedelta(days=max_days)).isoformat(),
+        }
 
     @task
-    def find_eligible_runs(cutoff: str) -> list[str]:
-        """Find completed PDF creation runs eligible for cleanup."""
-        cutoff_date = datetime.fromisoformat(cutoff)
-
-        return find_cleanup_runs(cutoff_date)
+    def find_eligible_runs(dates: dict[str, str]) -> list[str]:
+        return find_cleanup_runs(
+            cutoff=datetime.fromisoformat(dates["cutoff"]),
+            lookback=datetime.fromisoformat(dates["lookback"]),
+        )
 
     @task
     def find_run_directories(run_ids: list[str]) -> list[dict[str, str]]:
@@ -135,11 +147,11 @@ def pdf_cleanup():
             remove_run_directory(run_directory)
             logger.info("Removed scratch directory: %s", run_directory)
 
-    cutoff = calculate_cutoff()
-    eligible_runs = find_eligible_runs(cutoff)
+    dates = calculate_cutoff()
+    eligible_runs = find_eligible_runs(dates)
     run_directories = find_run_directories(eligible_runs)
     safe_directories = validate_run_directories(run_directories)
     remove_run_directories(safe_directories)
 
 
-pdf_cleanup()
+pdf_creation_cleanup()
