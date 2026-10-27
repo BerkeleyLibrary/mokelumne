@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 
 from airflow.sdk import Param, Variable, dag, get_current_context, task
 
-from mokelumne.util.pdf_cleanup_utils import (
+from mokelumne.util.pdf_creation_cleanup_utils import (
     find_cleanup_runs,
     remove_run_directory,
     validate_cleanup_directory,

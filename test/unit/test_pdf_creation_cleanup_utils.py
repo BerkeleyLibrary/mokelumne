@@ -1,6 +1,4 @@
-"""PyTest cases for the mokelumne.util.pdf_cleanup_utils module."""
-
-"""PyTest cases for the mokelumne.util.pdf_cleanup_utils module."""
+"""PyTest cases for the mokelumne.util.pdf_creation_cleanup_utils module."""
 
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -9,10 +7,10 @@ from unittest.mock import Mock
 import logging
 import pytest
 
-from mokelumne.util import pdf_cleanup_utils
+from mokelumne.util import pdf_creation_cleanup_utils
 
 
-class TestPdfCleanupUtils:
+class TestPdfCreationCleanupUtils:
     def test_safe_run_directory(self, tmp_path):
         """Verify a valid scratch directory is safe to remove."""
         scratch_base = tmp_path / "scratch"
@@ -21,7 +19,7 @@ class TestPdfCleanupUtils:
         run_directory = scratch_base / "run_1"
         run_directory.mkdir()
 
-        assert pdf_cleanup_utils.safe_run_directory(
+        assert pdf_creation_cleanup_utils.safe_run_directory(
             str(run_directory),
             str(scratch_base),
             "run_1",
@@ -31,7 +29,7 @@ class TestPdfCleanupUtils:
     def test_safe_run_directory_rejects_scratch_base(self):
         """DO NOT, EVER, allow the scratch base itself to be removed."""
 
-        result = pdf_cleanup_utils.safe_run_directory(
+        result = pdf_creation_cleanup_utils.safe_run_directory(
             "/srv/ocr/quiabo",
             "/srv/ocr/quiabo",
             "test_run",
@@ -42,7 +40,7 @@ class TestPdfCleanupUtils:
 
     def test_safe_run_directory_rejects_path_outside_scratch_base(self):
         """NEVER allow directories outside the scratch base to be removed."""
-        result = pdf_cleanup_utils.safe_run_directory(
+        result = pdf_creation_cleanup_utils.safe_run_directory(
             "/srv/da/important_stuff",
             "/srv/ocr/quiabo",
             "test_run",
@@ -53,7 +51,7 @@ class TestPdfCleanupUtils:
     def test_safe_run_directory_rejects_path_traversal(self):
         """Do not allow some sneaky path that escapes the scratch base."""
 
-        result = pdf_cleanup_utils.safe_run_directory(
+        result = pdf_creation_cleanup_utils.safe_run_directory(
             "/srv/ocr/quiabo/test_run/../../../da/important_stuff",
             "/srv/ocr/quiabo",
             "test_run",
@@ -64,7 +62,7 @@ class TestPdfCleanupUtils:
     def test_safe_run_directory_rejects_wrong_run_id(self):
         """Do not allow a directory that does not match the run ID."""
 
-        result = pdf_cleanup_utils.safe_run_directory(
+        result = pdf_creation_cleanup_utils.safe_run_directory(
             "/srv/ocr/quiabo/some_other_run",
             "/srv/ocr/quiabo",
             "test_run",
@@ -87,7 +85,7 @@ class TestPdfCleanupUtils:
         # Make the apparent run directory point outside scratch.
         run_directory.symlink_to(outside_directory, target_is_directory=True)
 
-        assert not pdf_cleanup_utils.safe_run_directory(
+        assert not pdf_creation_cleanup_utils.safe_run_directory(
             str(run_directory),
             str(scratch_base),
             run_id,
@@ -133,7 +131,7 @@ class TestPdfCleanupUtils:
         }
 
         monkeypatch.setattr(
-            pdf_cleanup_utils,
+            pdf_creation_cleanup_utils,
             "get_api_session",
             Mock(return_value=(base_url, session)),
         )
@@ -141,7 +139,7 @@ class TestPdfCleanupUtils:
         cutoff = datetime(2026, 9, 14, tzinfo=timezone.utc)
         lookback = datetime(2026, 8, 1, tzinfo=timezone.utc)
 
-        result = pdf_cleanup_utils.find_cleanup_runs(cutoff, lookback)
+        result = pdf_creation_cleanup_utils.find_cleanup_runs(cutoff, lookback)
 
         assert result == ["old_success", "old_failed"]
 
@@ -188,7 +186,7 @@ class TestPdfCleanupUtils:
         ]
 
         monkeypatch.setattr(
-            pdf_cleanup_utils,
+            pdf_creation_cleanup_utils,
             "get_api_session",
             Mock(return_value=(base_url, session)),
         )
@@ -196,7 +194,7 @@ class TestPdfCleanupUtils:
         cutoff = datetime(2026, 9, 14, tzinfo=timezone.utc)
         lookback = datetime(2026, 8, 1, tzinfo=timezone.utc)
 
-        result = pdf_cleanup_utils.find_cleanup_runs(cutoff, lookback)
+        result = pdf_creation_cleanup_utils.find_cleanup_runs(cutoff, lookback)
 
         assert result == ["run_1", "run_2"]
         assert session.get.call_count == 2
@@ -223,7 +221,7 @@ class TestPdfCleanupUtils:
         test_file = run_directory / "page.tif"
         test_file.write_text("test data")
 
-        pdf_cleanup_utils.remove_run_directory(str(run_directory))
+        pdf_creation_cleanup_utils.remove_run_directory(str(run_directory))
 
         assert not run_directory.exists()
 
@@ -233,7 +231,7 @@ class TestPdfCleanupUtils:
         run_directory = tmp_path / "already_gone"
 
         with caplog.at_level(logging.INFO):
-            pdf_cleanup_utils.remove_run_directory(str(run_directory))
+            pdf_creation_cleanup_utils.remove_run_directory(str(run_directory))
 
         assert "Scratch directory already removed" in caplog.text
 
@@ -263,12 +261,12 @@ class TestPdfCleanupUtils:
         )
 
         monkeypatch.setattr(
-            pdf_cleanup_utils.requests,
+            pdf_creation_cleanup_utils.requests,
             "Session",
             Mock(return_value=session),
         )
 
-        base_url, result_session = pdf_cleanup_utils.get_api_session()
+        base_url, result_session = pdf_creation_cleanup_utils.get_api_session()
 
         assert base_url == "http://airflow:8080"
         assert result_session is session
@@ -299,7 +297,7 @@ class TestPdfCleanupUtils:
         run_directory.symlink_to(outside_directory, target_is_directory=True)
 
         with pytest.raises(ValueError, match="Unsafe scratch directory"):
-            pdf_cleanup_utils.validate_cleanup_directory(
+            pdf_creation_cleanup_utils.validate_cleanup_directory(
                 str(run_directory),
                 str(scratch_base),
                 run_id,
@@ -316,7 +314,7 @@ class TestPdfCleanupUtils:
         scratch_base = tmp_path / "scratch"
         scratch_base.mkdir()
 
-        assert not pdf_cleanup_utils.expected_run_directory(
+        assert not pdf_creation_cleanup_utils.expected_run_directory(
             str(scratch_base / "test_run"),
             str(scratch_base),
             run_id,

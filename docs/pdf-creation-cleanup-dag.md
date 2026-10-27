@@ -1,4 +1,4 @@
-# PDF Cleanup Dag
+# PDF Creation Cleanup Dag
 
 ## Overview
 
@@ -119,7 +119,7 @@ Unit and Dag tests are provided for the cleanup workflow. With the local Docker 
 ```bash
 docker compose exec airflow-cli python3 -m pytest \
   test/dags/test_pdf_creation_cleanup.py \
-  test/unit/test_pdf_cleanup_utils.py
+  test/unit/test_pdf_creation_cleanup_utils.py
 ```
 
 These tests cover Dag structure, eligibility filtering, directory validation, and cleanup behavior.
