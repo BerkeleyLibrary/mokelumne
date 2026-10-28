@@ -7,7 +7,7 @@ from pathlib import Path
 
 from airflow.providers.http.operators.http import HttpOperator
 from airflow.providers.http.sensors.http import HttpSensor
-from airflow.sdk import Param, PokeReturnValue, dag, get_current_context, task
+from airflow.sdk import Param, PokeReturnValue, Variable, dag, get_current_context, task
 from airflow.sdk.exceptions import AirflowSkipException
 from celery.states import ALL_STATES, READY_STATES
 from requests import Response
@@ -62,25 +62,21 @@ def check_job_status(response: Response) -> PokeReturnValue:
     catchup=False,
     params={
         "source": Param(
+            default="tmp/srv/pa/collection1",
             type="string",
             title="Source directory",
             description="Directory containing the document subdirectories to process.",
         ),
         "destination": Param(
-            default="/srv/ocr/pdfs",
+            default="tmp/srv/ocr/pdfs",
             type="string",
             title="Destination directory",
             description="Directory where the generated PDFs will be saved.",
         ),
-        "run_base": Param(
-            default="/srv/ocr/quiabo",
-            type="string",
-            title="Runs base directory",
-            description="Base directory for all run temp files.",
-        ),
         "language": Param(
-            default="",
+            default="eng",
             type="string",
+            minLength=0,
             title="OCR Language",
             description=(
                 "Optional Tesseract language code to use instead of "
@@ -126,12 +122,23 @@ def pdf_creation():
 
         source_path = Path(context["params"]["source"])
         destination_path = Path(context["params"]["destination"])
-        run_base = Path(context["params"]["run_base"])
+        scratch_base = Path(Variable.get("pdf_creation_scratch_base"))
 
         pdf_utils.validate_source_path(source_path)
         pdf_utils.validate_destination_path(destination_path)
         pdf_utils.validate_source_structure(source_path)
-        pdf_utils.validate_run_base(run_base)
+        pdf_utils.validate_run_base(scratch_base)
+
+    @task
+    def prepare_run_directory() -> str:
+        """Create and return the scratch directory for this Dag run."""
+        context = get_current_context()
+        scratch_base = Variable.get("pdf_creation_scratch_base")
+        run_id = context["run_id"]
+
+        run_path = storage.run_dir(run_id, base_dir=scratch_base)
+
+        return str(run_path)
 
     @task
     def discover_documents():
@@ -142,14 +149,12 @@ def pdf_creation():
         return pdf_utils.discover_documents(source_path)
 
     @task
-    def process_document(document: pdf_utils.DocumentWorkItem):
+    def process_document(document: pdf_utils.DocumentWorkItem, run_path: str):
         """Process a document directory into a searchable PDF."""
 
         context = get_current_context()
         document_name = Path(document["source"]).name
         destination_path = Path(context["params"]["destination"])
-        run_base = Path(context["params"]["run_base"])
-        run_id = context["run_id"]
         language = context["params"]["language"]
         max_resolution = context["params"]["max_resolution"]
 
@@ -160,9 +165,8 @@ def pdf_creation():
             )
 
         # 2 - Prepare workspace!
-        run_path = storage.run_dir(run_id, base_dir=str(run_base))
         workspace_path = pdf_utils.prepare_workspace(
-            run_path,
+            Path(run_path),
             document_name,
         )
 
@@ -209,8 +213,11 @@ def pdf_creation():
         ]
 
     validation = validate_inputs()
+    run_path = prepare_run_directory()
     documents = discover_documents()
-    processed_documents = process_document.expand(document=documents)
+    processed_documents = process_document.partial(
+        run_path=run_path
+    ).expand(document=documents)
 
     # 5 - Submit OCR job
     # submissions will be a list of job_status endpoints to poll for completion.
@@ -245,6 +252,6 @@ def pdf_creation():
 
     # 8 - Cleanup
 
-    validation >> documents >> processed_documents >> submissions >> wait_for_pdf
+    validation >> run_path >> documents >> processed_documents >> submissions >> wait_for_pdf
 
 pdf_creation()

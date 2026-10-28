@@ -55,6 +55,11 @@ Airflow keeps ephemeral information in Redis but persists virtually all state (a
 docker compose down -v --remove-orphans
 ```
 
+## DAG Documentation
+- [GOBI Processing](docs/gobi-processing-dag.md)
+- [PDF Creation](docs/pdf-creation-dag.md)
+- [PDF Creation Cleanup](docs/pdf-creation-cleanup-dag.md)
+
 ## Testing
 
 With the stack running, execute the tests by exec-ing pytest in one of the airflow containers (cli works well). A full rundown of pytest flags is out-of-scope for this README, but here are some common use-cases to get you going:
@@ -115,8 +120,13 @@ Important environment variables for our build/environment:
 | `TIND_IIIF_MANIFEST_URL_PATTERN` | URL pattern for TIND IIIF manifests | `TIND_IIIF_MANIFEST_URL_PATTERN="https://digicoll.lib.berkeley.edu/record/{tind_id}/export/iiif_manifest"` |
 | `MOKELUMNE_PUBLIC_URL`|URL to access public assets - must end in `/`|`MOKELUMNE_PUBLIC_URL=https://mokelumne-assets.ucblib.org/`|
 | `MOKELUMNE_TIND_DOWNLOAD` | Path for downloaded image cache | `MOKELUMNE_TIND_DOWNLOAD="/some/path/to/download/to"` |
+| `PDF_CLEANUP_API_PASSWORD` | Optional password for the local `pdf_cleanup_service` account, created by `airflow-init` and used by the `airflow_api` connection. | `PDF_CLEANUP_API_PASSWORD="your-local-password"` |
 
-Note: The `AIRFLOW_UID` example in `example.env` maps to the reserved `uid` for the `airflow` user in [lap/workflow](https://git.lib.berkeley.edu/lap/workflow/-/wikis/UIDs).
+**Notes:**
+
+The `AIRFLOW_UID` example in `example.env` maps to the reserved `uid` for the `airflow` user in [lap/workflow](https://git.lib.berkeley.edu/lap/workflow/-/wikis/UIDs).
+
+The `PDF_CLEANUP_API_PASSWORD` variable is optional for local development, but must be configured to run the PDF Cleanup Dag.
 
 ### Dev Keycloak credentials
 The `keycloak-config-cli` container will create a user/pass of `admin`/`admin` for the `master` realm.

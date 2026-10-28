@@ -123,7 +123,6 @@ class TestPDFCreationDag:
         """Ensure expected DAG parameters exist."""
         assert "source" in DAG.params
         assert "destination" in DAG.params
-        assert "run_base" in DAG.params
         assert "language" in DAG.params
         assert "max_poll_interval" in DAG.params
         assert "max_total_poll_time" in DAG.params
@@ -133,10 +132,19 @@ class TestPDFCreationDag:
         """Ensure DAG tasks execute in the expected order."""
         # TODO: Update this test as additional tasks are implemented.
         validate_inputs = DAG.get_task("validate_inputs")
+        prepare_run_directory = DAG.get_task("prepare_run_directory")
         discover_documents = DAG.get_task("discover_documents")
 
-        assert [task.task_id for task in validate_inputs.downstream_list] == ["discover_documents"]
-        assert [task.task_id for task in discover_documents.downstream_list] == ["process_document"]
+        assert [task.task_id for task in validate_inputs.downstream_list] == ["prepare_run_directory"]
+        assert {
+            task.task_id for task in prepare_run_directory.downstream_list
+        } == {
+            "discover_documents",
+            "process_document",
+        }
+        assert [task.task_id for task in discover_documents.downstream_list] == [
+            "process_document"
+        ]
 
     def test_process_document_task_exists(self):
         """Ensure process_document task exists."""
@@ -179,3 +187,30 @@ class TestPDFCreationDag:
                 "timeout": 4 * 24 * 60 * 60,
             },
         ]
+
+    def test_prepare_run_directory(self, monkeypatch, tmp_path):
+        """Create and return the scratch directory for the Dag run."""
+        task = DAG.get_task("prepare_run_directory").python_callable
+
+        monkeypatch.setitem(
+            task.__globals__,
+            "get_current_context",
+            lambda: {
+                "run_id": "test_run",
+            },
+        )
+
+        variable = Mock()
+        variable.get.return_value = str(tmp_path)
+
+        monkeypatch.setitem(
+            task.__globals__,
+            "Variable",
+            variable,
+        )
+
+        result = task()
+
+        assert result == str(tmp_path / "test_run")
+        assert (tmp_path / "test_run").is_dir()
+        variable.get.assert_called_once_with("pdf_creation_scratch_base")
