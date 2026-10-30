@@ -1,5 +1,6 @@
 """Utilities for validating and preparing files for PDF creation."""
 
+import hashlib
 import re
 import shutil
 from pathlib import Path
@@ -82,6 +83,41 @@ def validate_source_structure(source_path: Path) -> None:
     # Thou shalt contain at least one subdirectory with TIFFs or JPEGs!!!
     if not valid_document_dirs:
         raise ValueError(f"No TIFF/JPEG document directories found: {source_path}")
+
+
+def validate_pdf(pdf_path: Path, sha256_hash: str) -> tuple[bool, str | None]:
+    """Validate a PDF file and return a tuple of (is_valid, error_message)."""
+    try:
+        if not pdf_path.exists():
+            raise FileNotFoundError(f"PDF file does not exist: {pdf_path}")
+
+        if not pdf_path.is_file():
+            raise ValueError(f"PDF path is not a file: {pdf_path}")
+
+        actual_hash = hashlib.sha256(pdf_path.read_bytes()).hexdigest()
+
+        if actual_hash != sha256_hash:
+            raise ValueError(
+                f"PDF hash mismatch for {pdf_path}: "
+                f"expected {sha256_hash}, got {actual_hash}"
+            )
+    except (OSError, ValueError) as e:
+        return False, str(e)
+
+    return True, None
+
+
+def publish_pdf(pdf_path: Path, destination_path: Path) -> Path:
+    """Move a valid pdf to a destination directory and return the new path."""
+
+    published_path = destination_path / pdf_path.name
+
+    # Move the PDF to the destination, overwriting if it already exists.
+    # Questions: do we want to overwrite existing files?
+    # Also, should we use a `.part` extension during the move to avoid false positives?
+    shutil.move(pdf_path, published_path)
+
+    return published_path
 
 
 def discover_documents(source_path: Path) -> list[DocumentWorkItem]:
