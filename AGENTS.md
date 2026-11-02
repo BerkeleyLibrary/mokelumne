@@ -105,9 +105,10 @@ test from a freshly rebuilt image rather than relying on a stale installed copy.
 - Author Dags with the public Airflow Task SDK (`airflow.sdk`)
   and use Airflow 3 conventions.
   - Do not import implementation details from Airflow core.
-  - Prefer TaskFlow `@task` functions or the Python operator
+  - Prefer TaskFlow `@task` functions for the Python operator
     for data processing; this deployment does not use
     Kubernetes, so do not introduce `KubernetesPodOperator`.
+  - Dags should be named in lowercase using the form `{verb}_{noun_phrase}`. For example, use the name `create_jpeg_derivatives` instead of `jpeg_derivative_creation` for a Dag that creates JPEG derivatives from batches of TIFF files.
 - Keep Dag parsing lightweight and deterministic.
   - Do filesystem, network, connection, and runtime-context work
     inside tasks.
