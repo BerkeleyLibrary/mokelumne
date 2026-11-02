@@ -5,12 +5,12 @@ import logging
 from http import HTTPStatus
 from pathlib import Path
 
-from celery.states import ALL_STATES, READY_STATES
-from requests import Response
 from airflow.providers.http.operators.http import HttpOperator
 from airflow.providers.http.sensors.http import HttpSensor
 from airflow.sdk import Param, PokeReturnValue, Variable, dag, get_current_context, task
 from airflow.sdk.exceptions import AirflowSkipException
+from celery.states import ALL_STATES, READY_STATES
+from requests import Response
 
 from mokelumne.util import pdf_utils, storage
 

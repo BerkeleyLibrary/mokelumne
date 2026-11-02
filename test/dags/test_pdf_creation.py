@@ -2,10 +2,10 @@
 
 import json
 from unittest.mock import Mock
-from test.util.dag_helper import get_dag
 
 import pytest
 
+from test.util.dag_helper import get_dag
 
 
 DAG = get_dag("pdf_creation")
