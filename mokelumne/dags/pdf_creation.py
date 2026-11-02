@@ -282,7 +282,7 @@ def pdf_creation(): # pylint: disable=too-many-locals
             return {
                 "job_id": finished_job.get("id", "UNKNOWN"),
                 "status": "VALIDATION_FAILED",
-                "output_path": str(output_path),
+                "output_path": result["output_path"],
                 "date_done": finished_job.get("date_done", "UNKNOWN"),
                 "error": error_msg,
             }
