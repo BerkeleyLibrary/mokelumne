@@ -59,6 +59,7 @@ docker compose down -v --remove-orphans
 - [GOBI Processing](docs/gobi-processing-dag.md)
 - [PDF Creation](docs/pdf-creation-dag.md)
 - [PDF Creation Cleanup](docs/pdf-creation-cleanup-dag.md)
+- [JPEG Derivatives](docs/jpeg-derivatives-dag.md)
 
 ## Testing
 
