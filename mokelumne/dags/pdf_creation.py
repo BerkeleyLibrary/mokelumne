@@ -2,6 +2,7 @@
 
 import json
 import logging
+from datetime import datetime, timezone
 from http import HTTPStatus
 from pathlib import Path
 
@@ -273,6 +274,7 @@ def pdf_creation(): # pylint: disable=too-many-locals
         result = finished_job["result"]
         output_path = Path(result["output_path"])
         sha256 = result["sha256"]
+        date_done = finished_job.get("date_done") or datetime.now(timezone.utc).isoformat()
 
         # Validate the PDF
         valid, error_msg = pdf_utils.validate_pdf(output_path, sha256)
@@ -283,7 +285,7 @@ def pdf_creation(): # pylint: disable=too-many-locals
                 "job_id": finished_job.get("id", "UNKNOWN"),
                 "status": "VALIDATION_FAILED",
                 "output_path": result["output_path"],
-                "date_done": finished_job.get("date_done", "UNKNOWN"),
+                "date_done": date_done,
                 "error": error_msg,
             }
 
@@ -299,7 +301,7 @@ def pdf_creation(): # pylint: disable=too-many-locals
                 "job_id": finished_job.get("id", "UNKNOWN"),
                 "status": "PUBLISH_FAILED",
                 "output_path": result["output_path"],
-                "date_done": finished_job.get("date_done", "UNKNOWN"),
+                "date_done": date_done,
                 "error": str(e),
             }
 
@@ -309,7 +311,7 @@ def pdf_creation(): # pylint: disable=too-many-locals
             "job_id": finished_job.get("id", "UNKNOWN"),
             "status": "PUBLISHED",
             "output_path": str(published_path),
-            "date_done": finished_job.get("date_done", "UNKNOWN"),
+            "date_done": date_done,
             "error": None,
         }
 

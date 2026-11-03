@@ -1,6 +1,7 @@
 """Test the pdf_creation DAG."""
 
 import json
+from datetime import datetime
 from unittest.mock import Mock
 
 import pytest
@@ -380,6 +381,7 @@ class TestPDFCreationDag:
         result = validate_and_publish(finished_job)
 
         publish_pdf.assert_not_called()
+        datetime.fromisoformat(result["date_done"])
         assert result["status"] == "VALIDATION_FAILED"
         assert result["output_path"] == str(output_path)
         assert result["error"] == "PDF hash mismatch"
@@ -407,6 +409,7 @@ class TestPDFCreationDag:
 
         result = validate_and_publish(finished_job)
 
+        datetime.fromisoformat(result["date_done"])
         assert result["status"] == "PUBLISH_FAILED"
         assert result["output_path"] == str(output_path)
         assert result["error"] == "destination unavailable"
