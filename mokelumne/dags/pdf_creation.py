@@ -2,6 +2,7 @@
 
 import json
 import logging
+from datetime import datetime, timezone
 from http import HTTPStatus
 from pathlib import Path
 
@@ -112,7 +113,7 @@ def check_job_status(response: Response) -> PokeReturnValue:
         ),
     },
 )
-def pdf_creation():
+def pdf_creation(): # pylint: disable=too-many-locals
     """Create searchable PDFs from document directories."""
 
     @task
@@ -236,7 +237,7 @@ def pdf_creation():
 
     # 6 - Wait for OCR.....
     # Will poll for up to a week for success or failure.
-    # xcom for each submission will be a dict with keys "output_path" and "sha256" if successful
+    # xcom for each response will be a dict with the job_id, status, and result (if done).
     wait_for_pdf = HttpSensor.partial(
         task_id="wait_for_pdf",
         http_conn_id="quiabo_default",
@@ -247,11 +248,92 @@ def pdf_creation():
         exponential_backoff=True,
     ).expand_kwargs(sensor_kwargs)
 
-    # 7 - Validate and publish
-    #   TODO: Fail and log any jobs that returned a "FAILURE" status 
+    # 7 - Select successful OCR jobs for publication
+    @task
+    def select_successful_job(finished_job: dict) -> dict | None:
+        """Return successful OCR jobs and filter non-successful jobs."""
+        status = finished_job.get("status")
 
-    # 8 - Cleanup
+        if status != "SUCCESS":
+            logger.warning(
+                "OCR job %s completed with status %s; not publishing",
+                finished_job.get("id", "UNKNOWN"),
+                status,
+            )
+            return None
 
-    validation >> run_path >> documents >> processed_documents >> submissions >> wait_for_pdf
+        return finished_job
+
+    # 8 - Validate and publish each successful OCR job independently
+    @task
+    def validate_and_publish(finished_job: dict) -> dict:
+        """Validate one generated PDF and publish it to the destination."""
+        context = get_current_context()
+        destination_path = Path(context["params"]["destination"])
+
+        result = finished_job["result"]
+        output_path = Path(result["output_path"])
+        sha256 = result["sha256"]
+        date_done = finished_job.get("date_done") or datetime.now(timezone.utc).isoformat()
+
+        # Validate the PDF
+        valid, error_msg = pdf_utils.validate_pdf(output_path, sha256)
+
+        if not valid:
+            logger.error("Failed to validate PDF: %s", error_msg)
+            return {
+                "job_id": finished_job.get("id", "UNKNOWN"),
+                "status": "VALIDATION_FAILED",
+                "output_path": result["output_path"],
+                "date_done": date_done,
+                "error": error_msg,
+            }
+
+        # Publish the PDF to the destination
+        try:
+            published_path = pdf_utils.publish_pdf(
+                output_path,
+                destination_path,
+            )
+        except OSError as e:
+            logger.error("Failed to publish PDF: %s", e)
+            return {
+                "job_id": finished_job.get("id", "UNKNOWN"),
+                "status": "PUBLISH_FAILED",
+                "output_path": result["output_path"],
+                "date_done": date_done,
+                "error": str(e),
+            }
+
+        logger.info("Published PDF: %s", published_path)
+
+        return {
+            "job_id": finished_job.get("id", "UNKNOWN"),
+            "status": "PUBLISHED",
+            "output_path": str(published_path),
+            "date_done": date_done,
+            "error": None,
+        }
+
+    successful_jobs = select_successful_job.expand(finished_job=wait_for_pdf.output)
+
+    publication_results = validate_and_publish.expand(finished_job=successful_jobs)
+
+    # 9 - Summarize results using finished jobs and published pdfs
+    # should use trigger_rule="all_done"
+
+    # 10 - Final status task to succeed or fail the DAG based on whether any jobs were published
+    # successfully.  If no jobs were published, the DAG will fail.
+
+    (
+        validation
+        >> run_path
+        >> documents
+        >> processed_documents
+        >> submissions
+        >> wait_for_pdf
+        >> successful_jobs
+        >> publication_results
+    )
 
 pdf_creation()

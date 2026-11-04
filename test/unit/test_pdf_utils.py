@@ -1,5 +1,6 @@
 """PyTest cases for the mokelumne.util.pdf_utils module."""
 
+import hashlib
 from pathlib import Path
 
 import pytest
@@ -218,6 +219,61 @@ class TestPDFUtils:
             match="Output path exists and is not a regular file",
         ):
             pdf_utils.output_exists(tmp_path, "document.pdf")
+
+    def test_validate_pdf_accepts_matching_hash(self, tmp_path: Path):
+        """Accept a PDF file when its SHA-256 hash matches."""
+        pdf_path = tmp_path / "document.pdf"
+        pdf_contents = b"%PDF-1.7 test document"
+        pdf_path.write_bytes(pdf_contents)
+        expected_hash = hashlib.sha256(pdf_contents).hexdigest()
+
+        assert pdf_utils.validate_pdf(pdf_path, expected_hash) == (True, None)
+
+    def test_validate_pdf_rejects_missing_file(self, tmp_path: Path):
+        """Reject a PDF path that does not exist."""
+        pdf_path = tmp_path / "missing.pdf"
+
+        valid, error = pdf_utils.validate_pdf(pdf_path, "abc123")
+
+        assert valid is False
+        assert error is not None
+        assert "PDF file does not exist" in error
+
+    def test_validate_pdf_rejects_directory(self, tmp_path: Path):
+        """Reject a PDF path that points to a directory."""
+        pdf_path = tmp_path / "document.pdf"
+        pdf_path.mkdir()
+
+        valid, error = pdf_utils.validate_pdf(pdf_path, "abc123")
+
+        assert valid is False
+        assert error is not None
+        assert "PDF path is not a file" in error
+
+    def test_validate_pdf_rejects_hash_mismatch(self, tmp_path: Path):
+        """Reject a PDF file when its computed SHA-256 hash differs."""
+        pdf_path = tmp_path / "document.pdf"
+        pdf_path.write_bytes(b"%PDF-1.7 test document")
+
+        valid, error = pdf_utils.validate_pdf(pdf_path, "abc123")
+
+        assert valid is False
+        assert error is not None
+        assert "PDF hash mismatch" in error
+
+    def test_publish_pdf_moves_file_to_destination(self, tmp_path: Path):
+        """Move a validated PDF into the destination directory."""
+        source_path = tmp_path / "workspace" / "document.pdf"
+        destination_path = tmp_path / "published"
+        source_path.parent.mkdir()
+        destination_path.mkdir()
+        source_path.write_bytes(b"%PDF-1.7 test document")
+
+        published_path = pdf_utils.publish_pdf(source_path, destination_path)
+
+        assert published_path == destination_path / "document.pdf"
+        assert published_path.read_bytes() == b"%PDF-1.7 test document"
+        assert not source_path.exists()
 
     def test_prepare_workspace_creates_directory(self, tmp_path: Path):
         """Create the document workspace when it does not exist."""
