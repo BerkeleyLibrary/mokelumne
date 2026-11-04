@@ -22,6 +22,10 @@ airflow_skip_exception = process_document.__globals__["AirflowSkipException"]
 class TestPDFCreationDag:
     """Tests for the pdf_creation DAG."""
 
+    def test_dag_tags(self):
+        """Verify the PDF creation DAG has the expected tags."""
+        assert set(DAG.tags) == {"pdf", "creation"}
+
     def test_valid_submission_accepts_pending_job(self):
         """Accept a valid HTTP 202 job submission response."""
         response = Mock()

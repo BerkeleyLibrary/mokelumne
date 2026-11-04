@@ -61,6 +61,7 @@ def check_job_status(response: Response) -> PokeReturnValue:
     description="Creates searchable PDFs from directories of source images",
     schedule=None,
     catchup=False,
+    tags=["pdf", "creation"],
     params={
         "source": Param(
             default="tmp/srv/pa/collection1",

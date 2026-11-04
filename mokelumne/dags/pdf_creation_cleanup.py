@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
     dag_id="pdf_creation_cleanup",
     schedule=None,
     catchup=False,
+    tags=["pdf", "cleanup"],
     params={
         "cleanup_window": Param(
             default=30,
