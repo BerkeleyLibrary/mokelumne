@@ -24,7 +24,7 @@ class TestPDFCreationDag:
 
     def test_dag_tags(self):
         """Verify the PDF creation DAG has the expected tags."""
-        assert set(DAG.tags) == {"pdf", "creation"}
+        assert set(DAG.tags) == {"dlp", "pdf", "creation"}
 
     def test_valid_submission_accepts_pending_job(self):
         """Accept a valid HTTP 202 job submission response."""
