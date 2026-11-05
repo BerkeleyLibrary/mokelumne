@@ -14,6 +14,10 @@ DAG = get_dag("pdf_creation_cleanup")
 class TestPdfCleanup:
     """Tests for the PDF cleanup DAG."""
 
+    def test_dag_tags(self):
+        """Verify the PDF cleanup DAG has the expected tags."""
+        assert set(DAG.tags) == {"pdf", "cleanup"}
+
     def test_calculate_cutoff(self, monkeypatch):
         """Calculate the cleanup cutoff and maximum lookback dates."""
         task = DAG.get_task("calculate_cutoff").python_callable
