@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>PDF creation results</title>
+</head>
+<body>
+  <h1>PDF creation results</h1>
+  <dl>
+    <dt>Source directory</dt>
+    <dd>{{ source }}</dd>
+    <dt>Destination directory</dt>
+    <dd>{{ destination }}</dd>
+    <dt>OCR language</dt>
+    <dd>{{ language or "automatic" }}</dd>
+    <dt>Jobs</dt>
+    <dd>{{ total }} total: {{ published|length }} published, {{ failed|length }} failed</dd>
+  </dl>
+
+  {% if failed %}
+  <h2>Failed ({{ failed|length }})</h2>
+  <table>
+    <thead>
+      <tr><th>Job</th><th>Status</th><th>Completed At</th><th>Output</th><th>Error</th></tr>
+    </thead>
+    <tbody>
+      {% for job in failed %}
+      <tr>
+        <td>{{ job.job_id }}</td>
+        <td>{{ job.status }}</td>
+        <td>{{ job.date_done }}</td>
+        <td>{{ job.output_path or "" }}</td>
+        <td>{{ job.error or "" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  {% if published %}
+  <h2>Published ({{ published|length }})</h2>
+  <table>
+    <thead>
+      <tr><th>Job</th><th>Completed At</th><th>Output</th></tr>
+    </thead>
+    <tbody>
+      {% for job in published %}
+      <tr>
+        <td>{{ job.job_id }}</td>
+        <td>{{ job.date_done }}</td>
+        <td>{{ job.output_path }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  {% if not total %}
+  <p>No jobs were run.</p>
+  {% endif %}
+</body>
+</html>
