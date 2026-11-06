@@ -21,7 +21,7 @@
   <h2>Failed ({{ failed|length }})</h2>
   <table>
     <thead>
-      <tr><th>Job</th><th>Status</th><th>Finished</th><th>Output</th><th>Error</th></tr>
+      <tr><th>Job</th><th>Status</th><th>Completed At</th><th>Output</th><th>Error</th></tr>
     </thead>
     <tbody>
       {% for job in failed %}
@@ -41,7 +41,7 @@
   <h2>Published ({{ published|length }})</h2>
   <table>
     <thead>
-      <tr><th>Job</th><th>Finished</th><th>Output</th></tr>
+      <tr><th>Job</th><th>Completed At</th><th>Output</th></tr>
     </thead>
     <tbody>
       {% for job in published %}
