@@ -12,7 +12,8 @@ from airflow.sdk import Param, PokeReturnValue, Variable, dag, get_current_conte
 from celery.states import ALL_STATES, READY_STATES
 from requests import Response
 
-from mokelumne.util import pdf_utils, storage
+from mokelumne.plugins.static_files.helpers import static_files_run_dir
+from mokelumne.util import pdf_report, pdf_utils, storage
 
 logger = logging.getLogger(__name__)
 
@@ -322,7 +323,28 @@ def pdf_creation(): # pylint: disable=too-many-locals
     publication_results = validate_and_publish.expand(finished_job=successful_jobs)
 
     # 9 - Summarize results using finished jobs and published pdfs
-    # should use trigger_rule="all_done"
+    @task(trigger_rule="all_done")
+    def generate_summary(finished_jobs, publications) -> str:
+        """Write index.html summarizing published and failed jobs; return its directory."""
+        context = get_current_context()
+        params = context["params"]
+
+        results = [
+            *pdf_report.failed_ocr_results(finished_jobs or []),
+            *(publications or []),
+        ]
+        html = pdf_report.render_results_html(
+            source=params["source"],
+            destination=params["destination"],
+            language=params["language"],
+            results=results,
+        )
+
+        output_dir = static_files_run_dir(context["dag"].dag_id, context["run_id"])
+        (output_dir / "index.html").write_text(html, encoding="utf-8")
+        return str(output_dir)
+
+    summary = generate_summary(wait_for_pdf.output, publication_results)
 
     # 10 - Final status task to succeed or fail the DAG based on whether any jobs were published
     # successfully.  If no jobs were published, the DAG will fail.
@@ -336,6 +358,7 @@ def pdf_creation(): # pylint: disable=too-many-locals
         >> wait_for_pdf
         >> successful_jobs
         >> publication_results
+        >> summary
     )
 
 pdf_creation()
