@@ -16,7 +16,6 @@ status_endpoint = DAG.get_task("submit_ocr_job").partial_kwargs["response_filter
 select_successful_job = DAG.get_task("select_successful_job").python_callable
 validate_and_publish = DAG.get_task("validate_and_publish").python_callable
 process_document = DAG.get_task("process_document").python_callable
-airflow_skip_exception = process_document.__globals__["AirflowSkipException"]
 
 
 class TestPDFCreationDag:
@@ -229,7 +228,7 @@ class TestPDFCreationDag:
         }
 
     def test_process_document_skips_existing_output(self, monkeypatch, tmp_path):
-        """Skip processing when the expected output PDF already exists."""
+        """Filter existing PDFs without preparing or submitting them for OCR."""
         monkeypatch.setitem(
             process_document.__globals__,
             "get_current_context",
@@ -241,17 +240,80 @@ class TestPDFCreationDag:
                 }
             },
         )
+
         pdf_utils_module = process_document.__globals__["pdf_utils"]
         monkeypatch.setattr(pdf_utils_module, "output_exists", Mock(return_value=True))
 
-        with pytest.raises(
-            airflow_skip_exception,
-            match="Output PDF already exists",
-        ):
-            process_document(
-                {"source": str(tmp_path / "document_001"), "output": "document_001.pdf"},
-                str(tmp_path / "run"),
-            )
+        prepare_workspace = Mock()
+        prepare_images = Mock()
+        monkeypatch.setattr(pdf_utils_module, "prepare_workspace", prepare_workspace)
+        monkeypatch.setattr(pdf_utils_module, "prepare_images", prepare_images)
+
+        result = process_document(
+            {"source": str(tmp_path / "document_001"), "output": "document_001.pdf"},
+            str(tmp_path / "run"),
+        )
+
+        assert result is None
+        prepare_workspace.assert_not_called()
+        prepare_images.assert_not_called()
+
+    def test_process_document_filters_existing_pdf_in_mixed_batch(
+        self, monkeypatch, tmp_path
+    ):
+        """Filter existing PDFs while preparing new documents for OCR."""
+        destination = tmp_path / "destination"
+        run_path = tmp_path / "run"
+
+        monkeypatch.setitem(
+            process_document.__globals__,
+            "get_current_context",
+            lambda: {
+                "params": {
+                    "destination": str(destination),
+                    "language": "eng",
+                    "max_resolution": 300,
+                }
+            },
+        )
+
+        pdf_utils_module = process_document.__globals__["pdf_utils"]
+
+        def output_exists(_destination, filename):
+            return filename == "existing.pdf"
+
+        monkeypatch.setattr(pdf_utils_module, "output_exists", output_exists)
+        monkeypatch.setattr(
+            pdf_utils_module,
+            "prepare_workspace",
+            Mock(return_value=run_path / "new"),
+        )
+        monkeypatch.setattr(
+            pdf_utils_module,
+            "determine_language",
+            Mock(return_value="eng"),
+        )
+        monkeypatch.setattr(
+            pdf_utils_module,
+            "prepare_images",
+            Mock(return_value=run_path / "new" / "filelist.txt"),
+        )
+
+        existing_result = process_document(
+            {"source": str(tmp_path / "existing"), "output": "existing.pdf"},
+            str(run_path),
+        )
+        new_result = process_document(
+            {"source": str(tmp_path / "new"), "output": "new.pdf"},
+            str(run_path),
+        )
+
+        assert existing_result is None
+        assert json.loads(new_result) == {
+            "filelist": str(run_path / "new" / "filelist.txt"),
+            "languages": ["eng"],
+            "output": str(destination / "new.pdf"),
+        }
 
     def test_polling_tasks_are_connected(self):
         """Ensure submissions flow through kwargs generation to the sensor."""

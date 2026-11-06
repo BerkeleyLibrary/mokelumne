@@ -9,7 +9,6 @@ from pathlib import Path
 from airflow.providers.http.operators.http import HttpOperator
 from airflow.providers.http.sensors.http import HttpSensor
 from airflow.sdk import Param, PokeReturnValue, Variable, dag, get_current_context, task
-from airflow.sdk.exceptions import AirflowSkipException
 from celery.states import ALL_STATES, READY_STATES
 from requests import Response
 
@@ -162,9 +161,11 @@ def pdf_creation(): # pylint: disable=too-many-locals
 
         # 1 - Check if output PDF already exists (skip if it does)
         if pdf_utils.output_exists(destination_path, document["output"]):
-            raise AirflowSkipException(
-                f"Output PDF already exists: {destination_path / document['output']}"
+            logger.info(
+                "Skipping document because output PDF already exists: %s",
+                destination_path / document["output"],
             )
+            return None
 
         # 2 - Prepare workspace!
         workspace_path = pdf_utils.prepare_workspace(
