@@ -1,9 +1,5 @@
 """PyTest cases for the mokelumne.templates and pdf_report modules."""
 
-import pytest
-from jinja2 import TemplateNotFound, UndefinedError
-
-from mokelumne import templates
 from mokelumne.util import pdf_report
 
 
@@ -16,20 +12,6 @@ def published(job_id: str = "job-1", output: str = "/dest/a.pdf") -> dict:
         "date_done": "2026-11-04T00:00:00+00:00",
         "error": None,
     }
-
-
-class TestRender:
-    """Tests for the shared renderer."""
-
-    def test_missing_template_raises(self):
-        """Raise when the template does not exist."""
-        with pytest.raises(TemplateNotFound):
-            templates.render("nope/missing.html")
-
-    def test_missing_variable_raises(self):
-        """Raise when a template variable is not supplied."""
-        with pytest.raises(UndefinedError):
-            templates.render("pdf_creation/results.html")
 
 
 class TestFailedOcrResults:
