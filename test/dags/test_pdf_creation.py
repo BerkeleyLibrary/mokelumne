@@ -5,6 +5,7 @@ from datetime import datetime
 from unittest.mock import Mock
 
 import pytest
+from airflow.sdk.exceptions import AirflowFailException
 
 from test.util.dag_helper import get_dag
 
@@ -16,6 +17,7 @@ status_endpoint = DAG.get_task("submit_ocr_job").partial_kwargs["response_filter
 select_successful_job = DAG.get_task("select_successful_job").python_callable
 validate_and_publish = DAG.get_task("validate_and_publish").python_callable
 process_document = DAG.get_task("process_document").python_callable
+final_status = DAG.get_task("final_status").python_callable
 
 
 class TestPDFCreationDag:
@@ -177,6 +179,12 @@ class TestPDFCreationDag:
             task.task_id for task in validate_and_publish_task.upstream_list
         }
 
+        final_status_task = DAG.get_task("final_status")
+        assert final_status_task.trigger_rule == "all_done"
+        assert validate_and_publish_task.task_id in {
+            task.task_id for task in final_status_task.upstream_list
+        }
+
     def test_process_document_task_exists(self):
         """Ensure process_document task exists."""
         assert DAG.get_task("process_document")
@@ -308,8 +316,10 @@ class TestPDFCreationDag:
             str(run_path),
         )
 
-        assert existing_result is None
-        assert json.loads(new_result) == {
+        mapped_results = [existing_result, new_result]
+
+        assert mapped_results[0] is None
+        assert json.loads(mapped_results[1]) == {
             "filelist": str(run_path / "new" / "filelist.txt"),
             "languages": ["eng"],
             "output": str(destination / "new.pdf"),
@@ -479,3 +489,77 @@ class TestPDFCreationDag:
         assert result["status"] == "PUBLISH_FAILED"
         assert result["output_path"] == str(output_path)
         assert result["error"] == "destination unavailable"
+
+    def test_final_status_succeeds_when_all_publications_succeed(self):
+        """Succeed when every submitted job was published."""
+        assert final_status([{"job_id": "job-123", "status": "PUBLISHED"}]) is None
+
+    @pytest.mark.parametrize("status", ["VALIDATION_FAILED", "PUBLISH_FAILED"])
+    def test_final_status_fails_for_unsuccessful_publication(self, status):
+        """Fail with the job details when a publication did not succeed."""
+        publications = [
+            {
+                "job_id": "job-123",
+                "status": status,
+                "error": "publication error",
+            }
+        ]
+
+        with pytest.raises(AirflowFailException) as exc_info:
+            final_status(publications)
+
+        assert json.loads(str(exc_info.value)) == {
+            "message": "Some jobs failed to publish",
+            "unpublished": publications,
+        }
+
+    def test_final_status_fails_when_there_are_no_publications(self):
+        """Fail when no documents produced a publication result."""
+        with pytest.raises(
+            AirflowFailException,
+            match="No jobs were published successfully",
+        ):
+            final_status([])
+
+    def test_generate_summary_runs_after_publication_regardless_of_upstream(self):
+        """Ensure the summary follows publication and runs even when upstream fails."""
+        summary = DAG.get_task("generate_summary")
+
+        assert summary.trigger_rule == "all_done"
+        assert "validate_and_publish" in {task.task_id for task in summary.upstream_list}
+
+    def test_generate_summary_writes_index_html(self, monkeypatch, tmp_path):
+        """Write index.html with published and failed jobs to the run directory."""
+        generate_summary = DAG.get_task("generate_summary").python_callable
+        monkeypatch.setitem(
+            generate_summary.__globals__,
+            "get_current_context",
+            lambda: {
+                "params": {"source": "/src", "destination": "/dest", "language": "eng"},
+                "dag": Mock(dag_id="pdf_creation"),
+                "run_id": "run-1",
+            },
+        )
+        monkeypatch.setitem(
+            generate_summary.__globals__,
+            "static_files_run_dir",
+            lambda dag_id, run_id: tmp_path,
+        )
+        finished = [{"id": "job-2", "status": "FAILURE", "result": "boom"}]
+        published = [
+            {
+                "job_id": "job-1",
+                "status": "PUBLISHED",
+                "output_path": "/dest/a.pdf",
+                "date_done": "2026-11-04T00:00:00+00:00",
+                "error": None,
+            },
+            None,
+        ]
+
+        output_dir = generate_summary(finished, published)
+
+        html = (tmp_path / "index.html").read_text(encoding="utf-8")
+        assert output_dir == str(tmp_path)
+        assert "2 total: 1 published, 1 failed" in html
+        assert "boom" in html
