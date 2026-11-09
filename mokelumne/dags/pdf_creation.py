@@ -346,8 +346,25 @@ def pdf_creation(): # pylint: disable=too-many-locals
 
     summary = generate_summary(wait_for_pdf.output, publication_results)
 
-    # 10 - Final status task to succeed or fail the DAG based on whether any jobs were published
-    # successfully.  If no jobs were published, the DAG will fail.
+    # 10 - Final status task to succeed or fail the DAG based on whether all
+    # unskipped jobs were published successfully.  If no jobs were published, the DAG will fail.
+    @task(trigger_rule="none_failed_min_one_success")
+    def final_status(publications) -> None:
+        """Fail the DAG if no jobs were published successfully."""
+        if not publications:
+            raise AirflowFailException("No jobs were published successfully.")
+
+        all_successful = all(pub_result["status"] == "PUBLISHED" for pub_result in publications)
+        if not all_successful:
+            for pub_result in publications:
+                if pub_result["status"] != "PUBLISHED":
+                    raise AirflowFailException(
+                        f"Job {pub_result['job_id']} failed to publish: {pub_result['error']}"
+                    )
+        else:
+            return None
+
+    final = final_status(publication_results)
 
     (
         validation
@@ -359,6 +376,7 @@ def pdf_creation(): # pylint: disable=too-many-locals
         >> successful_jobs
         >> publication_results
         >> summary
+        >> final_status
     )
 
 pdf_creation()
