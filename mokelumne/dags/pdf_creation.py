@@ -9,7 +9,7 @@ from pathlib import Path
 from airflow.providers.http.operators.http import HttpOperator
 from airflow.providers.http.sensors.http import HttpSensor
 from airflow.sdk import Param, PokeReturnValue, Variable, dag, get_current_context, task
-from airflow.exceptions import AirflowFailException
+from airflow.sdk.exceptions import AirflowFailException
 from celery.states import ALL_STATES, READY_STATES
 from requests import Response
 
@@ -357,11 +357,20 @@ def pdf_creation(): # pylint: disable=too-many-locals
 
         all_successful = all(pub_result["status"] == "PUBLISHED" for pub_result in publications)
         if not all_successful:
-            for pub_result in publications:
-                if pub_result["status"] != "PUBLISHED":
-                    raise AirflowFailException(
-                        f"Job {pub_result['job_id']} failed to publish: {pub_result['error']}"
+            unpublished = [
+                pub_result
+                for pub_result in publications
+                if pub_result["status"] != "PUBLISHED"
+            ]
+            if unpublished:
+                raise AirflowFailException(
+                    json.dumps(
+                        {
+                            "message": "Some jobs failed to publish",
+                            "unpublished": unpublished,
+                        }, indent=2,
                     )
+                )
         else:
             return None
 

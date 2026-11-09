@@ -5,7 +5,7 @@ from datetime import datetime
 from unittest.mock import Mock
 
 import pytest
-from airflow.exceptions import AirflowFailException
+from airflow.sdk.exceptions import AirflowFailException
 
 from test.util.dag_helper import get_dag
 
@@ -505,11 +505,13 @@ class TestPDFCreationDag:
             }
         ]
 
-        with pytest.raises(
-            AirflowFailException,
-            match="Job job-123 failed to publish: publication error",
-        ):
+        with pytest.raises(AirflowFailException) as exc_info:
             final_status(publications)
+
+        assert json.loads(str(exc_info.value)) == {
+            "message": "Some jobs failed to publish",
+            "unpublished": publications,
+        }
 
     def test_final_status_fails_when_there_are_no_publications(self):
         """Fail when no documents produced a publication result."""
