@@ -9,6 +9,7 @@ from pathlib import Path
 from airflow.providers.http.operators.http import HttpOperator
 from airflow.providers.http.sensors.http import HttpSensor
 from airflow.sdk import Param, PokeReturnValue, Variable, dag, get_current_context, task
+from airflow.exceptions import AirflowFailException
 from celery.states import ALL_STATES, READY_STATES
 from requests import Response
 
@@ -348,7 +349,7 @@ def pdf_creation(): # pylint: disable=too-many-locals
 
     # 10 - Final status task to succeed or fail the DAG based on whether all
     # unskipped jobs were published successfully.  If no jobs were published, the DAG will fail.
-    @task(trigger_rule="none_failed_min_one_success")
+    @task(trigger_rule="all_done")
     def final_status(publications) -> None:
         """Fail the DAG if no jobs were published successfully."""
         if not publications:
@@ -375,8 +376,6 @@ def pdf_creation(): # pylint: disable=too-many-locals
         >> wait_for_pdf
         >> successful_jobs
         >> publication_results
-        >> summary
-        >> final_status
     )
 
 pdf_creation()
