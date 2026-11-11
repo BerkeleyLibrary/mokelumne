@@ -485,21 +485,6 @@ class TestPDFUtils:
 
         assert mms_id is None
 
-    def test_determine_language_uses_requested_language(self, monkeypatch):
-        """Use the requested language without looking up the document in Alma."""
-
-        def fail_if_alma_called():
-            raise AssertionError("Alma should not be called when language is provided")
-
-        monkeypatch.setattr(pdf_utils, "AlmaHook", fail_if_alma_called)
-
-        language = pdf_utils.determine_language(
-            "jpn",
-            "991234567890123456_document",
-        )
-
-        assert language == "jpn"
-
     def test_determine_language_uses_defaults_without_mms_id(self, monkeypatch):
         """Use the default languages when the document has no MMS ID."""
 
@@ -537,10 +522,17 @@ class TestPDFUtils:
 
         assert language == "ara+fra"
 
-    def test_determine_language_uses_defaults_when_alma_has_no_languages(
-        self, monkeypatch
+    @pytest.mark.parametrize(
+        "requested_language,expected_language",
+        [
+            pytest.param("tur+kmr", "tur+kmr", id="with_requested_fallback"),
+            pytest.param("", "eng+spa+fra+ita+deu", id="with_default_fallback")
+        ]
+    )
+    def test_determine_language_fallback_when_alma_returns_no_languages(
+        self, monkeypatch, requested_language, expected_language
     ):
-        """Use the default languages when no languages can be derived from Alma."""
+        """Use fallback languages when no languages can be derived from Alma."""
 
         class FakeAlmaHook:
             def get_record_by_mms_id(self, _mms_id):
@@ -554,8 +546,8 @@ class TestPDFUtils:
         )
 
         language = pdf_utils.determine_language(
-            "",
+            requested_language,
             "991234567890123456_document",
         )
 
-        assert language == "eng+spa+fra+ita+deu"
+        assert language == expected_language

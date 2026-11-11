@@ -270,18 +270,18 @@ def determine_language(
     document_name: str,
 ) -> str:
     """Determine the Tesseract language codes for a document."""
-    if requested_language:
-        return requested_language
 
+    fallback_language = requested_language if requested_language else DEFAULT_OCR_LANGUAGES
+    
     mms_id = extract_mms_id(document_name)
 
     if not mms_id:
-        return DEFAULT_OCR_LANGUAGES
+        return fallback_language
 
     record_xml = AlmaHook().get_record_by_mms_id(mms_id)
     language = marc.derive_tesseract_codes_from_marc(record_xml)
 
     if not language:
-        return DEFAULT_OCR_LANGUAGES
+        return fallback_language
 
     return language
