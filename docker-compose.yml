@@ -74,8 +74,6 @@ x-airflow-common: &airflow-common
   volumes:
     - ./:/opt/airflow
     - ./artifacts:/home/airflow/artifacts
-    - ./files:/opt/airflow/files
-    - ./test:/opt/airflow/test
     - ./tmp:/srv
   user: "${AIRFLOW_UID:-40093}:0"
 
@@ -355,6 +353,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 15s
- 
+
 volumes:
   postgres-db-volume:
