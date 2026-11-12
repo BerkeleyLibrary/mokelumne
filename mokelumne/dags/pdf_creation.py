@@ -80,13 +80,15 @@ def check_job_status(response: Response) -> PokeReturnValue:
         ),
         "language": params.configurable_param(
             "pdf_creation_language_",
-            default="eng",
+            default=pdf_utils.DEFAULT_OCR_LANGUAGES,
             type="string",
             minLength=0,
             title="OCR Language",
-            description=(
-                "Optional Tesseract language code to use instead of "
-                "automatic language selection."
+            description_md=(
+                "Tesseract [language codes](https://tesseract-ocr.github.io/tessdoc/Data-Files-in-different-versions.html) "
+                "to use instead of automatic language selection from an "
+                "associated Alma record. Language codes should be delimited "
+                "by a **+**."
             ),
         ),
         "max_poll_interval": params.configurable_param(
