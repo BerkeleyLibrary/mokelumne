@@ -34,6 +34,7 @@ license = "MIT"
 
 [project.optional-dependencies]
 test = [
+    "apache-airflow-client ~= 3.3.2",
     "pytest",
     "pytest-cov",
     # Declared explicitly (rather than relying on Airflow's transitive install)
@@ -103,4 +104,5 @@ markers = [
     "dags: test actual DAG / task code",
     "e2e: end-to-end browser tests (require playwright sidecar and running Airflow stack)",
     "unit: fast isolated unit tests with no external dependencies",
+    "live_ocr: submits real OCR jobs; requires --run-live-ocr and running Quiabo/Tesseract",
 ]

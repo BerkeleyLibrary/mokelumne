@@ -11,6 +11,35 @@ from mokelumne.util import pdf_utils
 MM_PER_INCH = 25.4
 
 
+@pytest.mark.parametrize("output_path", [None, Path("/output/document.pdf")])
+def test_document_status_xcom_arguments(output_path: Path | None) -> None:
+    """Unpack the common key and serialized status into XCom push arguments."""
+    document = {"source": "/source/document", "output": "document.pdf"}
+    pushed = {}
+
+    def xcom_push(*, key, value):
+        pushed[key] = value
+
+    xcom_push(**pdf_utils.DocumentStatus(
+        document=document,
+        status=pdf_utils.DocumentStatus.PUBLISHED,
+        job_id="job-123",
+        output_path=output_path,
+        date_done="2026-11-16T12:00:00+00:00",
+    ))
+
+    assert pushed == {
+        "document_status": {
+            "document": document,
+            "status": "PUBLISHED",
+            "job_id": "job-123",
+            "output_path": str(output_path) if output_path is not None else None,
+            "date_done": "2026-11-16T12:00:00+00:00",
+            "error": None,
+        },
+    }
+
+
 class TestPDFUtils:
     """Test for PDF utils module"""
 

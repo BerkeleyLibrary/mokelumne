@@ -1,144 +1,29 @@
 """Test the pdf_creation DAG."""
 
 import json
-from datetime import datetime
-from unittest.mock import Mock, create_autospec
+import hashlib
+from copy import copy
+from unittest.mock import Mock
 
 import pytest
 from airflow.sdk.exceptions import AirflowFailException
-from airflow.sdk.types import TaskInstance
 
-from test.conftest import mock_ti
 from test.util.dag_helper import get_dag
 
 
 DAG = get_dag("pdf_creation")
-check_job_status = DAG.get_task("wait_for_pdf").partial_kwargs["response_check"]
-valid_submission = DAG.get_task("submit_ocr_job").partial_kwargs["response_check"]
-status_endpoint = DAG.get_task("submit_ocr_job").partial_kwargs["response_filter"]
-select_successful_job = DAG.get_task("select_successful_job").python_callable
-validate_and_publish = DAG.get_task("validate_and_publish").python_callable
-process_document = DAG.get_task("process_document").python_callable
-final_status = DAG.get_task("final_status").python_callable
+check_ocr_job_status = DAG.get_task("process_document.check_job_status").python_callable
+validate_pdf = DAG.get_task("process_document.validate_pdf").python_callable
+publish_pdf = DAG.get_task("process_document.publish_pdf").python_callable
+check_for_errors = DAG.get_task("check_for_errors").python_callable
 
-@pytest.fixture
-def mock_process_document_ti(
-    dag_id="pdf_creation",
-    run_id="manual__2026-01-01T00:00:00+00:00",
-    task_id="process_document",
-    map_index=1
-):
-    yield mock_ti(
-        dag_id=dag_id, run_id=run_id, task_id=task_id, map_index=map_index
-    )
+
 class TestPDFCreationDag:
     """Tests for the pdf_creation DAG."""
 
     def test_dag_tags(self):
         """Verify the PDF creation DAG has the expected tags."""
         assert set(DAG.tags) == {"dlp", "pdf", "creation"}
-
-    def test_valid_submission_accepts_pending_job(self):
-        """Accept a valid HTTP 202 job submission response."""
-        response = Mock()
-        response.status_code = 202
-        response.json.return_value = {
-            "job_id": "job-123",
-            "job_status": "jobs/job-123",
-            "status": "PENDING",
-        }
-
-        assert valid_submission(response) is True
-
-    @pytest.mark.parametrize(
-        "status_code,payload",
-        [
-            (
-                200,
-                {
-                    "job_id": "job-123",
-                    "job_status": "jobs/job-123",
-                    "status": "PENDING",
-                },
-            ),
-            (202, {"job_status": "jobs/job-123", "status": "PENDING"}),
-            (202, {"job_id": "job-123", "status": "PENDING"}),
-            (
-                202,
-                {
-                    "job_id": "job-123",
-                    "job_status": "jobs/job-123",
-                    "status": "STARTED",
-                },
-            ),
-        ],
-        ids=["wrong-http-status", "missing-job-id", "missing-job-status", "not-pending"],
-    )
-    def test_valid_submission_rejects_invalid_response(self, status_code, payload):
-        """Reject responses that do not match Quiabo's submission contract."""
-        response = Mock()
-        response.status_code = status_code
-        response.json.return_value = payload
-
-        assert valid_submission(response) is False
-
-    def test_status_endpoint_returns_job_status_path(self):
-        """Use Quiabo's job status path for subsequent HTTP polling."""
-        response = Mock()
-        response.json.return_value = {"job_status": "jobs/job-123"}
-
-        assert status_endpoint(response) == "jobs/job-123"
-
-    @pytest.mark.parametrize("status", ["PENDING", "STARTED"])
-    def test_check_job_status_continues_polling(self, status):
-        """Keep polling while a job is in a nonterminal state."""
-        response = Mock()
-        response.json.return_value = {"id": "job-123", "status": status}
-
-        result = check_job_status(response)
-
-        assert result.is_done is False
-        assert result.xcom_value is None
-
-    @pytest.mark.parametrize(
-        "payload",
-        [
-            {
-                "id": "job-123",
-                "status": "SUCCESS",
-                "result": {
-                    "output_path": "/srv/test/output.pdf",
-                    "sha256": "abc123",
-                },
-                "date_done": "2026-10-08T12:00:00",
-            },
-            {
-                "id": "job-123",
-                "status": "FAILURE",
-                "result": "Tesseract failed",
-                "traceback": "Traceback: Tesseract failed",
-            },
-            {"id": "job-123", "status": "REVOKED"},
-        ],
-        ids=["success", "failure", "revoked"],
-    )
-    def test_check_job_status_returns_terminal_payload(self, payload):
-        """Return the response payload when a job reaches a terminal state."""
-        response = Mock()
-        response.json.return_value = payload
-
-        result = check_job_status(response)
-
-        assert result.is_done is True
-        assert result.xcom_value == payload
-
-    def test_check_job_status_rejects_unknown_status(self):
-        """Reject statuses that Celery does not recognize."""
-        response = Mock()
-        response.json.return_value = {"status": "UNKNOWN"}
-
-        with pytest.raises(ValueError, match="Unexpected job status: UNKNOWN"):
-            check_job_status(response)
 
     def test_validate_inputs_task_exists(self):
         """Ensure validate_inputs task exists."""
@@ -157,434 +42,252 @@ class TestPDFCreationDag:
         assert "max_total_poll_time" in DAG.params
         assert "max_resolution" in DAG.params
 
-    def test_task_order(self):
-        """Ensure DAG tasks execute in the expected order."""
-        validate_inputs = DAG.get_task("validate_inputs")
-        prepare_run_directory = DAG.get_task("prepare_run_directory")
-        discover_documents = DAG.get_task("discover_documents")
-        process_document_task = DAG.get_task("process_document")
-        submit_ocr_job = DAG.get_task("submit_ocr_job")
-        wait_for_pdf = DAG.get_task("wait_for_pdf")
-        select_successful_job_task = DAG.get_task("select_successful_job")
-        validate_and_publish_task = DAG.get_task("validate_and_publish")
+    def test_submission_polling_and_publication_order(self):
+        """Submit prepared requests, poll their jobs, then publish completed PDFs."""
+        assert {"process_document.prepare_images", "process_document.determine_language"} <= (
+            DAG.get_task("process_document.submit_ocr_job").upstream_task_ids
+        )
+        assert "process_document.submit_ocr_job" in DAG.get_task(
+            "process_document.await_job_completion"
+        ).upstream_task_ids
+        assert "process_document.await_job_completion" in DAG.get_task(
+            "process_document.check_job_status"
+        ).upstream_task_ids
+        assert "process_document.check_job_status" in DAG.get_task(
+            "process_document.validate_pdf"
+        ).upstream_task_ids
+        assert "process_document.validate_pdf" in DAG.get_task(
+            "process_document.publish_pdf"
+        ).upstream_task_ids
 
-        assert [task.task_id for task in validate_inputs.downstream_list] == [
-            "prepare_run_directory"
-        ]
-        assert {
-            task.task_id for task in prepare_run_directory.downstream_list
-        } == {
+    def test_documents_are_processed_in_a_mapped_group(self):
+        """Map the document-processing group over discovery results."""
+        group = DAG.task_group.children["process_document"]
+        assert {task.task_id for task in group.iter_mapped_dependencies()} == {
             "discover_documents",
-            "process_document",
         }
-        assert [task.task_id for task in discover_documents.downstream_list] == [
-            "process_document"
-        ]
-        assert process_document_task.task_id in {
-            task.task_id for task in submit_ocr_job.upstream_list
-        }
-        assert wait_for_pdf.task_id in {
-            task.task_id for task in select_successful_job_task.upstream_list
-        }
-        assert select_successful_job_task.task_id in {
-            task.task_id for task in validate_and_publish_task.upstream_list
-        }
+        assert "prepare_run_directory" in DAG.get_task("discover_documents").upstream_task_ids
+        assert "validate_inputs" in DAG.get_task("prepare_run_directory").upstream_task_ids
 
-        final_status_task = DAG.get_task("final_status")
-        assert final_status_task.trigger_rule == "all_done"
-        assert validate_and_publish_task.task_id in {
-            task.task_id for task in final_status_task.upstream_list
-        }
-
-    def test_process_document_task_exists(self):
-        """Ensure process_document task exists."""
-        assert DAG.get_task("process_document")
-
-    def test_process_document_prepares_job_payload(self, mock_process_document_ti, monkeypatch, tmp_path):
-        """Prepare images and return the payload submitted to Quiabo."""
-        source_path = tmp_path / "document_001"
-        workspace_path = tmp_path / "run" / "document_001"
-        file_list_path = workspace_path / "filelist.txt"
-        ti = mock_process_document_ti
-        context = {
-            "params": {
-                "destination": str(tmp_path / "destination"),
-                "language": "",
-                "max_resolution": 300,
-            },
-            "task_instance": ti
-        }
-        monkeypatch.setitem(
-            process_document.__globals__,
-            "get_current_context",
-            lambda: context,
-        )
-        pdf_utils_module = process_document.__globals__["pdf_utils"]
-        monkeypatch.setattr(pdf_utils_module, "output_exists", Mock(return_value=False))
-        monkeypatch.setattr(
-            pdf_utils_module,
-            "prepare_workspace",
-            Mock(return_value=workspace_path),
-        )
-        monkeypatch.setattr(
-            pdf_utils_module,
-            "determine_language",
-            Mock(return_value="eng+fra"),
-        )
-        monkeypatch.setattr(
-            pdf_utils_module,
-            "prepare_images",
-            Mock(return_value=file_list_path),
-        )
-
-        result = process_document(
-            {"source": str(source_path), "output": "document_001.pdf"},
-            str(tmp_path / "run"),
-            ti,
-        )
-
-        assert json.loads(result) == {
-            "filelist": str(file_list_path),
-            "languages": ["eng", "fra"],
-            "output": str(tmp_path / "destination" / "document_001.pdf"),
-            "correlation_id": "mokelumne/pdf_creation/manual__2026-01-01T00:00:00+00:00/process_document/1"
-        }
-
-    def test_process_document_skips_existing_output(self,  mock_process_document_ti, monkeypatch, tmp_path):
-        """Filter existing PDFs without preparing or submitting them for OCR."""
-        ti = mock_process_document_ti
-        monkeypatch.setitem(
-            process_document.__globals__,
-            "get_current_context",
-            lambda: {
-                "params": {
-                    "destination": str(tmp_path),
-                    "language": "eng",
-                    "max_resolution": 300,
-                },
-                "task_instance": ti
-            },
-        )
-
-        pdf_utils_module = process_document.__globals__["pdf_utils"]
-        monkeypatch.setattr(pdf_utils_module, "output_exists", Mock(return_value=True))
-
-        prepare_workspace = Mock()
-        prepare_images = Mock()
-        monkeypatch.setattr(pdf_utils_module, "prepare_workspace", prepare_workspace)
-        monkeypatch.setattr(pdf_utils_module, "prepare_images", prepare_images)
-
-        result = process_document(
-            {"source": str(tmp_path / "document_001"), "output": "document_001.pdf"},
-            str(tmp_path / "run"),
-            ti
-        )
-
-        assert result is None
-        prepare_workspace.assert_not_called()
-        prepare_images.assert_not_called()
-
-    def test_process_document_filters_existing_pdf_in_mixed_batch(
-        self, mock_process_document_ti, monkeypatch, tmp_path
-    ):
-        """Filter existing PDFs while preparing new documents for OCR."""
-        destination = tmp_path / "destination"
-        run_path = tmp_path / "run"
-        ti = mock_process_document_ti
-        ti.map_index = 0
-
-        monkeypatch.setitem(
-            process_document.__globals__,
-            "get_current_context",
-            lambda: {
-                "params": {
-                    "destination": str(destination),
-                    "language": "eng",
-                    "max_resolution": 300,
-                },
-                "task_instance": ti
-            },
-        )
-
-        pdf_utils_module = process_document.__globals__["pdf_utils"]
-
-        def output_exists(_destination, filename):
-            return filename == "existing.pdf"
-
-        monkeypatch.setattr(pdf_utils_module, "output_exists", output_exists)
-        monkeypatch.setattr(
-            pdf_utils_module,
-            "prepare_workspace",
-            Mock(return_value=run_path / "new"),
-        )
-        monkeypatch.setattr(
-            pdf_utils_module,
-            "determine_language",
-            Mock(return_value="eng"),
-        )
-        monkeypatch.setattr(
-            pdf_utils_module,
-            "prepare_images",
-            Mock(return_value=run_path / "new" / "filelist.txt"),
-        )
-
-        existing_result = process_document(
-            {"source": str(tmp_path / "existing"), "output": "existing.pdf"},
-            str(run_path), ti
-        )
-        new_ti = mock_process_document_ti
-        new_ti.map_index = 1
-        new_ti.run_id = "manual__2026-11-01T00:00:00+00:00"
-        new_result = process_document(
-            {"source": str(tmp_path / "new"), "output": "new.pdf"},
-            str(run_path), new_ti
-        )
-
-        mapped_results = [existing_result, new_result]
-
-        assert mapped_results[0] is None
-        assert json.loads(mapped_results[1]) == {
-            "filelist": str(run_path / "new" / "filelist.txt"),
-            "languages": ["eng"],
-            "output": str(destination / "new.pdf"),
-            "correlation_id": "mokelumne/pdf_creation/manual__2026-11-01T00:00:00+00:00/process_document/1"
-        }
-
-    def test_polling_tasks_are_connected(self):
-        """Ensure submissions flow through kwargs generation to the sensor."""
-        submissions = DAG.get_task("submit_ocr_job")
-        set_sensor_kwargs = DAG.get_task("set_sensor_kwargs")
-        wait_for_pdf = DAG.get_task("wait_for_pdf")
-
-        assert submissions in set_sensor_kwargs.upstream_list
-        assert set_sensor_kwargs in wait_for_pdf.upstream_list
-
-    def test_set_sensor_kwargs_converts_polling_params_to_seconds(self, monkeypatch):
-        """Convert poll interval hours and total poll days to sensor seconds."""
-        task = DAG.get_task("set_sensor_kwargs").python_callable
-        monkeypatch.setitem(
-            task.__globals__,
-            "get_current_context",
-            lambda: {
-                "params": {
-                    "max_poll_interval": 2,
-                    "max_total_poll_time": 4,
-                }
-            },
-        )
-
-        result = task(["jobs/hash-id-1", "jobs/hash-id-2"])
-
-        assert result == [
-            {
-                "endpoint": "jobs/hash-id-1",
-                "max_wait": 2 * 60 * 60,
-                "timeout": 4 * 24 * 60 * 60,
-            },
-            {
-                "endpoint": "jobs/hash-id-2",
-                "max_wait": 2 * 60 * 60,
-                "timeout": 4 * 24 * 60 * 60,
-            },
-        ]
+    def test_document_status_waits_for_publication_even_after_failure(self):
+        """Collect each document's status after its processing tasks finish."""
+        status = DAG.get_task("process_document.return_document_status")
+        assert status.trigger_rule == "all_done"
+        assert "process_document.publish_pdf" in status.upstream_task_ids
 
     def test_prepare_run_directory(self, monkeypatch, tmp_path):
-        """Create and return the scratch directory for the Dag run."""
+        """Create and return the scratch directory for the supplied run ID."""
         task = DAG.get_task("prepare_run_directory").python_callable
+        monkeypatch.setenv("AIRFLOW_VAR_PDF_CREATION_SCRATCH_BASE", str(tmp_path))
 
-        monkeypatch.setitem(
-            task.__globals__,
-            "get_current_context",
-            lambda: {
-                "run_id": "test_run",
-            },
-        )
-
-        variable = Mock()
-        variable.get.return_value = str(tmp_path)
-
-        monkeypatch.setitem(
-            task.__globals__,
-            "Variable",
-            variable,
-        )
-
-        result = task()
+        result = task(run_id="test_run")
 
         assert result == str(tmp_path / "test_run")
         assert (tmp_path / "test_run").is_dir()
-        variable.get.assert_called_once_with("pdf_creation_scratch_base")
 
     @pytest.mark.parametrize("status", ["FAILURE", "REVOKED"])
-    def test_select_successful_job_filters_unsuccessful_jobs(self, status):
-        """Do not pass failed or revoked OCR jobs to publication."""
-        finished_job = {"id": "job-123", "status": status}
+    def test_check_job_status_rejects_unsuccessful_jobs(self, status):
+        """Record failed OCR jobs and fail without trying to publish them."""
+        document = {"source": "/src/document", "output": "document.pdf"}
+        ti = Mock()
 
-        assert select_successful_job(finished_job) is None
+        error = f"Job 'job-123' {status}: Tesseract failed"
+        with pytest.raises(AirflowFailException, match=error):
+            check_ocr_job_status(
+                document,
+                {"id": "job-123", "status": status, "result": "Tesseract failed"},
+                ti,
+            )
 
-    def test_select_successful_job_returns_successful_job(self):
-        """Pass successful OCR jobs to PDF validation and publication."""
-        finished_job = {"id": "job-123", "status": "SUCCESS"}
+        assert ti.xcom_push.call_args.kwargs["value"]["status"] == "OCR_JOB_FAILED"
+        assert ti.xcom_push.call_args.kwargs["value"]["error"] == error
 
-        assert select_successful_job(finished_job) == finished_job
-
-    def test_validate_and_publish_publishes_valid_pdf(self, monkeypatch, tmp_path):
-        """Validate the Quiabo output and publish a valid PDF."""
+    def test_successful_job_is_validated_and_published(self, tmp_path):
+        """Validate and publish an actual PDF file, recording its publication path."""
         output_path = tmp_path / "output.pdf"
-        published_path = tmp_path / "published" / "output.pdf"
-        finished_job = {
-            "id": "job-123",
-            "status": "SUCCESS",
-            "result": {"output_path": str(output_path), "sha256": "abc123"},
+        output_path.write_bytes(b"%PDF-1.4\n%%EOF\n")
+        destination = tmp_path / "published"
+        destination.mkdir()
+        document = {"source": "/src/document", "output": "output.pdf"}
+        job = {
+            "id": "job-123", "status": "SUCCESS",
+            "result": {
+                "output_path": str(output_path),
+                "sha256": hashlib.sha256(output_path.read_bytes()).hexdigest(),
+            },
             "date_done": "2026-10-08T12:00:00",
         }
-        monkeypatch.setitem(
-            validate_and_publish.__globals__,
-            "get_current_context",
-            lambda: {"params": {"destination": str(tmp_path / "published")}},
+        ti = Mock()
+
+        successful_job = check_ocr_job_status(document, job, ti)
+        validated_job = validate_pdf(document, successful_job, ti)
+        assert publish_pdf(document, validated_job, str(destination), ti) == document
+
+        assert (destination / "output.pdf").read_bytes() == b"%PDF-1.4\n%%EOF\n"
+        ti.xcom_push.assert_called_once_with(
+            key="document_status",
+            value={
+                "document": document, "job_id": "job-123", "status": "PUBLISHED",
+                "output_path": str(destination / "output.pdf"),
+                "date_done": "2026-10-08T12:00:00", "error": None,
+            },
         )
-        validate_pdf = Mock(return_value=(True, None))
-        publish_pdf = Mock(return_value=published_path)
-        monkeypatch.setattr("mokelumne.util.pdf_utils.validate_pdf", validate_pdf)
-        monkeypatch.setattr("mokelumne.util.pdf_utils.publish_pdf", publish_pdf)
 
-        result = validate_and_publish(finished_job)
-
-        validate_pdf.assert_called_once_with(output_path, "abc123")
-        publish_pdf.assert_called_once_with(output_path, tmp_path / "published")
-        assert result == {
-            "job_id": "job-123",
-            "status": "PUBLISHED",
-            "output_path": str(published_path),
-            "date_done": "2026-10-08T12:00:00",
-            "error": None,
+    def test_validate_pdf_reports_invalid_pdf(self, tmp_path):
+        """Reject a checksum mismatch without publishing the PDF."""
+        output = tmp_path / "output.pdf"
+        output.write_bytes(b"%PDF-1.4\n%%EOF\n")
+        destination = tmp_path / "published"
+        destination.mkdir()
+        job = {
+            "id": "job-123", "status": "SUCCESS",
+            "result": {"output_path": str(output), "sha256": "wrong-checksum"},
         }
+        ti = Mock()
 
-    def test_validate_and_publish_reports_invalid_pdf(self, monkeypatch, tmp_path):
-        """Return a validation failure without attempting publication."""
-        output_path = tmp_path / "output.pdf"
-        finished_job = {
-            "id": "job-123",
-            "result": {"output_path": str(output_path), "sha256": "abc123"},
-        }
-        monkeypatch.setitem(
-            validate_and_publish.__globals__,
-            "get_current_context",
-            lambda: {"params": {"destination": str(tmp_path)}},
-        )
-        monkeypatch.setattr(
-            "mokelumne.util.pdf_utils.validate_pdf",
-            Mock(return_value=(False, "PDF hash mismatch")),
-        )
-        publish_pdf = Mock()
-        monkeypatch.setattr("mokelumne.util.pdf_utils.publish_pdf", publish_pdf)
+        with pytest.raises(AirflowFailException, match="hash mismatch"):
+            validate_pdf(
+                {"source": "/src/a", "output": "output.pdf"},
+                job | {"date_done": "2026-10-08T12:00:00"},
+                ti,
+            )
 
-        result = validate_and_publish(finished_job)
+        assert list(destination.iterdir()) == []
+        assert ti.xcom_push.call_args.kwargs["value"]["status"] == "PDF_VALIDATION_FAILED"
 
-        publish_pdf.assert_not_called()
-        datetime.fromisoformat(result["date_done"])
-        assert result["status"] == "VALIDATION_FAILED"
-        assert result["output_path"] == str(output_path)
-        assert result["error"] == "PDF hash mismatch"
-
-    def test_validate_and_publish_reports_publication_error(self, monkeypatch, tmp_path):
-        """Return a publication failure when moving the validated PDF fails."""
-        output_path = tmp_path / "output.pdf"
-        finished_job = {
-            "id": "job-123",
-            "result": {"output_path": str(output_path), "sha256": "abc123"},
-        }
-        monkeypatch.setitem(
-            validate_and_publish.__globals__,
-            "get_current_context",
-            lambda: {"params": {"destination": str(tmp_path)}},
-        )
-        monkeypatch.setattr(
-            "mokelumne.util.pdf_utils.validate_pdf",
-            Mock(return_value=(True, None)),
-        )
+    def test_publish_pdf_reports_publication_error(self, monkeypatch, tmp_path):
+        """Record publication errors before failing the task."""
         monkeypatch.setattr(
             "mokelumne.util.pdf_utils.publish_pdf",
             Mock(side_effect=OSError("destination unavailable")),
         )
-
-        result = validate_and_publish(finished_job)
-
-        datetime.fromisoformat(result["date_done"])
-        assert result["status"] == "PUBLISH_FAILED"
-        assert result["output_path"] == str(output_path)
-        assert result["error"] == "destination unavailable"
-
-    def test_final_status_succeeds_when_all_publications_succeed(self):
-        """Succeed when every submitted job was published."""
-        assert final_status([{"job_id": "job-123", "status": "PUBLISHED"}]) is None
-
-    @pytest.mark.parametrize("status", ["VALIDATION_FAILED", "PUBLISH_FAILED"])
-    def test_final_status_fails_for_unsuccessful_publication(self, status):
-        """Fail with the job details when a publication did not succeed."""
-        publications = [
-            {
-                "job_id": "job-123",
-                "status": status,
-                "error": "publication error",
-            }
-        ]
-
-        with pytest.raises(AirflowFailException) as exc_info:
-            final_status(publications)
-
-        assert json.loads(str(exc_info.value)) == {
-            "message": "Some jobs failed to publish",
-            "unpublished": publications,
+        ti = Mock()
+        job = {
+            "id": "job-123", "status": "SUCCESS",
+            "result": {"output_path": str(tmp_path / "output.pdf"), "sha256": "abc123"},
         }
 
-    def test_final_status_fails_when_there_are_no_publications(self):
-        """Fail when no documents produced a publication result."""
-        with pytest.raises(
-            AirflowFailException,
-            match="No jobs were published successfully",
-        ):
-            final_status([])
+        with pytest.raises(AirflowFailException, match="destination unavailable"):
+            publish_pdf(
+                {"source": "/src/a", "output": "output.pdf"},
+                job | {"date_done": "2026-10-08T12:00:00"},
+                str(tmp_path),
+                ti,
+            )
 
-    def test_generate_summary_runs_after_publication_regardless_of_upstream(self):
-        """Ensure the summary follows publication and runs even when upstream fails."""
-        summary = DAG.get_task("generate_summary")
+        status = ti.xcom_push.call_args.kwargs["value"]
+        assert status["status"] == "PUBLISH_FAILED"
+        assert status["error"] == "destination unavailable"
 
-        assert summary.trigger_rule == "all_done"
-        assert "validate_and_publish" in {task.task_id for task in summary.upstream_list}
+    @pytest.mark.parametrize("results", [
+        {"job_id": "job-123", "status": "PUBLISHED"},
+        [{"job_id": "job-123", "status": "PUBLISHED"}],
+    ])
+    def test_check_for_errors_succeeds_when_all_publications_succeed(self, results):
+        """Accept successful processing as either a singleton or mapped results."""
+        assert check_for_errors(results) is None
+
+    def test_check_for_errors_accepts_skips_alongside_publication(self):
+        """Succeed when at least one document was published and the others were skipped."""
+        assert check_for_errors([
+            {"status": "PUBLISHED"},
+            {"status": "PDF_ALREADY_EXISTS"},
+        ]) is None
+
+    def test_check_for_errors_accepts_all_skipped_documents(self):
+        """Succeed when discovered documents already have output PDFs."""
+        assert check_for_errors([
+            {"status": "PDF_ALREADY_EXISTS"},
+            {"status": "PDF_ALREADY_EXISTS"},
+        ]) is None
+
+    @pytest.mark.parametrize("status", ["PDF_VALIDATION_FAILED", "PUBLISH_FAILED"])
+    def test_check_for_errors_fails_for_unsuccessful_publication(self, status):
+        """Fail with document details when a publication did not succeed."""
+        failed = {"job_id": "job-123", "status": status, "error": "publication error"}
+        with pytest.raises(AirflowFailException) as exc_info:
+            check_for_errors([
+                {"status": "PUBLISHED"},
+                {"status": "PDF_ALREADY_EXISTS"},
+                failed,
+            ])
+
+        assert json.loads(str(exc_info.value)) == {
+            "message": "Some documents failed to publish", "unpublished": [failed],
+        }
+
+    def test_check_for_errors_fails_when_no_documents_are_discovered(self):
+        """Fail when discovery produced no document results."""
+        with pytest.raises(AirflowFailException, match="No documents were discovered"):
+            check_for_errors([])
+
+    def test_summary_follows_document_statuses(self):
+        """Render collected document statuses before the final error check."""
+        assert "process_document.return_document_status" in (
+            DAG.get_task("generate_summary").upstream_task_ids
+        )
+        assert "generate_summary" in DAG.get_task("check_for_errors").upstream_task_ids
 
     def test_generate_summary_writes_index_html(self, monkeypatch, tmp_path):
-        """Write index.html with published and failed jobs to the run directory."""
+        """Render published and failed document statuses to the run's index page."""
         generate_summary = DAG.get_task("generate_summary").python_callable
         monkeypatch.setitem(
-            generate_summary.__globals__,
-            "get_current_context",
-            lambda: {
-                "params": {"source": "/src", "destination": "/dest", "language": "eng"},
-                "dag": Mock(dag_id="pdf_creation"),
-                "run_id": "run-1",
-            },
-        )
-        monkeypatch.setitem(
-            generate_summary.__globals__,
-            "static_files_run_dir",
+            generate_summary.__globals__, "static_files_run_dir",
             lambda dag_id, run_id: tmp_path,
         )
-        finished = [{"id": "job-2", "status": "FAILURE", "result": "boom"}]
-        published = [
+        document_results = [
             {
-                "job_id": "job-1",
-                "status": "PUBLISHED",
-                "output_path": "/dest/a.pdf",
-                "date_done": "2026-11-04T00:00:00+00:00",
-                "error": None,
+                "document": {"source": "/src/b", "output": "b.pdf"},
+                "job_id": None, "status": "PROCESSING_FAILED", "output_path": None,
+                "date_done": None, "error": "boom",
             },
-            None,
+            {
+                "document": {"source": "/src/a", "output": "a.pdf"},
+                "job_id": "job-1", "status": "PUBLISHED", "output_path": "/dest/a.pdf",
+                "date_done": "2026-11-04T00:00:00+00:00", "error": None,
+            },
         ]
 
-        output_dir = generate_summary(finished, published)
+        output_dir = generate_summary(document_results, "/src", "/dest", "eng", "pdf_creation", "run-1")
 
         html = (tmp_path / "index.html").read_text(encoding="utf-8")
         assert output_dir == str(tmp_path)
-        assert "2 total: 1 published, 1 failed" in html
+        assert "2 total: 1 published, 0 skipped, 1 failed" in html
         assert "boom" in html
+
+
+def test_map_index_uses_document_directory_name() -> None:
+    """Label mapped documents with the source directory name rather than its full path."""
+    document = {
+        "source": "/opt/airflow/test/fixtures/pdf_creation/inputs/tesseract-failure",
+        "output": "tesseract-failure.pdf",
+    }
+    named_tasks = [
+        task for task in DAG.tasks
+        if "op_kwargs" in task.template_fields and task.map_index_template is not None
+    ]
+    assert named_tasks
+    for task in named_tasks:
+        assert "document" in task.op_kwargs
+        rendered_task = copy(task)
+        rendered_task.op_kwargs = task.op_kwargs | {"document": document}
+        assert rendered_task.render_template(
+            task.map_index_template, {"task": rendered_task},
+        ) == "tesseract-failure"
+
+
+@pytest.mark.parametrize("task_id", [
+    "process_document.submit_ocr_job",
+    "process_document.await_job_completion",
+])
+def test_http_task_map_index_uses_document_directory_name(task_id: str) -> None:
+    """Label HTTP submission and polling with the same document directory name."""
+    task = copy(DAG.get_task(task_id))
+    assert "document" in task.template_fields
+    assert task.document is not None
+    task.document = {
+        "source": "/opt/airflow/test/fixtures/pdf_creation/inputs/tesseract-failure",
+        "output": "tesseract-failure.pdf",
+    }
+
+    assert task.render_template(task.map_index_template, {"task": task}) == "tesseract-failure"
