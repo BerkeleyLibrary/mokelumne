@@ -14,28 +14,6 @@ def published(job_id: str = "job-1", output: str = "/dest/a.pdf") -> dict:
     }
 
 
-class TestFailedOcrResults:
-    """Tests for failed_ocr_results."""
-
-    def test_skips_success_and_none(self):
-        """Ignore successful and empty jobs."""
-        jobs = [{"id": "a", "status": "SUCCESS"}, None]
-        assert not pdf_report.failed_ocr_results(jobs)
-
-    def test_failure_includes_error(self):
-        """Report non-successful jobs with their result as the error."""
-        jobs = [{"id": "a", "status": "FAILURE", "result": "boom", "date_done": "d"}]
-        assert pdf_report.failed_ocr_results(jobs) == [
-            {
-                "job_id": "a",
-                "status": "FAILURE",
-                "output_path": None,
-                "date_done": "d",
-                "error": "boom",
-            }
-        ]
-
-
 class TestRenderResultsHtml:
     """Tests for render_results_html."""
 
@@ -44,13 +22,36 @@ class TestRenderResultsHtml:
         return pdf_report.render_results_html("/src", "/dest", "eng", results)
 
     def test_mixed_counts(self):
-        """Show counts and both sections for mixed results."""
+        """Count published, skipped, and failed results separately, ignoring missing entries."""
         failed = {**published("job-2"), "status": "PUBLISH_FAILED", "error": "disk full"}
-        html = self.render([published(), failed, None])
-        assert "2 total: 1 published, 1 failed" in html
+        skipped = {
+            **published("job-3", "/dest/skipped.pdf"),
+            "document": {"source": "/src/skipped", "output": "skipped.pdf"},
+            "status": "PDF_ALREADY_EXISTS",
+        }
+        html = self.render([published(), failed, skipped, None])
+        assert "3 total: 1 published, 1 skipped, 1 failed" in html
+        assert "Skipped (1)" in html
         assert "Failed (1)" in html
         assert "Published (1)" in html
         assert "disk full" in html
+
+    def test_skipped_document_is_not_reported_as_an_error(self):
+        """Show an existing PDF only in the skipped section with its document path."""
+        skipped = {
+            **published(output="/dest/skipped.pdf"),
+            "document": {"source": "/src/skipped", "output": "skipped.pdf"},
+            "status": "PDF_ALREADY_EXISTS",
+            "job_id": None,
+        }
+        html = self.render([skipped])
+
+        assert "1 total: 0 published, 1 skipped, 0 failed" in html
+        assert "Skipped (1)" in html
+        assert "/src/skipped" in html
+        assert "/dest/skipped.pdf" in html
+        assert "Failed (" not in html
+        assert "Published (" not in html
 
     def test_empty(self):
         """Say so when no jobs ran."""

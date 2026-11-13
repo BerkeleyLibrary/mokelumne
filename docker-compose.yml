@@ -120,6 +120,19 @@ services:
         set -eo pipefail
         /entrypoint airflow db migrate
 
+        # Keep the local API test account aligned with the Keycloak test credentials.
+        if airflow users list --output json | grep '"username": *"testadmin"' >/dev/null; then
+          airflow users reset-password --username testadmin --password testadmin
+        else
+          airflow users create \
+            --username testadmin \
+            --firstname Test \
+            --lastname Admin \
+            --email testadmin@localhost \
+            --role Admin \
+            --password testadmin
+        fi
+
         # Configure PDF cleanup API access when a password is provided.
         if [ -n "$${PDF_CLEANUP_API_PASSWORD:-}" ]; then
           if ! airflow users list --output json | grep -q '"username": *"pdf_cleanup_service"'; then

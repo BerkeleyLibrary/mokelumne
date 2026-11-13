@@ -43,7 +43,7 @@ docker compose run \
 docker compose up --detach
 
 # If using localstack to mimic s3 bucket for local development
-docker compose --profile localstack --detach 
+docker compose --profile localstack --detach
 
 # Open airflow in the browser (see below for test credentials)
 open http://localhost:8080/
@@ -81,6 +81,16 @@ docker compose exec airflow-cli python3 -m pytest -k test_dags_load_with_no_erro
 ```
 
 Test results / reports are written to the `./artifacts/pytest` directory.
+
+### Testing w/Quiabo (for OCR)
+
+The e2e OCR tests require that you have Quiabo running and wired up properly to Mokelumne. Given that, you can run the e2e tests (exercised via the Airflow API) by enabling tests marked live_ocr:
+
+```sh
+docker compose exec airflow-cli python -m pytest --run-live-ocr -m live_ocr
+```
+
+The test's API Client uses `PYTEST_AIRFLOW_API_BASE_URL` to determine the API base URL. If running from your local machine (not in Docker), tweak it to point to `http://localhost:8080`.
 
 ## Configuration
 
@@ -137,3 +147,5 @@ It will also create the following users with roles mapped from calnet groups in 
 | `testadmin`  | `testadmin`  | Admin/User |
 | `testuser`   | `testuser`   | User       |
 | `testpublic` | `testpublic` | Public     |
+
+The `airflow-init` service also creates the local Airflow `testadmin` account with the Admin role, or resets its password if it already exists. This enables API token login with `testadmin:testadmin`; browser login continues through Keycloak. These fixed credentials are for local development and tests via the API.

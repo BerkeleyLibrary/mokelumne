@@ -8,8 +8,11 @@ import os
 import re
 
 from collections.abc import Generator
+from uuid import uuid4
 
 import pytest
+import requests
+from airflow_client.client import ApiClient, Configuration
 
 from playwright.sync_api import Browser, BrowserContext, Page, Playwright
 
@@ -20,6 +23,7 @@ from playwright.sync_api import Browser, BrowserContext, Page, Playwright
 # as a human driving the UI from their workstation. Host devs running
 # pytest from their shell only need to override PYTEST_PLAYWRIGHT_WS_ENDPOINT.
 AIRFLOW_BASE_URL = os.environ.get("PYTEST_AIRFLOW_BASE_URL", "http://localhost:8080")
+AIRFLOW_API_BASE_URL = os.environ.get("PYTEST_AIRFLOW_API_BASE_URL", "http://airflow-apiserver:8080")
 KEYCLOAK_BASE_URL = os.environ.get("PYTEST_KEYCLOAK_BASE_URL", "http://localhost:8180")
 PLAYWRIGHT_WS_ENDPOINT = os.environ.get("PYTEST_PLAYWRIGHT_WS_ENDPOINT", "ws://playwright:3000/ws")
 
@@ -93,6 +97,29 @@ def logout(page: Page) -> None:
     page.locator('div[data-value="logout"]').click()
     page.get_by_test_id("confirmation-confirm-button").click()
     page.wait_for_url(keycloak_logout_url())
+
+
+@pytest.fixture
+def api_client() -> Generator[ApiClient, None, None]:
+    """Log in as testadmin and close the authenticated Airflow client after use."""
+    response = requests.post(
+        f"{AIRFLOW_API_BASE_URL}/auth/token",
+        json={"username": "testadmin", "password": "testadmin"},
+        timeout=10,
+    )
+    response.raise_for_status()
+    configuration = Configuration(
+        host=AIRFLOW_API_BASE_URL,
+        access_token=response.json()["access_token"],
+    )
+    with ApiClient(configuration) as client:
+        yield client
+
+
+@pytest.fixture
+def dag_run_id(request: pytest.FixtureRequest) -> str:
+    """Create a unique Dag run ID identifying the current pytest test."""
+    return f"pytest__{request.node.name}__{uuid4().hex}"
 
 
 @pytest.fixture

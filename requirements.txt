@@ -177,6 +177,10 @@ apache-airflow==3.3.2 \
     #   apache-airflow-providers-http
     #   apache-airflow-providers-smtp
     #   apache-airflow-providers-standard
+apache-airflow-client==3.3.2 \
+    --hash=sha256:5d5c591b10d579b9382cfa04d2b5b9cc43a47cf51dac560d4efb6ddc092f4593 \
+    --hash=sha256:e9bb8de3717bb3a62a2efa4d31458b35683d775e91c5667f8697df7847baeb49
+    # via mokelumne (pyproject.toml)
 apache-airflow-core==3.3.2 \
     --hash=sha256:53f38e7749a2689a1d67c6e661284ecddaa687c1f7f3cae2d76b2eca7758210f \
     --hash=sha256:99258922bccec15be4700ff89f3c942b8acd93407e263c287ce863e671bb3c50
@@ -2411,6 +2415,7 @@ pydantic==2.13.4 \
     --hash=sha256:45a282cde31d808236fd7ea9d919b128653c8b38b393d1c4ab335c62924d9aba \
     --hash=sha256:c40756b57adaa8b1efeeced5c196f3f3b7c435f90e84ea7f443901bec8099ef6
     # via
+    #   apache-airflow-client
     #   apache-airflow-core
     #   apache-airflow-providers-http
     #   apache-airflow-task-sdk
@@ -2613,6 +2618,7 @@ python-dateutil==2.9.0.post0 \
     --hash=sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3 \
     --hash=sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427
     # via
+    #   apache-airflow-client
     #   apache-airflow-core
     #   apache-airflow-task-sdk
     #   arrow
@@ -3214,6 +3220,7 @@ urllib3==2.7.0 \
     --hash=sha256:231e0ec3b63ceb14667c67be60f2f2c40a518cb38b03af60abc813da26505f4c \
     --hash=sha256:9fb4c81ebbb1ce9531cce37674bbc6f1360472bc18ca9a553ede278ef7276897
     # via
+    #   apache-airflow-client
     #   botocore
     #   requests
 uuid-utils==0.16.1 \
