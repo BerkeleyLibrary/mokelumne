@@ -14,28 +14,6 @@ def published(job_id: str = "job-1", output: str = "/dest/a.pdf") -> dict:
     }
 
 
-class TestFailedOcrResults:
-    """Tests for failed_ocr_results."""
-
-    def test_skips_success_and_none(self):
-        """Ignore successful and empty jobs."""
-        jobs = [{"id": "a", "status": "SUCCESS"}, None]
-        assert not pdf_report.failed_ocr_results(jobs)
-
-    def test_failure_includes_error(self):
-        """Report non-successful jobs with their result as the error."""
-        jobs = [{"id": "a", "status": "FAILURE", "result": "boom", "date_done": "d"}]
-        assert pdf_report.failed_ocr_results(jobs) == [
-            {
-                "job_id": "a",
-                "status": "FAILURE",
-                "output_path": None,
-                "date_done": "d",
-                "error": "boom",
-            }
-        ]
-
-
 class TestRenderResultsHtml:
     """Tests for render_results_html."""
 

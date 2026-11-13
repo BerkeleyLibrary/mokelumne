@@ -1,7 +1,7 @@
 """Test the pdf_creation DAG."""
 
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest.mock import Mock
 
 import pytest
@@ -22,6 +22,18 @@ final_status = DAG.get_task("final_status").python_callable
 
 class TestPDFCreationDag:
     """Tests for the pdf_creation DAG."""
+
+    def test_sensor_polling_limits_use_runtime_params(self):
+        """Apply runtime polling limits before the sensor executes."""
+        runtime_sensor = Mock()
+        configure_polling = check_job_status.__globals__["configure_ocr_polling"]
+        configure_polling({
+            "task": runtime_sensor,
+            "params": {"max_poll_interval": 2, "max_total_poll_time": 5},
+        })
+
+        assert runtime_sensor.max_wait == timedelta(hours=2)
+        assert runtime_sensor.timeout == 432000
 
     def test_dag_tags(self):
         """Verify the PDF creation DAG has the expected tags."""
@@ -526,7 +538,9 @@ class TestPDFCreationDag:
         summary = DAG.get_task("generate_summary")
 
         assert summary.trigger_rule == "all_done"
-        assert "validate_and_publish" in {task.task_id for task in summary.upstream_list}
+        assert "process_document.return_document_status" in {
+            task.task_id for task in summary.upstream_list
+        }
 
     def test_generate_summary_writes_index_html(self, monkeypatch, tmp_path):
         """Write index.html with published and failed jobs to the run directory."""
@@ -545,9 +559,17 @@ class TestPDFCreationDag:
             "static_files_run_dir",
             lambda dag_id, run_id: tmp_path,
         )
-        finished = [{"id": "job-2", "status": "FAILURE", "result": "boom"}]
-        published = [
+        document_results = [
             {
+                "document": {"source": "/src/b", "output": "b.pdf"},
+                "job_id": None,
+                "status": "PROCESSING_FAILED",
+                "output_path": None,
+                "date_done": None,
+                "error": "boom",
+            },
+            {
+                "document": {"source": "/src/a", "output": "a.pdf"},
                 "job_id": "job-1",
                 "status": "PUBLISHED",
                 "output_path": "/dest/a.pdf",
@@ -557,7 +579,7 @@ class TestPDFCreationDag:
             None,
         ]
 
-        output_dir = generate_summary(finished, published)
+        output_dir = generate_summary(document_results)
 
         html = (tmp_path / "index.html").read_text(encoding="utf-8")
         assert output_dir == str(tmp_path)
