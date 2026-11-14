@@ -3,7 +3,6 @@
 import json
 import logging
 from datetime import datetime, timedelta, timezone
-from enum import Enum
 from http import HTTPStatus
 from pathlib import Path
 
@@ -171,21 +170,10 @@ def pdf_creation(): # pylint: disable=too-many-locals
     def process_document(document: pdf_utils.DocumentWorkItem, run_path: str):
         """Processes a single document directory into a PDF using Quiabo"""
 
-
-        class DocumentStatus(Enum):
-            """Indicates valid end states for a given document"""
-            ERROR_PDF_ALREADY_EXISTS = "PDF_ALREADY_EXISTS"
-            ERROR_OCR_JOB_UNSUCCESSFUL = "OCR_JOB_FAILED"
-            ERROR_PDF_INVALID = "PDF_VALIDATION_FAILED"
-            ERROR_PUBLISHING = "PUBLISH_FAILED"
-            ERROR_PROCESSING = "PROCESSING_FAILED"
-            PUBLISHED = "PUBLISHED"
-
-
         def _push_document_status(
             context,
             document: pdf_utils.DocumentWorkItem,
-            status: DocumentStatus,
+            status: pdf_utils.DocumentStatus,
             job_id: str | None = None,
             output_path: Path | None = None,
             date_done: str | None = None,
@@ -232,7 +220,7 @@ def pdf_creation(): # pylint: disable=too-many-locals
                 _push_document_status(
                     context=context,
                     document=document,
-                    status=DocumentStatus.ERROR_PDF_ALREADY_EXISTS,
+                    status=pdf_utils.DocumentStatus.ERROR_PDF_ALREADY_EXISTS,
                     output_path=existing_filepath,
                 )
                 raise AirflowSkipException(
@@ -304,7 +292,7 @@ def pdf_creation(): # pylint: disable=too-many-locals
                 _push_document_status(
                     context=context,
                     document=document,
-                    status=DocumentStatus.ERROR_OCR_JOB_UNSUCCESSFUL,
+                    status=pdf_utils.DocumentStatus.ERROR_OCR_JOB_UNSUCCESSFUL,
                     job_id=job_id,
                     error=errmsg,
                 )
@@ -321,7 +309,7 @@ def pdf_creation(): # pylint: disable=too-many-locals
                 _push_document_status(
                     context=context,
                     document=document,
-                    status=DocumentStatus.ERROR_PDF_INVALID,
+                    status=pdf_utils.DocumentStatus.ERROR_PDF_INVALID,
                     job_id=job_id,
                     date_done=date_done,
                     output_path=output_path,
@@ -338,7 +326,7 @@ def pdf_creation(): # pylint: disable=too-many-locals
                 _push_document_status(
                     context=context,
                     document=document,
-                    status=DocumentStatus.ERROR_PUBLISHING,
+                    status=pdf_utils.DocumentStatus.ERROR_PUBLISHING,
                     job_id=job_id,
                     date_done=date_done,
                     output_path=output_path,
@@ -350,7 +338,7 @@ def pdf_creation(): # pylint: disable=too-many-locals
             _push_document_status(
                 context=context,
                 document=document,
-                status=DocumentStatus.PUBLISHED,
+                status=pdf_utils.DocumentStatus.PUBLISHED,
                 job_id=job_id,
                 date_done=date_done,
                 output_path=str(published_path),
@@ -359,7 +347,7 @@ def pdf_creation(): # pylint: disable=too-many-locals
 
         @task(trigger_rule="all_done")
         def return_document_status(document: pdf_utils.DocumentWorkItem) -> dict:
-            """Return a standardized DocumentStatus summary for the doc
+            """Return a standardized pdf_utils.DocumentStatus summary for the doc
 
             Handles skips, exceptions, and success-cases."""
             context = get_current_context()
@@ -380,7 +368,7 @@ def pdf_creation(): # pylint: disable=too-many-locals
             return {
                 "document": document,
                 "job_id": None,
-                "status": DocumentStatus.ERROR_PROCESSING.value,
+                "status": pdf_utils.DocumentStatus.ERROR_PROCESSING.value,
                 "output_path": None,
                 "date_done": datetime.now(timezone.utc).isoformat(),
                 "error": "Processing ended without a recorded status; see task logs.",

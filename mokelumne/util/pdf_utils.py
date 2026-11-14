@@ -3,6 +3,7 @@
 import hashlib
 import re
 import shutil
+from enum import Enum
 from pathlib import Path
 
 import pyvips  # type: ignore[import-untyped]
@@ -16,6 +17,16 @@ MAX_DOCUMENT_IMAGES = 99_999_999
 MM_PER_INCH = 25.4
 
 DocumentWorkItem = dict[str, str]
+
+
+class DocumentStatus(Enum):
+    """Indicates valid end states for a given document"""
+    ERROR_PDF_ALREADY_EXISTS = "PDF_ALREADY_EXISTS"
+    ERROR_OCR_JOB_UNSUCCESSFUL = "OCR_JOB_FAILED"
+    ERROR_PDF_INVALID = "PDF_VALIDATION_FAILED"
+    ERROR_PUBLISHING = "PUBLISH_FAILED"
+    ERROR_PROCESSING = "PROCESSING_FAILED"
+    PUBLISHED = "PUBLISHED"
 
 
 def validate_source_path(source_path: Path) -> None:
@@ -272,7 +283,7 @@ def determine_language(
     """Determine the Tesseract language codes for a document."""
 
     fallback_language = requested_language if requested_language else DEFAULT_OCR_LANGUAGES
-    
+
     mms_id = extract_mms_id(document_name)
 
     if not mms_id:
