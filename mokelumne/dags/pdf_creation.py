@@ -2,14 +2,14 @@
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from pathlib import Path
 
 from airflow.providers.http.operators.http import HttpOperator
 from airflow.providers.http.sensors.http import HttpSensor
-from airflow.sdk import Param, PokeReturnValue, Variable, dag, get_current_context, task
-from airflow.sdk.exceptions import AirflowFailException
+from airflow.sdk import Param, PokeReturnValue, Variable, dag, get_current_context, task, task_group
+from airflow.sdk.exceptions import AirflowFailException, AirflowSkipException
 from celery.states import ALL_STATES, READY_STATES
 from requests import Response
 
@@ -40,6 +40,13 @@ def status_endpoint(response: Response) -> str:
     """Return polling endpoint from the job submission response."""
 
     return response.json()["job_status"]
+
+
+def configure_ocr_polling(context: dict) -> None:
+    """Set sensor polling limits from the current Dag run's Params."""
+    sensor = context["task"]
+    sensor.max_wait = timedelta(hours=context["params"]["max_poll_interval"])
+    sensor.timeout = timedelta(days=context["params"]["max_total_poll_time"]).total_seconds()
 
 
 def check_job_status(response: Response) -> PokeReturnValue:
@@ -159,240 +166,296 @@ def pdf_creation(): # pylint: disable=too-many-locals
 
         return pdf_utils.discover_documents(source_path)
 
-    @task
+    @task_group
     def process_document(document: pdf_utils.DocumentWorkItem, run_path: str):
-        """Process a document directory into a searchable PDF."""
+        """Processes a single document directory into a PDF using Quiabo"""
 
-        context = get_current_context()
-        document_name = Path(document["source"]).name
-        destination_path = Path(context["params"]["destination"])
-        language = context["params"]["language"]
-        max_resolution = context["params"]["max_resolution"]
+        def _push_document_status(
+            context,
+            document: pdf_utils.DocumentWorkItem,
+            status: pdf_utils.DocumentStatus,
+            job_id: str | None = None,
+            output_path: Path | None = None,
+            date_done: str | None = None,
+            error: str | None = None,
+        ) -> None:
+            """
+            Push a standardized representation of processing status via xcom
 
-        # 1 - Check if output PDF already exists (skip if it does)
-        if pdf_utils.output_exists(destination_path, document["output"]):
-            logger.info(
-                "Skipping document because output PDF already exists: %s",
-                destination_path / document["output"],
+            This helper provides a consistent way to indicate the processing
+            status of a document. Sharing status via xcom allows the use of
+            standard Airflow skip/error exceptions (changing pipeline visualization)
+            without losing the specifics of the failure.
+
+            `output_path` points to something different depending on status.
+            On success or when the PDF already exists, it's the publication path;
+            otherwise, it's the internal output_path reported by Quiabo, or None
+            if nothing has been written.
+            """
+
+            context["ti"].xcom_push(
+                key="document_status",
+                value={
+                    "document": document,
+                    "job_id": job_id,
+                    "status": status.value,
+                    "output_path": str(output_path) if output_path is not None else None,
+                    "date_done": date_done,
+                    "error": error,
+                },
             )
-            return None
 
-        # 2 - Prepare workspace!
-        workspace_path = pdf_utils.prepare_workspace(
-            Path(run_path),
-            document_name,
-        )
+        @task
+        def prepare_ocr_request(document: pdf_utils.DocumentWorkItem, run_path: str) -> str:
+            """Prepare a document directory for OCR, returning Quiabo job submission args encoded as JSON"""
 
-        # Log the workspace path for now; later stages will use it directly.
-        logger.info("Prepared document workspace: %s", workspace_path)
+            context = get_current_context()
+            document_name = Path(document["source"]).name
+            destination_path = Path(context["params"]["destination"])
+            language = context["params"]["language"]
+            max_resolution = context["params"]["max_resolution"]
 
-        # 3 - Determine language
-        language = pdf_utils.determine_language(
-            language,
-            document_name,
-        )
-        logger.info("Using OCR language(s): %s", language)
+            if pdf_utils.output_exists(destination_path, document["output"]):
+                existing_filepath = destination_path / document["output"]
+                _push_document_status(
+                    context=context,
+                    document=document,
+                    status=pdf_utils.DocumentStatus.ERROR_PDF_ALREADY_EXISTS,
+                    output_path=existing_filepath,
+                )
+                raise AirflowSkipException(
+                    f"Skipping document because output PDF already exists: {existing_filepath}"
+                )
 
-        # 4 - Prepare images (size/convert as necessary)
-        file_list_path = pdf_utils.prepare_images(
-            Path(document["source"]),
-            workspace_path,
-            max_resolution,
-        )
-        logger.info("Prepared Tesseract file list: %s", file_list_path)
-
-        return json.dumps(
-            {
-                "filelist": str(file_list_path),
-                "languages": language.split("+"),
-                "output": str(destination_path / document["output"]),
-            }
-        )
-
-    @task
-    def set_sensor_kwargs(endpoints: list[str]) -> list[dict]:
-        """Set kwargs for HttpSensor. This allows us to set runtime polling params."""
-        context = get_current_context()
-        max_wait = 60 * 60 * context["params"]["max_poll_interval"]
-        timeout = 24 * 60 * 60 * context["params"]["max_total_poll_time"]
-
-        return [
-            {
-                "endpoint": endpoint,
-                "max_wait": max_wait,
-                "timeout": timeout
-            }
-            for endpoint in endpoints
-        ]
-
-    validation = validate_inputs()
-    run_path = prepare_run_directory()
-    documents = discover_documents()
-    processed_documents = process_document.partial(
-        run_path=run_path
-    ).expand(document=documents)
-
-    # 5 - Submit OCR job
-    # submissions will be a list of job_status endpoints to poll for completion.
-    submissions = HttpOperator.partial(
-        task_id="submit_ocr_job",
-        http_conn_id="quiabo_default",
-        endpoint="/jobs",
-        method="POST",
-        headers={"Content-Type": "application/json"},
-        response_check=valid_submission,
-        response_filter=status_endpoint,
-        deferrable=False,
-    ).expand(data=processed_documents)
-
-    sensor_kwargs = set_sensor_kwargs(submissions.output)
-
-    # 6 - Wait for OCR.....
-    # Will poll for up to a week for success or failure.
-    # xcom for each response will be a dict with the job_id, status, and result (if done).
-    wait_for_pdf = HttpSensor.partial(
-        task_id="wait_for_pdf",
-        http_conn_id="quiabo_default",
-        response_check=check_job_status,
-        mode="reschedule",
-        deferrable=False,
-        poke_interval=15,
-        exponential_backoff=True,
-    ).expand_kwargs(sensor_kwargs)
-
-    # 7 - Select successful OCR jobs for publication
-    @task
-    def select_successful_job(finished_job: dict) -> dict | None:
-        """Return successful OCR jobs and filter non-successful jobs."""
-        status = finished_job.get("status")
-
-        if status != "SUCCESS":
-            logger.warning(
-                "OCR job %s completed with status %s; not publishing",
-                finished_job.get("id", "UNKNOWN"),
-                status,
+            workspace_path = pdf_utils.prepare_workspace(
+                Path(run_path),
+                document_name,
             )
-            return None
+            logger.info("Prepared document workspace: %s", workspace_path)
 
-        return finished_job
+            language = pdf_utils.determine_language(language, document_name)
+            logger.info("Using OCR language(s): %s", language)
 
-    # 8 - Validate and publish each successful OCR job independently
-    @task
-    def validate_and_publish(finished_job: dict) -> dict:
-        """Validate one generated PDF and publish it to the destination."""
-        context = get_current_context()
-        destination_path = Path(context["params"]["destination"])
+            file_list_path = pdf_utils.prepare_images(
+                Path(document["source"]),
+                workspace_path,
+                max_resolution,
+            )
+            logger.info("Prepared Tesseract file list: %s", file_list_path)
 
-        result = finished_job["result"]
-        output_path = Path(result["output_path"])
-        sha256 = result["sha256"]
-        date_done = finished_job.get("date_done") or datetime.now(timezone.utc).isoformat()
+            return json.dumps(
+                {
+                    "filelist": str(file_list_path),
+                    "languages": language.split("+"),
+                    "output": str(destination_path / document["output"]),
+                }
+            )
 
-        # Validate the PDF
-        valid, error_msg = pdf_utils.validate_pdf(output_path, sha256)
+        def submit_ocr_job(data: str):
+            """Submit job JSON to Quiabo for processing"""
+            return HttpOperator(
+                task_id="submit_ocr_job",
+                http_conn_id="quiabo_default",
+                endpoint="/jobs",
+                method="POST",
+                headers={"Content-Type": "application/json"},
+                data=data,
+                response_check=valid_submission,
+                response_filter=status_endpoint,
+                deferrable=False,
+            )
 
-        if not valid:
-            logger.error("Failed to validate PDF: %s", error_msg)
+        def await_job_completion(endpoint: str):
+            """Wait for Quiabo to report that a job is done processing"""
+            return HttpSensor(
+                task_id="await_job_completion",
+                http_conn_id="quiabo_default",
+                endpoint=endpoint,
+                response_check=check_job_status,
+                mode="reschedule",
+                deferrable=False,
+                poke_interval=15,
+                exponential_backoff=True,
+                pre_execute=configure_ocr_polling,
+            )
+
+
+        @task
+        def validate_and_publish(document: pdf_utils.DocumentWorkItem, job: dict) -> dict:
+            """Validate one generated PDF and publish it to the destination."""
+
+            context = get_current_context()
+            job_id = job.get("id", "UNKNOWN")
+            status = job.get("status")
+            if status != "SUCCESS":
+                errmsg = f"OCR job {job_id} completed with status {status}; not publishing"
+                _push_document_status(
+                    context=context,
+                    document=document,
+                    status=pdf_utils.DocumentStatus.ERROR_OCR_JOB_UNSUCCESSFUL,
+                    job_id=job_id,
+                    error=errmsg,
+                )
+                raise AirflowFailException(errmsg)
+
+            destination_path = Path(context["params"]["destination"])
+            result = job["result"]
+            output_path = Path(result["output_path"])
+            sha256 = result["sha256"]
+            date_done = job.get("date_done") or datetime.now(timezone.utc).isoformat()
+
+            valid, errmsg = pdf_utils.validate_pdf(output_path, sha256)
+            if not valid:
+                _push_document_status(
+                    context=context,
+                    document=document,
+                    status=pdf_utils.DocumentStatus.ERROR_PDF_INVALID,
+                    job_id=job_id,
+                    date_done=date_done,
+                    output_path=output_path,
+                    error=errmsg,
+                )
+                raise AirflowFailException(errmsg)
+
+            try:
+                published_path = pdf_utils.publish_pdf(
+                    output_path,
+                    destination_path,
+                )
+            except OSError as e:
+                _push_document_status(
+                    context=context,
+                    document=document,
+                    status=pdf_utils.DocumentStatus.ERROR_PUBLISHING,
+                    job_id=job_id,
+                    date_done=date_done,
+                    output_path=output_path,
+                    error=str(e),
+                )
+                raise AirflowFailException(e)
+
+            logger.info("Published PDF: %s", published_path)
+            _push_document_status(
+                context=context,
+                document=document,
+                status=pdf_utils.DocumentStatus.PUBLISHED,
+                job_id=job_id,
+                date_done=date_done,
+                output_path=str(published_path),
+            )
+            return document
+
+        @task(trigger_rule="all_done")
+        def return_document_status(document: pdf_utils.DocumentWorkItem) -> dict:
+            """Return a standardized pdf_utils.DocumentStatus summary for the doc
+
+            Handles skips, exceptions, and success-cases."""
+            context = get_current_context()
+            ti = context["ti"]
+
+            for task_id in (
+                "process_document.validate_and_publish",
+                "process_document.prepare_ocr_request",
+            ):
+                status = ti.xcom_pull(
+                    task_ids=task_id,
+                    key="document_status",
+                    map_indexes=ti.map_index,
+                )
+                if status is not None:
+                    return status
+
             return {
-                "job_id": finished_job.get("id", "UNKNOWN"),
-                "status": "VALIDATION_FAILED",
-                "output_path": result["output_path"],
-                "date_done": date_done,
-                "error": error_msg,
+                "document": document,
+                "job_id": None,
+                "status": pdf_utils.DocumentStatus.ERROR_PROCESSING.value,
+                "output_path": None,
+                "date_done": datetime.now(timezone.utc).isoformat(),
+                "error": "Processing ended without a recorded status; see task logs.",
             }
 
-        # Publish the PDF to the destination
-        try:
-            published_path = pdf_utils.publish_pdf(
-                output_path,
-                destination_path,
-            )
-        except OSError as e:
-            logger.error("Failed to publish PDF: %s", e)
-            return {
-                "job_id": finished_job.get("id", "UNKNOWN"),
-                "status": "PUBLISH_FAILED",
-                "output_path": result["output_path"],
-                "date_done": date_done,
-                "error": str(e),
-            }
+        ocr_request = prepare_ocr_request(document, run_path)
+        submitted_job = submit_ocr_job(data=ocr_request)
+        completed_job = await_job_completion(endpoint=submitted_job.output)
+        publication = validate_and_publish(
+            document=document,
+            job=completed_job.output,
+        )
+        document_status = return_document_status(document)
 
-        logger.info("Published PDF: %s", published_path)
+        [ocr_request, submitted_job, completed_job, publication] >> document_status
 
-        return {
-            "job_id": finished_job.get("id", "UNKNOWN"),
-            "status": "PUBLISHED",
-            "output_path": str(published_path),
-            "date_done": date_done,
-            "error": None,
-        }
+        return document_status
 
-    successful_jobs = select_successful_job.expand(finished_job=wait_for_pdf.output)
-
-    publication_results = validate_and_publish.expand(finished_job=successful_jobs)
-
-    # 9 - Summarize results using finished jobs and published pdfs
     @task(trigger_rule="all_done")
-    def generate_summary(finished_jobs, publications) -> str:
+    def normalize_results(results) -> list[dict]:
+        """Collect document statuses into a consistent list.
+
+        This works around a bug in Airflow <3.4.0 whereby tasks mapped over a one-element
+        input return a single scalar output rather than a list with one item.
+
+        This is fixed in 3.4.0, see:
+        - https://airflow.apache.org/docs/apache-airflow/3.4.0/release_notes.html#airflow-3-4-0-2026-11-06).
+        - https://github.com/apache/airflow/pull/69075
+        """
+        if isinstance(results, dict):
+            return [results]
+        return list(results or [])
+
+    def generate_summary(results) -> str:
         """Write index.html summarizing published and failed jobs; return its directory."""
         context = get_current_context()
         params = context["params"]
 
-        results = [
-            *pdf_report.failed_ocr_results(finished_jobs or []),
-            *(publications or []),
-        ]
         html = pdf_report.render_results_html(
             source=params["source"],
             destination=params["destination"],
             language=params["language"],
-            results=results,
+            results=results or [],
         )
 
         output_dir = static_files_run_dir(context["dag"].dag_id, context["run_id"])
         (output_dir / "index.html").write_text(html, encoding="utf-8")
         return str(output_dir)
 
-    summary = generate_summary(wait_for_pdf.output, publication_results)
+    def check_for_errors(results) -> None:
+        """Mark the DAG successful only if all jobs succeeded"""
 
-    # 10 - Final status task to succeed or fail the DAG based on whether all
-    # unskipped jobs were published successfully.  If no jobs were published, the DAG will fail.
-    @task(trigger_rule="all_done")
-    def final_status(publications) -> None:
-        """Fail the DAG if no jobs were published successfully."""
-        if not publications:
-            raise AirflowFailException("No jobs were published successfully.")
+        if isinstance(results, dict):
+            results = [results]
 
-        all_successful = all(pub_result["status"] == "PUBLISHED" for pub_result in publications)
-        if not all_successful:
-            unpublished = [
-                pub_result
-                for pub_result in publications
-                if pub_result["status"] != "PUBLISHED"
-            ]
-            if unpublished:
-                raise AirflowFailException(
-                    json.dumps(
-                        {
-                            "message": "Some jobs failed to publish",
-                            "unpublished": unpublished,
-                        }, indent=2,
-                    )
+        if not results:
+            raise AirflowFailException("No documents were published successfully.")
+
+        unpublished = [
+            r for r in results
+                if r["status"] != "PUBLISHED"
+        ]
+        if unpublished:
+            raise AirflowFailException(
+                json.dumps(
+                    {
+                        "message": "Some documents failed to publish",
+                        "unpublished": unpublished,
+                    }, indent=2,
                 )
-        else:
-            return None
+            )
 
-    final = final_status(publication_results)
+        return None
 
-    (
-        validation
-        >> run_path
-        >> documents
-        >> processed_documents
-        >> submissions
-        >> wait_for_pdf
-        >> successful_jobs
-        >> publication_results
+
+    validation = validate_inputs()
+    run_path = prepare_run_directory()
+    documents = discover_documents()
+    validation >> run_path >> documents
+
+    document_results = normalize_results(
+        process_document.partial(
+            run_path=run_path
+        ).expand(document=documents)
     )
+
+    generate_summary(document_results) >> check_for_errors(document_results)
+
 
 pdf_creation()
