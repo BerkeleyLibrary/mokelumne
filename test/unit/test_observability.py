@@ -3,7 +3,7 @@
 import pytest
 
 from mokelumne.util.observability import task_instance_correlation_id
-
+from test.conftest import mock_ti
 
 class TestObservability:
 
@@ -38,11 +38,8 @@ class TestObservability:
         map_index: int | None,
         expected_correlation_id: str
     ):
+        ti = mock_ti(dag_id=dag_id, run_id=run_id, task_id=task_id, map_index=map_index)
 
         assert task_instance_correlation_id(
-            dag_id,
-            run_id,
-            task_id,
-            environment=environment,
-            map_index=map_index
+            ti=ti, environment=environment
         ) == expected_correlation_id

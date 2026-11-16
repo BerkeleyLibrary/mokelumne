@@ -8,7 +8,9 @@ import pytest
 from airflow.sdk.exceptions import AirflowFailException
 from airflow.sdk.types import TaskInstance
 
+from test.conftest import mock_ti
 from test.util.dag_helper import get_dag
+
 
 
 DAG = get_dag("pdf_creation")
@@ -21,19 +23,16 @@ process_document = DAG.get_task("process_document").python_callable
 final_status = DAG.get_task("final_status").python_callable
 
 @pytest.fixture
-def mock_process_document_ti():
-    ti = create_autospec(TaskInstance, instance=True)
-    ti.dag_id = "pdf_creation"
-    ti.run_id = "manual__2026-01-01T00:00:00+00:00"
-    ti.task_id = "process_document"
-    ti.map_index = 1
+def mock_process_document_ti(
+    dag_id="pdf_creation",
+    run_id="manual__2026-01-01T00:00:00+00:00",
+    task_id="process_document",
+    map_index=1
 
-    xcom_store = {}
-    ti.xcom_push.side_effect = lambda key, value, **kwargs: xcom_store.update({key: value})
-    ti.xcom_pull.side_effect = lambda task_ids=None, key="return_value", **kwargs: xcom_store.get(key)
-
-    return ti
-
+):
+    yield mock_ti(
+        dag_id=dag_id, run_id=run_id, task_id=task_id, map_index=map_index
+    )
 class TestPDFCreationDag:
     """Tests for the pdf_creation DAG."""
 
@@ -208,13 +207,14 @@ class TestPDFCreationDag:
         source_path = tmp_path / "document_001"
         workspace_path = tmp_path / "run" / "document_001"
         file_list_path = workspace_path / "filelist.txt"
+        ti = mock_process_document_ti
         context = {
             "params": {
                 "destination": str(tmp_path / "destination"),
                 "language": "",
                 "max_resolution": 300,
             },
-            "task_instance": mock_process_document_ti
+            "task_instance": ti
         }
         monkeypatch.setitem(
             process_document.__globals__,
@@ -241,7 +241,8 @@ class TestPDFCreationDag:
 
         result = process_document(
             {"source": str(source_path), "output": "document_001.pdf"},
-            str(tmp_path / "run"), mock_process_document_ti,
+            str(tmp_path / "run"),
+            ti,
         )
 
         assert json.loads(result) == {
@@ -253,6 +254,7 @@ class TestPDFCreationDag:
 
     def test_process_document_skips_existing_output(self,  mock_process_document_ti, monkeypatch, tmp_path):
         """Filter existing PDFs without preparing or submitting them for OCR."""
+        ti = mock_process_document_ti
         monkeypatch.setitem(
             process_document.__globals__,
             "get_current_context",
@@ -262,7 +264,7 @@ class TestPDFCreationDag:
                     "language": "eng",
                     "max_resolution": 300,
                 },
-                "task_instance": mock_process_document_ti
+                "task_instance": ti
             },
         )
 
@@ -277,7 +279,7 @@ class TestPDFCreationDag:
         result = process_document(
             {"source": str(tmp_path / "document_001"), "output": "document_001.pdf"},
             str(tmp_path / "run"),
-            mock_process_document_ti
+            ti
         )
 
         assert result is None
@@ -290,6 +292,8 @@ class TestPDFCreationDag:
         """Filter existing PDFs while preparing new documents for OCR."""
         destination = tmp_path / "destination"
         run_path = tmp_path / "run"
+        ti = mock_process_document_ti
+        ti.map_index = 0
 
         monkeypatch.setitem(
             process_document.__globals__,
@@ -300,7 +304,7 @@ class TestPDFCreationDag:
                     "language": "eng",
                     "max_resolution": 300,
                 },
-                "task_instance": mock_process_document_ti
+                "task_instance": ti
             },
         )
 
@@ -328,9 +332,10 @@ class TestPDFCreationDag:
 
         existing_result = process_document(
             {"source": str(tmp_path / "existing"), "output": "existing.pdf"},
-            str(run_path), mock_process_document_ti
+            str(run_path), ti
         )
         new_ti = mock_process_document_ti
+        new_ti.map_index = 1
         new_ti.run_id = "manual__2026-11-01T00:00:00+00:00"
         new_result = process_document(
             {"source": str(tmp_path / "new"), "output": "new.pdf"},
