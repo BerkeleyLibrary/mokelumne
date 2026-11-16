@@ -9,12 +9,14 @@ from pathlib import Path
 from airflow.providers.http.operators.http import HttpOperator
 from airflow.providers.http.sensors.http import HttpSensor
 from airflow.sdk import Param, PokeReturnValue, Variable, dag, get_current_context, task
+from airflow.sdk.configuration import conf
 from airflow.sdk.exceptions import AirflowFailException
+from airflow.sdk.types import TaskInstance
 from celery.states import ALL_STATES, READY_STATES
 from requests import Response
 
 from mokelumne.plugins.static_files.helpers import static_files_run_dir
-from mokelumne.util import params, pdf_report, pdf_utils, storage
+from mokelumne.util import observability, params, pdf_report, pdf_utils, storage
 
 logger = logging.getLogger(__name__)
 
@@ -160,7 +162,7 @@ def pdf_creation(): # pylint: disable=too-many-locals
         return pdf_utils.discover_documents(source_path)
 
     @task
-    def process_document(document: pdf_utils.DocumentWorkItem, run_path: str):
+    def process_document(document: pdf_utils.DocumentWorkItem, run_path: str, ti: TaskInstance = None): # pyright: ignore[reportArgumentType]
         """Process a document directory into a searchable PDF."""
 
         context = get_current_context()
@@ -200,12 +202,20 @@ def pdf_creation(): # pylint: disable=too-many-locals
             max_resolution,
         )
         logger.info("Prepared Tesseract file list: %s", file_list_path)
-
         return json.dumps(
             {
                 "filelist": str(file_list_path),
                 "languages": language.split("+"),
                 "output": str(destination_path / document["output"]),
+                "correlation_id": observability.task_instance_correlation_id(
+                    dag_id=ti.dag_id,
+                    run_id=ti.run_id,
+                    task_id=ti.task_id,
+                    map_index=ti.map_index,
+                    environment=conf.get(
+                        "api", "instance_name", fallback="mokelumne"
+                    )
+                )
             }
         )
 
