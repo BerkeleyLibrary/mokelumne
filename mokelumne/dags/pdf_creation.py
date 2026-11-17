@@ -209,7 +209,7 @@ def pdf_creation(): # pylint: disable=too-many-locals
                 "output": str(destination_path / document["output"]),
                 "correlation_id": observability.task_instance_correlation_id(
                     ti=ti,
-                    environment=conf.get(
+                    instance_name=conf.get(
                         "api", "instance_name", fallback="mokelumne"
                     )
                 )

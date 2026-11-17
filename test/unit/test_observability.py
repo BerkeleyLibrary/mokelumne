@@ -8,7 +8,7 @@ from test.conftest import mock_ti
 class TestObservability:
 
     @pytest.mark.parametrize(
-        "environment,dag_id,run_id,task_id,map_index,expected_correlation_id",
+        "instance_name,dag_id,run_id,task_id,map_index,expected_correlation_id",
         [
             pytest.param(
                 "production", "make_rocket_go", "1234", "fire_boosters", 1, "production/make_rocket_go/1234/fire_boosters/1",
@@ -31,7 +31,7 @@ class TestObservability:
     )
     def test_task_instance_correlation_id(
         self,
-        environment: str | None,
+        instance_name: str | None,
         dag_id: str,
         run_id: str,
         task_id: str,
@@ -41,5 +41,5 @@ class TestObservability:
         ti = mock_ti(dag_id=dag_id, run_id=run_id, task_id=task_id, map_index=map_index)
 
         assert task_instance_correlation_id(
-            ti=ti, environment=environment
+            ti=ti, instance_name=instance_name
         ) == expected_correlation_id
