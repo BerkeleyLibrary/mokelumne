@@ -2,11 +2,13 @@
 
 import json
 from datetime import datetime
-from unittest.mock import Mock
+from unittest.mock import Mock, create_autospec
 
 import pytest
 from airflow.sdk.exceptions import AirflowFailException
+from airflow.sdk.types import TaskInstance
 
+from test.conftest import mock_ti
 from test.util.dag_helper import get_dag
 
 
@@ -19,7 +21,16 @@ validate_and_publish = DAG.get_task("validate_and_publish").python_callable
 process_document = DAG.get_task("process_document").python_callable
 final_status = DAG.get_task("final_status").python_callable
 
-
+@pytest.fixture
+def mock_process_document_ti(
+    dag_id="pdf_creation",
+    run_id="manual__2026-01-01T00:00:00+00:00",
+    task_id="process_document",
+    map_index=1
+):
+    yield mock_ti(
+        dag_id=dag_id, run_id=run_id, task_id=task_id, map_index=map_index
+    )
 class TestPDFCreationDag:
     """Tests for the pdf_creation DAG."""
 
@@ -189,17 +200,19 @@ class TestPDFCreationDag:
         """Ensure process_document task exists."""
         assert DAG.get_task("process_document")
 
-    def test_process_document_prepares_job_payload(self, monkeypatch, tmp_path):
+    def test_process_document_prepares_job_payload(self, mock_process_document_ti, monkeypatch, tmp_path):
         """Prepare images and return the payload submitted to Quiabo."""
         source_path = tmp_path / "document_001"
         workspace_path = tmp_path / "run" / "document_001"
         file_list_path = workspace_path / "filelist.txt"
+        ti = mock_process_document_ti
         context = {
             "params": {
                 "destination": str(tmp_path / "destination"),
                 "language": "",
                 "max_resolution": 300,
-            }
+            },
+            "task_instance": ti
         }
         monkeypatch.setitem(
             process_document.__globals__,
@@ -227,16 +240,19 @@ class TestPDFCreationDag:
         result = process_document(
             {"source": str(source_path), "output": "document_001.pdf"},
             str(tmp_path / "run"),
+            ti,
         )
 
         assert json.loads(result) == {
             "filelist": str(file_list_path),
             "languages": ["eng", "fra"],
             "output": str(tmp_path / "destination" / "document_001.pdf"),
+            "correlation_id": "mokelumne/pdf_creation/manual__2026-01-01T00:00:00+00:00/process_document/1"
         }
 
-    def test_process_document_skips_existing_output(self, monkeypatch, tmp_path):
+    def test_process_document_skips_existing_output(self,  mock_process_document_ti, monkeypatch, tmp_path):
         """Filter existing PDFs without preparing or submitting them for OCR."""
+        ti = mock_process_document_ti
         monkeypatch.setitem(
             process_document.__globals__,
             "get_current_context",
@@ -245,7 +261,8 @@ class TestPDFCreationDag:
                     "destination": str(tmp_path),
                     "language": "eng",
                     "max_resolution": 300,
-                }
+                },
+                "task_instance": ti
             },
         )
 
@@ -260,6 +277,7 @@ class TestPDFCreationDag:
         result = process_document(
             {"source": str(tmp_path / "document_001"), "output": "document_001.pdf"},
             str(tmp_path / "run"),
+            ti
         )
 
         assert result is None
@@ -267,11 +285,13 @@ class TestPDFCreationDag:
         prepare_images.assert_not_called()
 
     def test_process_document_filters_existing_pdf_in_mixed_batch(
-        self, monkeypatch, tmp_path
+        self, mock_process_document_ti, monkeypatch, tmp_path
     ):
         """Filter existing PDFs while preparing new documents for OCR."""
         destination = tmp_path / "destination"
         run_path = tmp_path / "run"
+        ti = mock_process_document_ti
+        ti.map_index = 0
 
         monkeypatch.setitem(
             process_document.__globals__,
@@ -281,7 +301,8 @@ class TestPDFCreationDag:
                     "destination": str(destination),
                     "language": "eng",
                     "max_resolution": 300,
-                }
+                },
+                "task_instance": ti
             },
         )
 
@@ -309,11 +330,14 @@ class TestPDFCreationDag:
 
         existing_result = process_document(
             {"source": str(tmp_path / "existing"), "output": "existing.pdf"},
-            str(run_path),
+            str(run_path), ti
         )
+        new_ti = mock_process_document_ti
+        new_ti.map_index = 1
+        new_ti.run_id = "manual__2026-11-01T00:00:00+00:00"
         new_result = process_document(
             {"source": str(tmp_path / "new"), "output": "new.pdf"},
-            str(run_path),
+            str(run_path), new_ti
         )
 
         mapped_results = [existing_result, new_result]
@@ -323,6 +347,7 @@ class TestPDFCreationDag:
             "filelist": str(run_path / "new" / "filelist.txt"),
             "languages": ["eng"],
             "output": str(destination / "new.pdf"),
+            "correlation_id": "mokelumne/pdf_creation/manual__2026-11-01T00:00:00+00:00/process_document/1"
         }
 
     def test_polling_tasks_are_connected(self):

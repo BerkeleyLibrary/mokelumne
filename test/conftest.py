@@ -6,9 +6,11 @@ import csv
 import io
 
 from pathlib import Path
+from unittest.mock import create_autospec
 
 import pytest
 
+from airflow.sdk.types import TaskInstance
 
 GOBI_DAG_VARIABLES = {
     "process_gobi_orders_input_dir": "/opt/airflow/files/gobi/in",
@@ -71,3 +73,13 @@ def pytest_collection_modifyitems(config, items):
         except IndexError:
             # test was in the top-level ./test directory
             continue
+
+
+def mock_ti(**kwargs):
+    ti = create_autospec(TaskInstance, instance=True, **kwargs)
+
+    xcom_store = {}
+    ti.xcom_push.side_effect = lambda key, value, **kwargs: xcom_store.update({key: value})
+    ti.xcom_pull.side_effect = lambda task_ids=None, key="return_value", **kwargs: xcom_store.get(key)
+
+    return ti
