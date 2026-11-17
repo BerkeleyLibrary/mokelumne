@@ -202,6 +202,7 @@ def pdf_creation(): # pylint: disable=too-many-locals
             max_resolution,
         )
         logger.info("Prepared Tesseract file list: %s", file_list_path)
+
         return json.dumps(
             {
                 "filelist": str(file_list_path),

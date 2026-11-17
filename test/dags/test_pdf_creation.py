@@ -12,7 +12,6 @@ from test.conftest import mock_ti
 from test.util.dag_helper import get_dag
 
 
-
 DAG = get_dag("pdf_creation")
 check_job_status = DAG.get_task("wait_for_pdf").partial_kwargs["response_check"]
 valid_submission = DAG.get_task("submit_ocr_job").partial_kwargs["response_check"]
@@ -28,7 +27,6 @@ def mock_process_document_ti(
     run_id="manual__2026-01-01T00:00:00+00:00",
     task_id="process_document",
     map_index=1
-
 ):
     yield mock_ti(
         dag_id=dag_id, run_id=run_id, task_id=task_id, map_index=map_index
