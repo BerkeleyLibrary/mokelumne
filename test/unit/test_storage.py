@@ -88,7 +88,14 @@ class TestStorage:
             self, tmp_path: Path, kind: str | None, match_message: str
         ):
         """Accept an existing directory."""
-        assert storage.validate_path(path=tmp_path, kind=kind) is None
+        assert storage.validate_path(path=tmp_path, kind=kind) == tmp_path
+
+    @VALIDATION_KIND_PARAMETERS
+    def test_validate_path_accepts_directory_with_path_as_str(
+            self, tmp_path: Path, kind: str | None, match_message: str
+        ):
+        """Accept an existing directory."""
+        assert storage.validate_path(path=str(tmp_path), kind=kind) == tmp_path
 
     @VALIDATION_KIND_PARAMETERS
     def test_validate_path_rejects_missing_directory(

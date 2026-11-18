@@ -31,16 +31,20 @@ def record_dir(record_id: str) -> Path:
     return record_path
 
 
-def validate_path(path: Path, kind: str | None = None) -> None:
+def validate_path(path: str | Path, kind: str | None = None) -> Path:
     """
     Validate that a given path exists and is a directory.
 
     :param path: The path to validate.
-    :type path: Path
+    :type path: str | Path
     :param kind: The kind of path to be verified (used in exception messages).
     :type kind: str | None
-    :rtype: None
+    :returns: The validated and normalized path name.
+    :rtype: Path
     """
+
+    if isinstance(path, str):
+        path = Path(path)
 
     label = str(kind or "specified").capitalize()
 
@@ -53,3 +57,5 @@ def validate_path(path: Path, kind: str | None = None) -> None:
         raise ValueError(
             " ".join([label, "path is not a directory:", str(path)])
         )
+
+    return path

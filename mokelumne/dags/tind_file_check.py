@@ -9,7 +9,7 @@ from mokelumne.util.file_transfer import list_files, build_volume_path
 from mokelumne.util.marc import list_values_from_marc_xml, extract_url_names
 from mokelumne.util.tind_reports import format_da_tind_report
 
-from mokelumne.util.storage import run_dir
+from mokelumne.util.storage import run_dir, validate_path
 
 logger = logging.getLogger(__name__)
 BASE_VOLUME_PATH = "/srv/da"
@@ -51,8 +51,11 @@ def tind_file_check():
     def validated_source_dir(params: dict) -> str:
         """Checks that the source path exists."""
         da_path = build_volume_path(BASE_VOLUME_PATH, params["da_directory"].lstrip('/'))
-        if not da_path.exists():
-            raise AirflowFailException(f"Source directory does not exist: {da_path}")
+
+        try:
+            validate_path(path=da_path, kind="source")
+        except (FileNotFoundError, ValueError) as ex:
+            raise AirflowFailException(ex)
 
         return str(da_path)
 
