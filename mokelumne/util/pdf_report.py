@@ -6,6 +6,7 @@ from typing import NotRequired, TypedDict
 from mokelumne.templates import render
 
 PUBLISHED = "PUBLISHED"
+PDF_ALREADY_EXISTS = "PDF_ALREADY_EXISTS"
 OCR_SUCCESS = "SUCCESS"
 
 class FinishedOcrJob(TypedDict):
@@ -25,31 +26,6 @@ class JobResult(TypedDict):
     output_path: str | None
     date_done: str | None
     error: str | None
-
-
-def failed_ocr_results(finished_jobs: Iterable[FinishedOcrJob | None]) -> list[JobResult]:
-    """Convert finished OCR jobs that did not succeed into failure results.
-
-    :param finished_jobs: Final status payloads returned by the Quiabo job endpoint.
-    :type finished_jobs: Iterable[FinishedOcrJob | None]
-    :returns: One result per non-successful job, in the publication result shape.
-    :rtype: list[JobResult]
-    """
-    failures: list[JobResult] = []
-    for job in finished_jobs:
-        if not job or job["status"] == OCR_SUCCESS:
-            continue
-        result = job.get("result")
-        failures.append(
-            {
-                "job_id": job.get("id", "UNKNOWN"),
-                "status": job["status"],
-                "output_path": None,
-                "date_done": job.get("date_done"),
-                "error": None if result is None else str(result),
-            }
-        )
-    return failures
 
 
 def render_results_html(
@@ -72,15 +48,17 @@ def render_results_html(
     :returns: The rendered HTML document.
     :rtype: str
     """
-    jobs = [job for job in results if job]
-    published = [job for job in jobs if job["status"] == PUBLISHED]
-    failed = [job for job in jobs if job["status"] != PUBLISHED]
+    results = [job for job in results if job is not None]
+    published = [job for job in results if job["status"] == PUBLISHED]
+    skipped = [job for job in results if job["status"] == PDF_ALREADY_EXISTS]
+    failed = [job for job in results if job["status"] not in {PUBLISHED, PDF_ALREADY_EXISTS}]
     return render(
         "pdf_creation/results.html",
         source=source,
         destination=destination,
         language=language,
-        total=len(jobs),
+        total=len(results),
         published=published,
+        skipped=skipped,
         failed=failed,
     )

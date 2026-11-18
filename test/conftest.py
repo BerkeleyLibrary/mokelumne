@@ -50,9 +50,17 @@ def read_csv(path: Path | str) -> csv.DictReader:
         return csv.DictReader(io.StringIO(f.read()))
 
 
+def pytest_addoption(parser: pytest.Parser) -> None:
+    """Register the opt-in switch for tests that submit real OCR jobs."""
+    parser.addoption(
+        "--run-live-ocr", action="store_true", default=False,
+        help="Run live_ocr tests against a running Quiabo/Tesseract service",
+    )
+
+
 def pytest_collection_modifyitems(config, items):
     """
-    Automatically marks tests with the name of their enclosing directory above ./test
+    Mark tests by directory and skip live OCR tests unless explicitly enabled.
 
     Uses Path to avoid cross-platform issues, and matches relative to the
     test's rootdir to avoid matching on directories that happen to be named
@@ -60,7 +68,11 @@ def pytest_collection_modifyitems(config, items):
     """
 
     rootdir = Path(config.rootdir)
+    run_live_ocr = config.getoption("--run-live-ocr")
     for item in items:
+        if item.get_closest_marker("live_ocr") is not None and not run_live_ocr:
+            item.add_marker(pytest.mark.skip(reason="Requires --run-live-ocr"))
+
         try:
             item_relpath = Path(item.fspath).relative_to(rootdir)
         except ValueError:

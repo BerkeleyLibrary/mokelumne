@@ -14,7 +14,7 @@
     <dt>OCR language</dt>
     <dd>{{ language or "automatic" }}</dd>
     <dt>Jobs</dt>
-    <dd>{{ total }} total: {{ published|length }} published, {{ failed|length }} failed</dd>
+    <dd>{{ total }} total: {{ published|length }} published, {{ skipped|length }} skipped, {{ failed|length }} failed</dd>
   </dl>
 
   {% if failed %}
@@ -31,6 +31,24 @@
         <td>{{ job.date_done }}</td>
         <td>{{ job.output_path or "" }}</td>
         <td>{{ job.error or "" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  {% if skipped %}
+  <h2>Skipped ({{ skipped|length }})</h2>
+  <table>
+    <thead>
+      <tr><th>Document</th><th>Output</th><th>Reason</th></tr>
+    </thead>
+    <tbody>
+      {% for job in skipped %}
+      <tr>
+        <td>{{ job.document.source }}</td>
+        <td>{{ job.output_path or "" }}</td>
+        <td>PDF already exists.</td>
       </tr>
       {% endfor %}
     </tbody>
