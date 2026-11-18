@@ -42,7 +42,7 @@ def validate_path(path: Path, kind: str | None = None) -> None:
     :rtype: None
     """
 
-    label = str(kind or "this").capitalize()
+    label = str(kind or "specified").capitalize()
 
     if not path.exists():
         raise FileNotFoundError(

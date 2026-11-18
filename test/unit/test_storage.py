@@ -10,8 +10,8 @@ VALIDATION_KIND_PARAMETERS = pytest.mark.parametrize(
     "kind, match_message",
     [
         pytest.param("source", "Source", id="with_kind_specified"),
-        pytest.param("", "This", id="with_kind_as_empty_str"),
-        pytest.param(None, "This", id="with_kind_as_none"),
+        pytest.param("", "Specified", id="with_kind_as_empty_str"),
+        pytest.param(None, "Specified", id="with_kind_as_none"),
     ]
 )
 
