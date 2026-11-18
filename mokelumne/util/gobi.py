@@ -11,7 +11,7 @@ from uuid import uuid4
 
 from pymarc import MARCReader, MARCWriter, Record
 
-from mokelumne.util.storage import run_dir
+from mokelumne.util.storage import run_dir, validate_path
 
 logger = logging.getLogger(__name__)
 
@@ -38,21 +38,11 @@ GOBI_PROVIDERS: Final = frozenset(
 )
 
 
-def require_directory(directory: Path | str, label: str) -> Path:
-    """Return a directory path or raise a descriptive exception."""
-
-    path = Path(directory)
-    if not path.exists():
-        raise FileNotFoundError(f"{label} directory does not exist: {path}")
-    if not path.is_dir():
-        raise NotADirectoryError(f"{label} path is not a directory: {path}")
-    return path
-
 
 def find_order_files(input_directory: Path | str) -> list[str]:
     """Return regular ``.ord`` files in deterministic filename order."""
 
-    input_path = require_directory(input_directory, "Input")
+    input_path = validate_path(input_directory, "Input")
     return [str(path) for path in sorted(input_path.glob("*.ord")) if path.is_file()]
 
 
@@ -87,7 +77,7 @@ def build_staging_directory(
 ) -> Path:
     """Create a run- and input-specific staging directory beside the output."""
 
-    output_path = require_directory(output_directory, "Output")
+    output_path = validate_path(Path(output_directory), "Output")
     staging_base = output_path.parent / ".airflow" / dag_id
     staging_path = run_dir(run_id, base_dir=str(staging_base)) / Path(input_file).name
     staging_path.mkdir(exist_ok=True)
@@ -220,14 +210,14 @@ def process_order_file(
     if input_path.suffix != ".ord":
         raise ValueError(f"Order file must have a .ord extension: {input_path}")
 
-    output_path = require_directory(output_directory, "Output")
-    staging_path = require_directory(staging_directory, "Staging")
+    output_path = validate_path(output_directory, "Output")
+    staging_path = validate_path(staging_directory, "Staging")
     if staging_path.stat().st_dev != output_path.stat().st_dev:
         raise OSError(
             "Staging and output directories must be on the same filesystem: "
             f"{staging_path}, {output_path}"
         )
-    archive_path = require_directory(processed_directory, "Processed") / input_path.name
+    archive_path = validate_path(processed_directory, "Processed") / input_path.name
     if archive_path.exists():
         raise FileExistsError(f"Processed order file already exists: {archive_path}")
 

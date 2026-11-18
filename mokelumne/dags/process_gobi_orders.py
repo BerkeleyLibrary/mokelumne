@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
+from pathlib import Path
 
 from airflow.sdk import Param, Variable, dag, get_current_context, task
 from airflow.sdk.exceptions import AirflowFailException
@@ -14,8 +15,9 @@ from mokelumne.util.gobi import (
     build_staging_directory,
     find_order_files,
     process_order_file,
-    require_directory,
 )
+
+from mokelumne.util.storage import validate_path
 
 input_dir = Variable.get("process_gobi_orders_input_dir")
 output_dir = Variable.get("process_gobi_orders_output_dir")
@@ -78,8 +80,8 @@ def process_gobi_orders():
         context = get_current_context()
         params = context["params"]
         try:
-            require_directory(params["output_directory"], "Output")
-            require_directory(params["processed_directory"], "Processed")
+            validate_path(path=Path(params["output_directory"]), kind="output")
+            validate_path(path=Path(params["processed_directory"]), kind="processed")
             order_files = find_order_files(params["input_directory"])
         except Exception as ex:
             raise AirflowFailException(f"Could not scan for GOBI order files: {ex}") from ex

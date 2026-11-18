@@ -14,31 +14,6 @@ MM_PER_INCH = 25.4
 class TestPDFUtils:
     """Test for PDF utils module"""
 
-    def test_validate_source_path_accepts_directory(self, tmp_path: Path):
-        """Accept an existing source directory."""
-        pdf_utils.validate_source_path(tmp_path)
-
-    def test_validate_source_path_rejects_missing_directory(self, tmp_path: Path):
-        """Reject a source directory that does not exist."""
-        source_path = tmp_path / "missing"
-
-        with pytest.raises(
-            FileNotFoundError,
-            match="Source directory does not exist",
-        ):
-            pdf_utils.validate_source_path(source_path)
-
-    def test_validate_source_path_rejects_file(self, tmp_path: Path):
-        """Reject a source path that is a file."""
-        source_path = tmp_path / "source.txt"
-        source_path.write_text("not a directory", encoding="utf-8")
-
-        with pytest.raises(
-            ValueError,
-            match="Source path is not a directory",
-        ):
-            pdf_utils.validate_source_path(source_path)
-
     def test_validate_source_structure_root(self, tmp_path: Path):
         """Reject a source path that contains images in the root."""
         root_image = tmp_path / "page001.tif"
@@ -90,56 +65,6 @@ class TestPDFUtils:
         image.write_text("test image", encoding="utf-8")
 
         pdf_utils.validate_source_structure(tmp_path)
-
-    def test_validate_destination_path_accepts_directory(self, tmp_path: Path):
-        """Accept an existing destination directory."""
-        pdf_utils.validate_destination_path(tmp_path)
-
-    def test_validate_destination_path_rejects_missing_directory(self, tmp_path: Path):
-        """Reject a destination directory that does not exist."""
-        destination_path = tmp_path / "missing"
-
-        with pytest.raises(
-            FileNotFoundError,
-            match="Destination directory does not exist",
-        ):
-            pdf_utils.validate_destination_path(destination_path)
-
-    def test_validate_destination_path_rejects_file(self, tmp_path: Path):
-        """Reject a destination path that is a file."""
-        destination_path = tmp_path / "destination.txt"
-        destination_path.write_text("not a directory", encoding="utf-8")
-
-        with pytest.raises(
-            ValueError,
-            match="Destination path is not a directory",
-        ):
-            pdf_utils.validate_destination_path(destination_path)
-
-    def test_validate_run_base_accepts_directory(self, tmp_path: Path):
-        """Accept an existing run base directory."""
-        pdf_utils.validate_run_base(tmp_path)
-
-    def test_validate_run_base_rejects_missing_directory(self, tmp_path: Path):
-        """Reject a run base directory that does not exist."""
-        run_base_path = tmp_path / "missing"
-
-        with pytest.raises(
-            FileNotFoundError,
-            match="Run base directory does not exist",
-        ):
-            pdf_utils.validate_run_base(run_base_path)
-
-    def test_validate_run_base_rejects_file(self, tmp_path: Path):
-        """Reject a run base path that is a file."""
-        run_base_path = tmp_path / "run_base.txt"
-        run_base_path.write_text("not a directory", encoding="utf-8")
-
-        with pytest.raises(
-            ValueError,
-            match="Run base path is not a directory",
-        ):
-            pdf_utils.validate_run_base(run_base_path)
 
     def test_discover_documents_builds_work_items(self, tmp_path: Path):
         """Build work items for document directories containing images."""

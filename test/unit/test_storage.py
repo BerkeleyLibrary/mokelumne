@@ -6,6 +6,14 @@ import pytest
 
 from mokelumne.util import storage
 
+VALIDATION_KIND_PARAMETERS = pytest.mark.parametrize(
+    "kind, match_message",
+    [
+        pytest.param("source", "Source", id="with_kind_specified"),
+        pytest.param("", "Specified", id="with_kind_as_empty_str"),
+        pytest.param(None, "Specified", id="with_kind_as_none"),
+    ]
+)
 
 @pytest.fixture
 def test_dl_dir(monkeypatch, tmp_path: Path) -> Path:
@@ -75,3 +83,45 @@ class TestStorage:
         result = storage.record_dir("123456")
         assert result.parts[-2:] == ("12", "123456")
 
+    @VALIDATION_KIND_PARAMETERS
+    def test_validate_path_accepts_directory(
+            self, tmp_path: Path, kind: str | None, match_message: str
+        ):
+        """Accept an existing directory."""
+        assert storage.validate_path(path=tmp_path, kind=kind) == tmp_path
+
+    @VALIDATION_KIND_PARAMETERS
+    def test_validate_path_accepts_directory_with_path_as_str(
+            self, tmp_path: Path, kind: str | None, match_message: str
+        ):
+        """Accept an existing directory."""
+        assert storage.validate_path(path=str(tmp_path), kind=kind) == tmp_path
+
+    @VALIDATION_KIND_PARAMETERS
+    def test_validate_path_rejects_missing_directory(
+            self, tmp_path: Path, kind: str | None, match_message: str
+        ):
+        """Raise an exception when a directory does not exist."""
+        path = tmp_path / "missing"
+
+        with pytest.raises(FileNotFoundError) as ex:
+            storage.validate_path(path=path, kind=kind)
+
+        error_message = str(ex.value)
+        assert "directory does not exist" in error_message
+        assert match_message in error_message
+
+    @VALIDATION_KIND_PARAMETERS
+    def test_validate_path_rejects_file(
+            self, tmp_path: Path, kind: str | None, match_message: str
+        ):
+        """Raise an exception when a path is a file."""
+        path = tmp_path / "source.txt"
+        path.write_text("not a directory", encoding="utf-8")
+
+        with pytest.raises(ValueError) as ex:
+            storage.validate_path(path=path, kind=kind)
+
+        error_message = str(ex.value)
+        assert "path is not a directory" in error_message
+        assert match_message in error_message
