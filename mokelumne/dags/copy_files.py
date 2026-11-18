@@ -13,7 +13,7 @@ from airflow.providers.standard.operators.hitl import ApprovalOperator
 from airflow.sdk import Param, dag, chain, get_current_context, task
 from airflow.sdk.exceptions import AirflowFailException
 
-from mokelumne.util.storage import run_dir
+from mokelumne.util.storage import run_dir, validate_path
 from mokelumne.util.file_transfer import (
     DESTINATION_VOLUMES,
     SOURCE_VOLUMES,
@@ -108,11 +108,10 @@ def copy_files():
 
         source_path = Path(copy_paths["source"])
 
-        if not source_path.exists():
-            raise AirflowFailException(f"Source path does not exist: {source_path}")
-
-        if not source_path.is_dir():
-            raise AirflowFailException(f"Source is not a directory: {source_path}")
+        try:
+            validate_path(path=source_path, kind="source")
+        except (FileNotFoundError, ValueError) as exc:
+            raise AirflowFailException(str(exc))
 
         return str(source_path)
 
@@ -122,15 +121,10 @@ def copy_files():
         destination_path = Path(copy_paths["destination"])
         parent_path = destination_path.parent
 
-        if not parent_path.exists():
-            raise AirflowFailException(
-                f"Destination parent directory does not exist: {parent_path}"
-            )
-
-        if not parent_path.is_dir():
-            raise AirflowFailException(
-                f"Destination parent path is not a directory: {parent_path}"
-            )
+        try:
+            validate_path(path=parent_path, kind="destination parent")
+        except (FileNotFoundError, ValueError) as exc:
+            raise AirflowFailException(str(exc))
 
         if destination_path.exists():
             if not destination_path.is_dir():

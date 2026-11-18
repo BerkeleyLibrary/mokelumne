@@ -18,36 +18,6 @@ MM_PER_INCH = 25.4
 DocumentWorkItem = dict[str, str]
 
 
-def validate_source_path(source_path: Path) -> None:
-    """Validate the source directory containing document subdirectories."""
-
-    if not source_path.exists():
-        raise FileNotFoundError(f"Source directory does not exist: {source_path}")
-
-    if not source_path.is_dir():
-        raise ValueError(f"Source path is not a directory: {source_path}")
-
-
-def validate_destination_path(destination_path: Path) -> None:
-    """Validate that the destination path exists and is a directory."""
-
-    if not destination_path.exists():
-        raise FileNotFoundError(f"Destination directory does not exist: {destination_path}")
-
-    if not destination_path.is_dir():
-        raise ValueError(f"Destination path is not a directory: {destination_path}")
-
-
-def validate_run_base(run_base: Path) -> None:
-    """Validate that the run base path exists and is a directory."""
-
-    if not run_base.exists():
-        raise FileNotFoundError(f"Run base directory does not exist: {run_base}")
-
-    if not run_base.is_dir():
-        raise ValueError(f"Run base path is not a directory: {run_base}")
-
-
 def validate_source_structure(source_path: Path) -> None:
     """Validate the source directory structure for PDF creation."""
 

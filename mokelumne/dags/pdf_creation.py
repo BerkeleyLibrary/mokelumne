@@ -137,10 +137,10 @@ def pdf_creation(): # pylint: disable=too-many-locals
         destination_path = Path(context["params"]["destination"])
         scratch_base = Path(Variable.get("pdf_creation_scratch_base"))
 
-        pdf_utils.validate_source_path(source_path)
-        pdf_utils.validate_destination_path(destination_path)
+        storage.validate_path(path=source_path, kind="source")
+        storage.validate_path(path=destination_path, kind="destination")
         pdf_utils.validate_source_structure(source_path)
-        pdf_utils.validate_run_base(scratch_base)
+        storage.validate_path(path=scratch_base, kind="run base")
 
     @task
     def prepare_run_directory() -> str:

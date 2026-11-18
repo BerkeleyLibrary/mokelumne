@@ -29,3 +29,27 @@ def record_dir(record_id: str) -> Path:
     record_path = storage_dir() / "tind_records" / record_id[0:2] / record_id
     record_path.mkdir(exist_ok=True, parents=True)
     return record_path
+
+
+def validate_path(path: Path, kind: str | None = None) -> None:
+    """
+    Validate that a given path exists and is a directory.
+
+    :param path: The path to validate.
+    :type path: Path
+    :param kind: The kind of path to be verified (used in exception messages).
+    :type kind: str | None
+    :rtype: None
+    """
+
+    label = str(kind or "this").capitalize()
+
+    if not path.exists():
+        raise FileNotFoundError(
+            " ".join([label, "directory does not exist:", str(path)])
+        )
+
+    if not path.is_dir():
+        raise ValueError(
+            " ".join([label, "path is not a directory:", str(path)])
+        )
