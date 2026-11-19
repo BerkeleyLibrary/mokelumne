@@ -10,14 +10,13 @@ from airflow.sdk.exceptions import AirflowFailException, AirflowSkipException
 
 from mokelumne.plugins.static_files.helpers import static_files_run_dir
 from mokelumne.util import params, pdf_report, pdf_utils, storage
-from mokelumne.util.file_transfer import (
-    DESTINATION_VOLUMES as ASSETS_VOLUMES,
-    build_volume_path
-)
+from mokelumne.util.file_transfer import build_volume_path
 
 logger = logging.getLogger(__name__)
 
-VALID_PDF_VOLUMES = ASSETS_VOLUMES + ["/opt/airflow/test/fixtures"]
+sf_var = Variable.get("expose_pdf_creation_e2e_fixtures", default=False)
+SHOW_FIXTURES = str(sf_var).strip().lower() in {"true", "1", "t", "y", "yes"}
+VALID_PDF_VOLUMES = storage.get_assets_volumes(include_fixtures=SHOW_FIXTURES)
 
 
 @dag(

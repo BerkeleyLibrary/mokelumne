@@ -14,19 +14,6 @@ from pathlib import Path
 ManifestEntry = dict[str, int | str]
 Manifest = dict[str, str | list[ManifestEntry]]
 
-SOURCE_VOLUMES = [
-    "/srv/lpsdata4",
-    "/srv/dcushare",
-    "/srv/lpsdata2",
-    "/srv/ealdata",
-    "/srv/rohoshare",
-]
-
-DESTINATION_VOLUMES = [
-    "/srv/pa",
-    "/srv/da",
-]
-
 logger = logging.getLogger(__name__)
 
 # Set the default log level to debug if environment variable is not set or is invalid. 

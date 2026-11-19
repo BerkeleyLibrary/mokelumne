@@ -3,7 +3,20 @@
 import os
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
+
+SOURCE_VOLUMES = [
+    "/srv/lpsdata4",
+    "/srv/dcushare",
+    "/srv/lpsdata2",
+    "/srv/ealdata",
+    "/srv/rohoshare",
+]
+
+DESTINATION_VOLUMES = [
+    "/srv/pa",
+    "/srv/da",
+]
 
 def storage_dir(base_dir: Optional[str] = None) -> Path:
     """Retrieve the base directory path to use for storage."""
@@ -59,3 +72,19 @@ def validate_path(path: str | Path, kind: str | None = None) -> Path:
         )
 
     return path
+
+
+def get_assets_volumes(include_fixtures: bool = False) -> List[str]:
+    """
+    Get a list of "assets" volumes (like DA and PA) for use as Dag Params.
+
+    :param include_fixtures: Determines whether a fixtures directory is exposed
+        in the list of assets volumes.
+    :type include_fixtures: bool
+    :returns: Paths for the "assets" volumes.
+    :rtype: List[str]
+    """
+    if include_fixtures:
+        return DESTINATION_VOLUMES + ["/opt/airflow/test/fixtures"]
+
+    return DESTINATION_VOLUMES

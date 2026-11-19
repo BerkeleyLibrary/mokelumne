@@ -13,10 +13,13 @@ from airflow.providers.standard.operators.hitl import ApprovalOperator
 from airflow.sdk import Param, dag, chain, get_current_context, task
 from airflow.sdk.exceptions import AirflowFailException
 
-from mokelumne.util.storage import run_dir, validate_path
-from mokelumne.util.file_transfer import (
+from mokelumne.util.storage import (
+    run_dir,
+    validate_path,
     DESTINATION_VOLUMES,
     SOURCE_VOLUMES,
+)
+from mokelumne.util.file_transfer import (
     build_file_manifest,
     build_volume_path,
     clean_destination_path,

@@ -125,3 +125,17 @@ class TestStorage:
         error_message = str(ex.value)
         assert "path is not a directory" in error_message
         assert match_message in error_message
+
+    @pytest.mark.parametrize(
+        "include_fixtures, presence",
+        [
+            pytest.param(True, True, id="include_fixtures_is_true"),
+            pytest.param(False, False, id="include_fixtures_is_false")
+        ]
+    )
+    def test_get_asset_volumes(
+        self, include_fixtures: bool, presence: bool
+    ):
+        """Ensure asset volumes include/exclude fixtures appropriately."""
+        volumes = storage.get_assets_volumes(include_fixtures=include_fixtures)
+        assert ("/opt/airflow/test/fixtures" in volumes) == presence
