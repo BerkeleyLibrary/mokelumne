@@ -10,6 +10,7 @@ from airflow.sdk.exceptions import AirflowFailException, AirflowSkipException
 
 from mokelumne.plugins.static_files.helpers import static_files_run_dir
 from mokelumne.util import params, pdf_report, pdf_utils, storage
+from mokelumne.util.pdf_creation_cleanup_utils import remove_run_directory, validate_cleanup_directory
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +48,13 @@ logger = logging.getLogger(__name__)
                 "associated Alma record. Language codes should be delimited "
                 "by a **+**."
             ),
+        ),
+        "cleanup_after": params.configurable_param(
+            "pdf_creation_cleanup_after_",
+            default=True,
+            type="boolean",
+            title="Cleanup scratch directory after run?",
+            description="If true, the scratch directory will be deleted after a successful run.",
         ),
         "max_poll_interval": params.configurable_param(
             "pdf_creation_max_poll_interval_",
@@ -386,6 +394,14 @@ def pdf_creation(): # pylint: disable=too-many-locals
                 )
             )
 
+    @task
+    def cleanup_run(scratch_path: str, run_id: str, cleanup_after: bool) -> None:
+        """Delete the scratch directory for this Dag run when enabled."""
+        if not cleanup_after:
+            return
+
+        if validate_cleanup_directory(scratch_path, Variable.get("pdf_creation_scratch_base"), run_id):
+            remove_run_directory(scratch_path)
 
     validation = validate_inputs(
         source="{{ params.source }}",
@@ -399,13 +415,19 @@ def pdf_creation(): # pylint: disable=too-many-locals
         run_path=run_path
     ).expand(document=documents)
 
-    generate_summary(
-        results=document_results,
-        source="{{ params.source }}",
-        destination="{{ params.destination }}",
-        language="{{ params.language }}",
-        dag_id="{{ dag.dag_id }}",
-    ) >> check_for_errors(document_results)
+    (
+        generate_summary(
+            results=document_results,
+            source="{{ params.source }}",
+            destination="{{ params.destination }}",
+            language="{{ params.language }}",
+            dag_id="{{ dag.dag_id }}",
+        )
+        >> check_for_errors(document_results)
+        >> cleanup_run(
+            run_path, run_id="{{ run_id }}", cleanup_after="{{ params.cleanup_after }}"
+        )
+    )
 
 
 pdf_creation()
