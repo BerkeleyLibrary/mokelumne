@@ -16,6 +16,7 @@ check_ocr_job_status = DAG.get_task("process_document.check_job_status").python_
 validate_pdf = DAG.get_task("process_document.validate_pdf").python_callable
 publish_pdf = DAG.get_task("process_document.publish_pdf").python_callable
 check_for_errors = DAG.get_task("check_for_errors").python_callable
+cleanup_run = DAG.get_task("cleanup_run").python_callable
 
 
 class TestPDFCreationDag:
@@ -86,6 +87,88 @@ class TestPDFCreationDag:
 
         assert result == str(tmp_path / "test_run")
         assert (tmp_path / "test_run").is_dir()
+
+    def test_cleanup_run_removes_validated_run_directory(
+        self, monkeypatch, tmp_path
+    ):
+        """Remove the directory after validating it against the scratch base."""
+        scratch_base = tmp_path / "scratch"
+        scratch_base.mkdir()
+        run_directory = scratch_base / "run-1"
+        run_directory.mkdir()
+        (run_directory / "page.tif").write_text("test data")
+
+        variable = Mock()
+        variable.get.return_value = str(scratch_base)
+        monkeypatch.setitem(cleanup_run.__globals__, "Variable", variable)
+
+        cleanup_run(str(run_directory), "run-1", True)
+
+        variable.get.assert_called_once_with("pdf_creation_scratch_base")
+        assert not run_directory.exists()
+
+    def test_cleanup_run_is_noop_when_disabled(self, monkeypatch, tmp_path):
+        """Keep the directory and avoid configuration lookup when disabled."""
+        run_directory = tmp_path / "run-1"
+        run_directory.mkdir()
+
+        variable = Mock()
+        monkeypatch.setitem(cleanup_run.__globals__, "Variable", variable)
+
+        cleanup_run(str(run_directory), "run-1", False)
+
+        variable.get.assert_not_called()
+        assert run_directory.is_dir()
+
+    def test_cleanup_run_skips_already_removed_directory(
+        self, monkeypatch, tmp_path
+    ):
+        """Do not attempt removal when validation finds no run directory."""
+        scratch_base = tmp_path / "scratch"
+        scratch_base.mkdir()
+        run_directory = scratch_base / "run-1"
+
+        variable = Mock()
+        variable.get.return_value = str(scratch_base)
+        monkeypatch.setitem(cleanup_run.__globals__, "Variable", variable)
+        remove_directory = Mock()
+        monkeypatch.setitem(
+            cleanup_run.__globals__, "remove_run_directory", remove_directory
+        )
+
+        cleanup_run(str(run_directory), "run-1", True)
+
+        remove_directory.assert_not_called()
+
+    def test_cleanup_run_rejects_directory_outside_scratch_base(
+        self, monkeypatch, tmp_path
+    ):
+        """Reject an outside directory and leave it untouched."""
+        scratch_base = tmp_path / "scratch"
+        scratch_base.mkdir()
+        outside_directory = tmp_path / "run-1"
+        outside_directory.mkdir()
+
+        variable = Mock()
+        variable.get.return_value = str(scratch_base)
+        monkeypatch.setitem(cleanup_run.__globals__, "Variable", variable)
+        remove_directory = Mock()
+        monkeypatch.setitem(
+            cleanup_run.__globals__, "remove_run_directory", remove_directory
+        )
+
+        with pytest.raises(ValueError, match="Unexpected scratch directory"):
+            cleanup_run(str(outside_directory), "run-1", True)
+
+        remove_directory.assert_not_called()
+        assert outside_directory.is_dir()
+
+    def test_cleanup_run_follows_success_check(self):
+        """Run cleanup only after the final error check succeeds."""
+        cleanup_task = DAG.get_task("cleanup_run")
+
+        assert cleanup_task.upstream_task_ids == {"check_for_errors"}
+        assert cleanup_task.trigger_rule == "all_success"
 
     @pytest.mark.parametrize("status", ["FAILURE", "REVOKED"])
     def test_check_job_status_rejects_unsuccessful_jobs(self, status):
