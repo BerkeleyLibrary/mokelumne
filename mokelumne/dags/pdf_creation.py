@@ -40,7 +40,7 @@ VALID_PDF_VOLUMES = ASSETS_VOLUMES + ["/opt/airflow/test/fixtures"]
             default="",
             type="string",
             title="Source subdirectory",
-            description="Relative path within the source volume containing the document subdirectories. Do not include leading or trailing '/'.",
+            description="Relative path within the source volume containing the document subdirectories. Do not include leading or final '/'.",
         ),
         "destination_volume": params.configurable_param(
             "pdf_creation_destination_volume_",
@@ -51,7 +51,7 @@ VALID_PDF_VOLUMES = ASSETS_VOLUMES + ["/opt/airflow/test/fixtures"]
             enum=VALID_PDF_VOLUMES,
         ),
         "destination_subdirectory": params.configurable_param(
-            "pdf_creation_destination_subdirectory",
+            "pdf_creation_destination_subdirectory_",
             default="",
             type="string",
             title="Destination subdirectory",
