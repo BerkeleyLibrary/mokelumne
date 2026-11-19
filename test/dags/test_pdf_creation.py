@@ -165,7 +165,10 @@ class TestPDFCreationDag:
         """Run cleanup only after the final error check succeeds."""
         cleanup_task = DAG.get_task("cleanup_run")
 
-        assert cleanup_task.upstream_task_ids == {"check_for_errors"}
+        assert cleanup_task.upstream_task_ids == {
+            "check_for_errors",
+            "prepare_run_directory",
+        }
         assert cleanup_task.trigger_rule == "all_success"
 
     @pytest.mark.parametrize("status", ["FAILURE", "REVOKED"])
