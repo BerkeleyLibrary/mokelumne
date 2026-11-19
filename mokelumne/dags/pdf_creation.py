@@ -45,8 +45,8 @@ VALID_PDF_VOLUMES = storage.get_assets_volumes(include_fixtures=SHOW_FIXTURES)
             "pdf_creation_destination_volume_",
             default=VALID_PDF_VOLUMES[1],
             type="string",
-            title="Destination volume where the generated PDFs will be saved.",
-            description="Root destination volume.",
+            title="Destintation volume",
+            description="Destination volume where the generated PDFs will be saved.",
             enum=VALID_PDF_VOLUMES,
         ),
         "destination_subdirectory": params.configurable_param(
