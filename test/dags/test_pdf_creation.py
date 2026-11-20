@@ -109,13 +109,15 @@ class TestPDFCreationDag:
     def test_cleanup_run_condition(self, cleanup_after):
         """Allow cleanup when enabled and skip it when disabled."""
         cleanup_task = DAG.get_task("cleanup_run")
+        pre_execute_hook = cleanup_task._pre_execute_hook
+        assert pre_execute_hook is not None
         context = {"params": {"cleanup_after": cleanup_after}}
 
         if cleanup_after:
-            cleanup_task.pre_execute(context)
+            pre_execute_hook(context)
         else:
             with pytest.raises(AirflowSkipException, match="Skipping cleanup"):
-                cleanup_task.pre_execute(context)
+                pre_execute_hook(context)
 
     def test_cleanup_run_skips_already_removed_directory(
         self, monkeypatch, tmp_path
