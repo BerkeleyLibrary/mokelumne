@@ -35,8 +35,10 @@ class TestPDFCreationDag:
 
     def test_expected_params_exist(self):
         """Ensure expected DAG parameters exist."""
-        assert "source" in DAG.params
-        assert "destination" in DAG.params
+        assert "source_volume" in DAG.params
+        assert "source_subdirectory" in DAG.params
+        assert "destination_volume" in DAG.params
+        assert "destination_subdirectory" in DAG.params
         assert "language" in DAG.params
         assert "max_poll_interval" in DAG.params
         assert "max_total_poll_time" in DAG.params

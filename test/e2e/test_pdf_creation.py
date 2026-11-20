@@ -43,8 +43,10 @@ def completed_pdf_run(
             note=f"Created by pytest: {dag_run_id}",
             logical_date=None,
             conf={
-                "source": "/opt/airflow/test/fixtures/pdf_creation/inputs",
-                "destination": "/opt/airflow/test/fixtures/pdf_creation/outputs",
+                "source_volume": "/opt/airflow/test/fixtures",
+                "source_subdirectory": "pdf_creation/inputs",
+                "destination_volume": "/opt/airflow/test/fixtures",
+                "destination_subdirectory": "pdf_creation/outputs",
                 "language": "eng",
                 "max_resolution": 200,
             },

@@ -10,8 +10,13 @@ from airflow.sdk.exceptions import AirflowFailException, AirflowSkipException
 
 from mokelumne.plugins.static_files.helpers import static_files_run_dir
 from mokelumne.util import params, pdf_report, pdf_utils, storage
+from mokelumne.util.file_transfer import build_volume_path
 
 logger = logging.getLogger(__name__)
+
+sf_var = Variable.get("expose_pdf_creation_e2e_fixtures", default=False)
+SHOW_FIXTURES = str(sf_var).strip().lower() in {"true", "1", "t", "y", "yes"}
+VALID_PDF_VOLUMES = storage.get_assets_volumes(include_fixtures=SHOW_FIXTURES)
 
 
 @dag(
@@ -21,19 +26,35 @@ logger = logging.getLogger(__name__)
     render_template_as_native_obj=True,
     tags=["dlp", "pdf", "creation"],
     params={
-        "source": params.configurable_param(
-            "pdf_creation_source_",
-            default="tmp/srv/pa/collection1",
+        "source_volume": params.configurable_param(
+            "pdf_creation_source_volume_",
+            default=VALID_PDF_VOLUMES[0],
             type="string",
-            title="Source directory",
-            description="Directory containing the document subdirectories to process.",
+            title="Source volume",
+            description="Root source volume containing the document subdirectories to process.",
+            enum=VALID_PDF_VOLUMES,
         ),
-        "destination": params.configurable_param(
-            "pdf_creation_destination_",
-            default="tmp/srv/ocr/pdfs",
+        "source_subdirectory": params.configurable_param(
+            "pdf_creation_source_subdirectory_",
+            default="",
             type="string",
-            title="Destination directory",
-            description="Directory where the generated PDFs will be saved.",
+            title="Source subdirectory",
+            description="Relative path within the source volume containing the document subdirectories. Do not include leading or final '/'.",
+        ),
+        "destination_volume": params.configurable_param(
+            "pdf_creation_destination_volume_",
+            default=VALID_PDF_VOLUMES[1],
+            type="string",
+            title="Destintation volume",
+            description="Destination volume where the generated PDFs will be saved.",
+            enum=VALID_PDF_VOLUMES,
+        ),
+        "destination_subdirectory": params.configurable_param(
+            "pdf_creation_destination_subdirectory_",
+            default="",
+            type="string",
+            title="Destination subdirectory",
+            description="Relative path within the destination volume where the generated PDFs will be saved. Do not include leading or final '/'.",
         ),
         "language": params.configurable_param(
             "pdf_creation_language_",
@@ -82,6 +103,11 @@ logger = logging.getLogger(__name__)
 )
 def pdf_creation(): # pylint: disable=too-many-locals
     """Create searchable PDFs from document directories."""
+
+    @task
+    def build_path(volume: str, subdirectory: str) -> str:
+        """Build a str-based expanded path."""
+        return str(build_volume_path(volume=volume, subdirectory=subdirectory))
 
     @task
     def validate_inputs(source: str, destination: str) -> None:
@@ -386,13 +412,22 @@ def pdf_creation(): # pylint: disable=too-many-locals
                 )
             )
 
+    source_path = build_path(
+        volume="{{ params.source_volume }}",
+        subdirectory="{{ params.source_subdirectory }}"
+    )
+
+    destination_path = build_path(
+        volume="{{ params.destination_volume }}",
+        subdirectory="{{ params.destination_subdirectory }}"
+    )
 
     validation = validate_inputs(
-        source="{{ params.source }}",
-        destination="{{ params.destination }}",
+        source=source_path,
+        destination=destination_path,
     )
     run_path = prepare_run_directory()
-    documents = discover_documents(source="{{ params.source }}")
+    documents = discover_documents(source=source_path)
     validation >> run_path >> documents
 
     document_results = process_document.partial(
@@ -401,8 +436,8 @@ def pdf_creation(): # pylint: disable=too-many-locals
 
     generate_summary(
         results=document_results,
-        source="{{ params.source }}",
-        destination="{{ params.destination }}",
+        source=source_path,
+        destination=destination_path,
         language="{{ params.language }}",
         dag_id="{{ dag.dag_id }}",
     ) >> check_for_errors(document_results)
