@@ -6,7 +6,7 @@ from copy import copy
 from unittest.mock import Mock
 
 import pytest
-from airflow.sdk.exceptions import AirflowFailException
+from airflow.sdk.exceptions import AirflowFailException, AirflowSkipException
 
 from test.util.dag_helper import get_dag
 
@@ -102,23 +102,22 @@ class TestPDFCreationDag:
         variable.get.return_value = str(scratch_base)
         monkeypatch.setitem(cleanup_run.__globals__, "Variable", variable)
 
-        cleanup_run(str(run_directory), "run-1", True)
+        cleanup_run(str(run_directory), "run-1")
 
         variable.get.assert_called_once_with("pdf_creation_scratch_base")
         assert not run_directory.exists()
 
-    def test_cleanup_run_is_noop_when_disabled(self, monkeypatch, tmp_path):
-        """Keep the directory and avoid configuration lookup when disabled."""
-        run_directory = tmp_path / "run-1"
-        run_directory.mkdir()
+    @pytest.mark.parametrize("cleanup_after", [True, False])
+    def test_cleanup_run_condition(self, cleanup_after):
+        """Allow cleanup when enabled and skip it when disabled."""
+        cleanup_task = DAG.get_task("cleanup_run")
+        context = {"params": {"cleanup_after": cleanup_after}}
 
-        variable = Mock()
-        monkeypatch.setitem(cleanup_run.__globals__, "Variable", variable)
-
-        cleanup_run(str(run_directory), "run-1", False)
-
-        variable.get.assert_not_called()
-        assert run_directory.is_dir()
+        if cleanup_after:
+            cleanup_task.pre_execute(context)
+        else:
+            with pytest.raises(AirflowSkipException, match="Skipping cleanup"):
+                cleanup_task.pre_execute(context)
 
     def test_cleanup_run_skips_already_removed_directory(
         self, monkeypatch, tmp_path
@@ -136,7 +135,7 @@ class TestPDFCreationDag:
             cleanup_run.__globals__, "remove_run_directory", remove_directory
         )
 
-        cleanup_run(str(run_directory), "run-1", True)
+        cleanup_run(str(run_directory), "run-1")
 
         remove_directory.assert_not_called()
 
@@ -158,7 +157,7 @@ class TestPDFCreationDag:
         )
 
         with pytest.raises(ValueError, match="Unexpected scratch directory"):
-            cleanup_run(str(outside_directory), "run-1", True)
+            cleanup_run(str(outside_directory), "run-1")
 
         remove_directory.assert_not_called()
         assert outside_directory.is_dir()

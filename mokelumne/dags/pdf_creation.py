@@ -420,12 +420,13 @@ def pdf_creation(): # pylint: disable=too-many-locals
                 )
             )
 
+    @task.run_if(
+        lambda context: context["params"]["cleanup_after"],
+        skip_message="Skipping cleanup of scratch directory per user request.",
+    )
     @task
-    def cleanup_run(scratch_path: str, run_id: str, cleanup_after: bool) -> None:
+    def cleanup_run(scratch_path: str, run_id: str) -> None:
         """Delete the scratch directory for this Dag run when enabled."""
-        if not cleanup_after:
-            return
-
         if validate_cleanup_directory(scratch_path, Variable.get("pdf_creation_scratch_base"), run_id):
             remove_run_directory(scratch_path)
 
@@ -460,9 +461,7 @@ def pdf_creation(): # pylint: disable=too-many-locals
             dag_id="{{ dag.dag_id }}",
         )
         >> check_for_errors(document_results)
-        >> cleanup_run(
-            run_path, run_id="{{ run_id }}", cleanup_after="{{ params.cleanup_after }}"
-        )
+        >> cleanup_run(run_path, run_id="{{ run_id }}")
     )
 
 
