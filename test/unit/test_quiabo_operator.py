@@ -13,14 +13,14 @@ def operator() -> SubmitOcrJobOperator:
     """Configure a submission with ordinary document inputs."""
     return SubmitOcrJobOperator(
         task_id="submit", document={"source": "/src/a", "output": "a.pdf"},
-        destination="/dest", language="eng+fra", file_list_path="/run/filelist.txt",
+        language="eng+fra", file_list_path="/run/filelist.txt",
     )
 
 
 def test_request_payload(operator: SubmitOcrJobOperator) -> None:
-    """Build the JSON body from document paths and language codes."""
+    """Submit the file list and languages without an explicit output path."""
     assert operator.request_payload() == {
-        "filelist": "/run/filelist.txt", "languages": ["eng", "fra"], "output": "/dest/a.pdf",
+        "filelist": "/run/filelist.txt", "languages": ["eng", "fra"],
     }
 
 

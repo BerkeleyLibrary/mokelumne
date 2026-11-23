@@ -146,7 +146,7 @@ def pdf_creation(): # pylint: disable=too-many-locals
         return pdf_utils.discover_documents(source_path)
 
     @task_group
-    def process_document(document: pdf_utils.DocumentWorkItem, run_path: str):
+    def process_document(document: pdf_utils.DocumentWorkItem, run_path: str, destination: str):
         """Processes a single document directory into a PDF using Quiabo"""
 
         # Labels mapped tasks by their document's containing directory name.
@@ -328,7 +328,7 @@ def pdf_creation(): # pylint: disable=too-many-locals
 
         processed_check = check_if_processed(
             document=document,
-            destination="{{ params.destination }}",
+            destination=destination,
         )
         workspace = prepare_workspace(document=document, run_path=run_path)
         language = determine_language(document=document, language="{{ params.language }}")
@@ -342,7 +342,6 @@ def pdf_creation(): # pylint: disable=too-many-locals
             task_id="submit_ocr_job",
             map_index_template=HTTP_DOCUMENT_INDEX,
             document=document,
-            destination="{{ params.destination }}",
             language=language,
             file_list_path=file_list,
         )
@@ -359,7 +358,7 @@ def pdf_creation(): # pylint: disable=too-many-locals
         published_doc = publish_pdf(
             document=document,
             job=validated_job,
-            destination="{{ params.destination }}",
+            destination=destination,
         )
         document_status = return_document_status(document=document)
 
@@ -449,7 +448,8 @@ def pdf_creation(): # pylint: disable=too-many-locals
     validation >> run_path >> documents
 
     document_results = process_document.partial(
-        run_path=run_path
+        run_path=run_path,
+        destination=destination_path,
     ).expand(document=documents)
 
     (

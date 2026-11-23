@@ -63,6 +63,31 @@ class TestPDFCreationDag:
             "process_document.publish_pdf"
         ).upstream_task_ids
 
+    def test_final_destination_uses_volume_and_subdirectory(self):
+        """Use the assembled destination for checks, publication, and reporting."""
+        destination = DAG.get_task("validate_inputs").op_kwargs["destination"]
+        assert destination.operator.op_kwargs == {
+            "volume": "{{ params.destination_volume }}",
+            "subdirectory": "{{ params.destination_subdirectory }}",
+        }
+        for task_id in (
+            "process_document.check_if_processed",
+            "process_document.publish_pdf",
+            "generate_summary",
+        ):
+            assert DAG.get_task(task_id).op_kwargs["destination"] == destination
+
+    def test_ocr_submission_uses_prepared_file_list(self):
+        """Let Quiabo derive its output path from the prepared file list."""
+        submission = DAG.get_task("process_document.submit_ocr_job")
+        images = DAG.get_task("process_document.prepare_images")
+        workspace = DAG.get_task("process_document.prepare_workspace")
+
+        assert submission.file_list_path.operator is images
+        assert "destination" not in submission.template_fields
+        assert images.op_kwargs["workspace_path"].operator is workspace
+        assert "process_document.check_if_processed" in workspace.upstream_task_ids
+
     def test_documents_are_processed_in_a_mapped_group(self):
         """Map the document-processing group over discovery results."""
         group = DAG.task_group.children["process_document"]
