@@ -70,8 +70,8 @@ VALID_PDF_VOLUMES = storage.get_assets_volumes(include_fixtures=SHOW_FIXTURES)
                 "by a **+**."
             ),
         ),
-        "cleanup_after": params.configurable_param(
-            "pdf_creation_cleanup_after_",
+        "cleanup_after_successful_run": params.configurable_param(
+            "pdf_creation_cleanup_after_successful_run_",
             default=True,
             type="boolean",
             title="Cleanup scratch directory after run?",
@@ -421,7 +421,7 @@ def pdf_creation(): # pylint: disable=too-many-locals
             )
 
     @task.run_if(
-        lambda context: context["params"]["cleanup_after"],
+        lambda context: context["params"]["cleanup_after_successful_run"],
         skip_message="Skipping cleanup of scratch directory per user request.",
     )
     @task

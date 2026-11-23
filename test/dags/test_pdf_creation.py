@@ -107,15 +107,15 @@ class TestPDFCreationDag:
         variable.get.assert_called_once_with("pdf_creation_scratch_base")
         assert not run_directory.exists()
 
-    @pytest.mark.parametrize("cleanup_after", [True, False])
-    def test_cleanup_run_condition(self, cleanup_after):
+    @pytest.mark.parametrize("cleanup_after_successful_run", [True, False])
+    def test_cleanup_run_condition(self, cleanup_after_successful_run):
         """Allow cleanup when enabled and skip it when disabled."""
         cleanup_task = DAG.get_task("cleanup_run")
         pre_execute_hook = cleanup_task._pre_execute_hook
         assert pre_execute_hook is not None
-        context = {"params": {"cleanup_after": cleanup_after}}
+        context = {"params": {"cleanup_after_successful_run": cleanup_after_successful_run}}
 
-        if cleanup_after:
+        if cleanup_after_successful_run:
             pre_execute_hook(context)
         else:
             with pytest.raises(AirflowSkipException, match="Skipping cleanup"):
