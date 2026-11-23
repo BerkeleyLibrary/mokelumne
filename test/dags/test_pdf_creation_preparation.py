@@ -48,7 +48,7 @@ def test_prepare_and_submit_new_document(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("AIRFLOW_CONN_QUIABO_DEFAULT", "http://quiabo.test")
     monkeypatch.setattr("requests.Session.send", send_request)
     submit = SubmitOcrJobOperator(
-        task_id="submit", document=document, destination=str(destination),
+        task_id="submit", document=document,
         language=language, file_list_path=file_list,
     )
 
@@ -66,7 +66,6 @@ def test_prepare_and_submit_new_document(tmp_path: Path, monkeypatch) -> None:
     assert json.loads(request.body) == {
         "filelist": file_list,
         "languages": ["eng", "fra"],
-        "output": str(destination / "document.pdf"),
         "correlation_id": "test/pdf_creation/test_run/process_document.submit_ocr_job/1",
     }
     image_path = Path(workspace) / "00000001.tif"

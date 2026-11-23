@@ -328,14 +328,13 @@ class SubmitOcrJobOperator(HttpOperator):
 
     template_fields = (
         *HttpOperator.template_fields,
-        "document", "destination", "language", "file_list_path",
+        "document", "language", "file_list_path",
     )
 
     def __init__(
         self,
         *,
         document: dict[str, str],
-        destination: str,
         language: str,
         file_list_path: str,
         http_conn_id: str = "quiabo_default",
@@ -347,7 +346,6 @@ class SubmitOcrJobOperator(HttpOperator):
         so that it's available for templating (e.g. via map_index_template).
 
         :param document: Document to process.
-        :param destination: Final PDF directory.
         :param language: Tesseract language codes separated by plus signs.
         :param file_list_path: Path to the prepared Tesseract file list.
         :param http_conn_id: Airflow connection for Quiabo.
@@ -358,7 +356,6 @@ class SubmitOcrJobOperator(HttpOperator):
             deferrable=False, **kwargs,
         )
         self.document = document
-        self.destination = destination
         self.language = language
         self.file_list_path = file_list_path
 
@@ -370,7 +367,6 @@ class SubmitOcrJobOperator(HttpOperator):
         return {
             "filelist": self.file_list_path,
             "languages": self.language.split("+"),
-            "output": str(Path(self.destination) / self.document["output"]),
         }
 
     def execute(self, context: Context) -> str:

@@ -6,7 +6,7 @@ from copy import copy
 from unittest.mock import Mock
 
 import pytest
-from airflow.sdk.exceptions import AirflowFailException
+from airflow.sdk.exceptions import AirflowFailException, AirflowSkipException
 
 from test.util.dag_helper import get_dag
 
@@ -16,6 +16,7 @@ check_ocr_job_status = DAG.get_task("process_document.check_job_status").python_
 validate_pdf = DAG.get_task("process_document.validate_pdf").python_callable
 publish_pdf = DAG.get_task("process_document.publish_pdf").python_callable
 check_for_errors = DAG.get_task("check_for_errors").python_callable
+cleanup_run = DAG.get_task("cleanup_run").python_callable
 
 
 class TestPDFCreationDag:
@@ -62,6 +63,31 @@ class TestPDFCreationDag:
             "process_document.publish_pdf"
         ).upstream_task_ids
 
+    def test_final_destination_uses_volume_and_subdirectory(self):
+        """Use the assembled destination for checks, publication, and reporting."""
+        destination = DAG.get_task("validate_inputs").op_kwargs["destination"]
+        assert destination.operator.op_kwargs == {
+            "volume": "{{ params.destination_volume }}",
+            "subdirectory": "{{ params.destination_subdirectory }}",
+        }
+        for task_id in (
+            "process_document.check_if_processed",
+            "process_document.publish_pdf",
+            "generate_summary",
+        ):
+            assert DAG.get_task(task_id).op_kwargs["destination"] == destination
+
+    def test_ocr_submission_uses_prepared_file_list(self):
+        """Let Quiabo derive its output path from the prepared file list."""
+        submission = DAG.get_task("process_document.submit_ocr_job")
+        images = DAG.get_task("process_document.prepare_images")
+        workspace = DAG.get_task("process_document.prepare_workspace")
+
+        assert submission.file_list_path.operator is images
+        assert "destination" not in submission.template_fields
+        assert images.op_kwargs["workspace_path"].operator is workspace
+        assert "process_document.check_if_processed" in workspace.upstream_task_ids
+
     def test_documents_are_processed_in_a_mapped_group(self):
         """Map the document-processing group over discovery results."""
         group = DAG.task_group.children["process_document"]
@@ -86,6 +112,92 @@ class TestPDFCreationDag:
 
         assert result == str(tmp_path / "test_run")
         assert (tmp_path / "test_run").is_dir()
+
+    def test_cleanup_run_removes_validated_run_directory(
+        self, monkeypatch, tmp_path
+    ):
+        """Remove the directory after validating it against the scratch base."""
+        scratch_base = tmp_path / "scratch"
+        scratch_base.mkdir()
+        run_directory = scratch_base / "run-1"
+        run_directory.mkdir()
+        (run_directory / "page.tif").write_text("test data")
+
+        variable = Mock()
+        variable.get.return_value = str(scratch_base)
+        monkeypatch.setitem(cleanup_run.__globals__, "Variable", variable)
+
+        cleanup_run(str(run_directory), "run-1")
+
+        variable.get.assert_called_once_with("pdf_creation_scratch_base")
+        assert not run_directory.exists()
+
+    @pytest.mark.parametrize("cleanup_after_successful_run", [True, False])
+    def test_cleanup_run_condition(self, cleanup_after_successful_run):
+        """Allow cleanup when enabled and skip it when disabled."""
+        cleanup_task = DAG.get_task("cleanup_run")
+        pre_execute_hook = cleanup_task._pre_execute_hook
+        assert pre_execute_hook is not None
+        context = {"params": {"cleanup_after_successful_run": cleanup_after_successful_run}}
+
+        if cleanup_after_successful_run:
+            pre_execute_hook(context)
+        else:
+            with pytest.raises(AirflowSkipException, match="Skipping cleanup"):
+                pre_execute_hook(context)
+
+    def test_cleanup_run_skips_already_removed_directory(
+        self, monkeypatch, tmp_path
+    ):
+        """Do not attempt removal when validation finds no run directory."""
+        scratch_base = tmp_path / "scratch"
+        scratch_base.mkdir()
+        run_directory = scratch_base / "run-1"
+
+        variable = Mock()
+        variable.get.return_value = str(scratch_base)
+        monkeypatch.setitem(cleanup_run.__globals__, "Variable", variable)
+        remove_directory = Mock()
+        monkeypatch.setitem(
+            cleanup_run.__globals__, "remove_run_directory", remove_directory
+        )
+
+        cleanup_run(str(run_directory), "run-1")
+
+        remove_directory.assert_not_called()
+
+    def test_cleanup_run_rejects_directory_outside_scratch_base(
+        self, monkeypatch, tmp_path
+    ):
+        """Reject an outside directory and leave it untouched."""
+        scratch_base = tmp_path / "scratch"
+        scratch_base.mkdir()
+        outside_directory = tmp_path / "run-1"
+        outside_directory.mkdir()
+
+        variable = Mock()
+        variable.get.return_value = str(scratch_base)
+        monkeypatch.setitem(cleanup_run.__globals__, "Variable", variable)
+        remove_directory = Mock()
+        monkeypatch.setitem(
+            cleanup_run.__globals__, "remove_run_directory", remove_directory
+        )
+
+        with pytest.raises(ValueError, match="Unexpected scratch directory"):
+            cleanup_run(str(outside_directory), "run-1")
+
+        remove_directory.assert_not_called()
+        assert outside_directory.is_dir()
+
+    def test_cleanup_run_follows_success_check(self):
+        """Run cleanup only after the final error check succeeds."""
+        cleanup_task = DAG.get_task("cleanup_run")
+
+        assert cleanup_task.upstream_task_ids == {
+            "check_for_errors",
+            "prepare_run_directory",
+        }
+        assert cleanup_task.trigger_rule == "all_success"
 
     @pytest.mark.parametrize("status", ["FAILURE", "REVOKED"])
     def test_check_job_status_rejects_unsuccessful_jobs(self, status):

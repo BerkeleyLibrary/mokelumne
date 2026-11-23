@@ -11,6 +11,7 @@ from airflow.sdk.exceptions import AirflowFailException, AirflowSkipException
 from mokelumne.plugins.static_files.helpers import static_files_run_dir
 from mokelumne.util import params, pdf_report, pdf_utils, storage
 from mokelumne.util.file_transfer import build_volume_path
+from mokelumne.util.pdf_creation_cleanup_utils import remove_run_directory, validate_cleanup_directory
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +69,13 @@ VALID_PDF_VOLUMES = storage.get_assets_volumes(include_fixtures=SHOW_FIXTURES)
                 "associated Alma record. Language codes should be delimited "
                 "by a **+**."
             ),
+        ),
+        "cleanup_after_successful_run": params.configurable_param(
+            "pdf_creation_cleanup_after_successful_run_",
+            default=True,
+            type="boolean",
+            title="Cleanup scratch directory after run?",
+            description="If true, the scratch directory will be deleted after a successful run.",
         ),
         "max_poll_interval": params.configurable_param(
             "pdf_creation_max_poll_interval_",
@@ -138,7 +146,7 @@ def pdf_creation(): # pylint: disable=too-many-locals
         return pdf_utils.discover_documents(source_path)
 
     @task_group
-    def process_document(document: pdf_utils.DocumentWorkItem, run_path: str):
+    def process_document(document: pdf_utils.DocumentWorkItem, run_path: str, destination: str):
         """Processes a single document directory into a PDF using Quiabo"""
 
         # Labels mapped tasks by their document's containing directory name.
@@ -320,7 +328,7 @@ def pdf_creation(): # pylint: disable=too-many-locals
 
         processed_check = check_if_processed(
             document=document,
-            destination="{{ params.destination }}",
+            destination=destination,
         )
         workspace = prepare_workspace(document=document, run_path=run_path)
         language = determine_language(document=document, language="{{ params.language }}")
@@ -334,7 +342,6 @@ def pdf_creation(): # pylint: disable=too-many-locals
             task_id="submit_ocr_job",
             map_index_template=HTTP_DOCUMENT_INDEX,
             document=document,
-            destination="{{ params.destination }}",
             language=language,
             file_list_path=file_list,
         )
@@ -351,7 +358,7 @@ def pdf_creation(): # pylint: disable=too-many-locals
         published_doc = publish_pdf(
             document=document,
             job=validated_job,
-            destination="{{ params.destination }}",
+            destination=destination,
         )
         document_status = return_document_status(document=document)
 
@@ -412,6 +419,16 @@ def pdf_creation(): # pylint: disable=too-many-locals
                 )
             )
 
+    @task.run_if(
+        lambda context: context["params"]["cleanup_after_successful_run"],
+        skip_message="Skipping cleanup of scratch directory per user request.",
+    )
+    @task
+    def cleanup_run(scratch_path: str, run_id: str) -> None:
+        """Delete the scratch directory for this Dag run when enabled."""
+        if validate_cleanup_directory(scratch_path, Variable.get("pdf_creation_scratch_base"), run_id):
+            remove_run_directory(scratch_path)
+
     source_path = build_path(
         volume="{{ params.source_volume }}",
         subdirectory="{{ params.source_subdirectory }}"
@@ -431,16 +448,22 @@ def pdf_creation(): # pylint: disable=too-many-locals
     validation >> run_path >> documents
 
     document_results = process_document.partial(
-        run_path=run_path
+        run_path=run_path,
+        destination=destination_path,
     ).expand(document=documents)
 
-    generate_summary(
-        results=document_results,
-        source=source_path,
-        destination=destination_path,
-        language="{{ params.language }}",
-        dag_id="{{ dag.dag_id }}",
-    ) >> check_for_errors(document_results)
+    (
+        generate_summary(
+            results=document_results,
+            source=source_path,
+            destination=destination_path,
+            language="{{ params.language }}",
+            dag_id="{{ dag.dag_id }}",
+        )
+        >> check_for_errors(document_results)
+        >> cleanup_run(run_path, run_id="{{ run_id }}")
+    )
+
 
 
 pdf_creation()
